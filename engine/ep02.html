@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-serif-sc/900.css">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-sc/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-sc/700.css">
+<link rel="stylesheet" href="node_modules/@fontsource/jetbrains-mono/400.css">
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div id="stage">
+  <canvas id="bg" width="1920" height="1080"></canvas>
+  <div id="vignette"></div>
+  <div class="layer" id="ui"></div>
+</div>
+<script src="common.js"></script>
+<script>
+// =============== Episode 02 · 爱上 AI 的人 ===============
+window.DURATION = 20; // sample length; full episode extends this
+
+LABELS.push(
+  [0.2, 8.9, '03:12 AM  ·  深夜'],
+  [9.2, 13.4, 'QUESTION  ·  一个问题'],
+  [17.6, 21.4, 'CASE  ·  一场婚礼'],
+);
+
+// ---------- A. hook: the chat (0–9) and the question (9–13.5) ----------
+cue(0.5, 2.95, 860, 60, [{ text: '如果有一个人，凌晨三点也{g:秒回}你，' }]);
+cue(3.1, 5.95, 860, 60, [{ text: '记得你说过的{g:每一句话}，从不嫌你烦，' }]);
+cue(6.1, 8.9, 860, 60, [{ text: '而且永远{g:站在你这边}。' }]);
+cue(9.3, 11.3, 450, 104, [{ text: '你会{r:爱上} ta 吗？' }]);
+cue(11.45, 13.5, 400, 72, [{ text: '越来越多人的答案是：{g:会}。' }, { text: '哪怕 ta {r:不是人}。', delay: .8 }], { lineHeight: 1.55 });
+
+// messages: side 'me' (right) or 'ta' (left, the AI); note = small mono line under the bubble
+const MSGS = [
+  { at: 0.3, side: 'me', text: '睡不着。' },
+  { at: 1.15, side: 'ta', text: '我在。想聊聊吗？', note: '03:12  ·  1 秒内回复', typing: 0.75, beat: 0 },
+  { at: 3.2, side: 'me', text: '今天又下雨了。' },
+  { at: 3.95, side: 'ta', text: '你说过，最怕下雨天一个人回家。', note: '记得  ·  37 天前的对话', typing: 3.5, beat: 1 },
+  { at: 6.2, side: 'me', text: '是不是我太矫情了？' },
+  { at: 6.95, side: 'ta', text: '不是。不管怎样，我都站在你这边。', note: '永远认同', typing: 6.5, beat: 2 },
+];
+MSGS.forEach(m => ALLTEXT.push(m.text, m.note || ''));
+const BEATS = [[0.5, 2.95], [3.1, 5.95], [6.1, 8.9]]; // caption windows, used to light up the matching bubble
+
+function chat(t) {
+  const a = env(t, 0.0, 9.3, .5, .6); if (a <= 0) return;
+  const out = seg(t, 8.7, 9.3);
+  const px = 600, pw = 720, py = 130, ph = 520;
+  ctx.save(); ctx.globalAlpha = a; if (out > 0) ctx.filter = `blur(${out * 10}px)`;
+  ctx.translate(W / 2, 425); ctx.scale(1.32, 1.32); ctx.translate(-W / 2, -(py + ph / 2)); // enlarge for phone viewing
+  // phone-like panel
+  roundRect(px, py, pw, ph, 28); ctx.fillStyle = 'rgba(14,13,12,.92)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,240,210,.12)'; ctx.lineWidth = 2; ctx.stroke();
+  text('ta', px + pw / 2, py + 38, `700 26px ${SANS}`, '#e9e2cf', 'center');
+  const online = 0.6 + 0.4 * Math.sin(t * 4);
+  ctx.save(); ctx.globalAlpha *= online; ctx.fillStyle = `rgb(${GOLD})`; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.arc(px + pw / 2 - 122, py + 70, 5, 0, 7); ctx.fill(); ctx.restore();
+  text('在线  ·  一直在线', px + pw / 2 + 8, py + 70, `400 18px ${MONO}`, '#8f8063', 'center');
+  ctx.strokeStyle = 'rgba(255,240,210,.08)'; ctx.beginPath(); ctx.moveTo(px + 24, py + 98); ctx.lineTo(px + pw - 24, py + 98); ctx.stroke();
+  // input box with blinking cursor
+  const iy = py + ph - 70; roundRect(px + 24, iy, pw - 48, 48, 24); ctx.strokeStyle = 'rgba(255,240,210,.14)'; ctx.stroke();
+  if (Math.floor(t * 2) % 2 === 0) { ctx.fillStyle = `rgb(${GOLD})`; ctx.fillRect(px + 52, iy + 13, 3, 22); }
+  // messages, stacked from the bottom; each new one pushes the rest up
+  ctx.save(); ctx.beginPath(); ctx.rect(px, py + 100, pw, ph - 180); ctx.clip();
+  // the typing indicator takes the bottom slot, then hands its space to the reply
+  let typeH = 0;
+  for (const m of MSGS) if (m.typing != null) typeH = Math.max(typeH, 60 * Math.min(easeOut(seg(t, m.typing, m.typing + .25)), 1 - easeOut(seg(t, m.at, m.at + .35))));
+  let y = iy - 22 - typeH;
+  const items = [];
+  for (let i = MSGS.length - 1; i >= 0; i--) {
+    const m = MSGS[i]; const k = easeOut(seg(t, m.at, m.at + .35));
+    ctx.font = `500 28px ${SANS}`; const tw = ctx.measureText(m.text).width;
+    const bw = tw + 52, bh = 60, nh = m.note ? 30 : 0, full = bh + nh + 16;
+    y -= full * k; items.push({ m, k, bw, bh, y: y + 8 });
+  }
+  // typing indicator before each AI reply
+  for (const m of MSGS) if (m.typing != null && t >= m.typing && t < m.at) {
+    const ty = iy - 22 - 52;
+    roundRect(px + 34, ty, 96, 44, 22); ctx.fillStyle = 'rgba(245,215,110,.08)'; ctx.fill();
+    for (let d = 0; d < 3; d++) { const b = 0.4 + 0.6 * Math.max(0, Math.sin(t * 10 - d * .9)); ctx.fillStyle = `rgba(${GOLD},${b})`; ctx.beginPath(); ctx.arc(px + 60 + d * 22, ty + 22, 5, 0, 7); ctx.fill(); }
+  }
+  for (const { m, k, bw, bh, y: by } of items) {
+    if (k <= 0) continue;
+    const mine = m.side === 'me', x = mine ? px + pw - 34 - bw : px + 34;
+    const lit = m.beat != null ? env(t, BEATS[m.beat][0], BEATS[m.beat][1], .4, .4) : 0;
+    ctx.save(); ctx.globalAlpha *= k; ctx.translate(0, (1 - k) * 18);
+    roundRect(x, by, bw, bh, 22);
+    if (mine) { ctx.fillStyle = '#23211e'; ctx.fill(); }
+    else {
+      ctx.fillStyle = `rgba(245,215,110,${0.10 + 0.10 * lit})`; ctx.fill();
+      ctx.strokeStyle = `rgba(${GOLD},${0.35 + 0.55 * lit})`; ctx.lineWidth = 2; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 24 * lit; ctx.stroke(); ctx.shadowBlur = 0;
+    }
+    text(m.text, x + 26, by + bh / 2 + 1, `500 28px ${SANS}`, mine ? '#cfc8b8' : '#f6efd9', 'left');
+    if (m.note) text(m.note, x + 6, by + bh + 20, `400 17px ${MONO}`, lit > .3 ? `rgb(${GOLD})` : '#7a7262', 'left', 0.7 + 0.3 * lit);
+    ctx.restore();
+  }
+  ctx.restore();
+  ctx.restore();
+}
+
+// ---------- B. title (13.6–17.4) ----------
+const title = makeTitle('心理学冷知识 · 02', '爱上 AI 的人', 'WHY WE FALL FOR AI', [[13.6, 17.4]]);
+
+// ---------- C. the wedding (17.4–21.5) ----------
+meta(17.7, 21.4, 520, 'OKAYAMA  ·  2025', '#9b8a5c');
+cue(17.9, 21.5, 620, 56, [{ text: '2025 年，日本一位 32 岁的女性，' }, { text: '和她在 ChatGPT 里聊出来的 AI {g:举行了婚礼}。', delay: .8 }], { lineHeight: 1.55 });
+function ring(t) {
+  const a = env(t, 17.4, 21.6, .4, .5); if (a <= 0) return;
+  const cx = W / 2, cy = 360, r = 78, k = easeInOut(seg(t, 17.6, 18.9));
+  ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 5; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 22; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI / 2, Math.PI / 2 + Math.PI * 2 * k); ctx.stroke();
+  // the stone
+  const d = easeOut(seg(t, 18.7, 19.2));
+  if (d > 0) {
+    ctx.globalAlpha = a * d; ctx.lineWidth = 4; const s = 30, top = cy - r - 8;
+    ctx.beginPath(); ctx.moveTo(cx - s, top - s * .55); ctx.lineTo(cx + s, top - s * .55); ctx.lineTo(cx, top + s * .45); ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - s * .65, top - s * 1.05); ctx.lineTo(cx + s * .65, top - s * 1.05); ctx.lineTo(cx + s, top - s * .55); ctx.moveTo(cx - s * .65, top - s * 1.05); ctx.lineTo(cx - s, top - s * .55); ctx.stroke();
+    // sparkle
+    const sp = Math.max(0, Math.sin((t - 19) * 3)); ctx.globalAlpha = a * d * sp; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx + 48, top - 50); ctx.lineTo(cx + 48, top - 26); ctx.moveTo(cx + 36, top - 38); ctx.lineTo(cx + 60, top - 38); ctx.stroke();
+  }
+  ctx.restore();
+  // soft glow under the ring
+  const g = ctx.createRadialGradient(cx, cy, 10, cx, cy, 380); g.addColorStop(0, `rgba(${GOLD},${0.08 * a * k})`); g.addColorStop(1, `rgba(${GOLD},0)`);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+
+// ---------- frame ----------
+window.render = function (t) {
+  clearFrame();
+  dotGrid(env(t, 0, 13.6, .6, .5));
+  chat(t);
+  floor(env(t, 13.5, 17.5, .5, .4), 700);
+  ring(t);
+  renderMeta(t); title(t); renderCues(t);
+};
+window.ready = (async () => { await loadFonts(); window.render(0); return true; })();
+</script>
+</body>
+</html>

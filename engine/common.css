@@ -1,0 +1,38 @@
+
+  :root {
+    --gold: #F5D76E; --red: #E8483A; --white: #F2EFE8;
+    --serif: 'Noto Serif SC', serif; --sans: 'Noto Sans SC', sans-serif; --mono: 'JetBrains Mono', 'Noto Sans SC', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; background: #070707; overflow: hidden; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #070707; }
+  canvas { position: absolute; inset: 0; }
+  #vignette { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 62% 62% at 50% 50%, rgba(0,0,0,0) 35%, rgba(0,0,0,.55) 75%, rgba(0,0,0,.92) 100%); }
+  .layer { position: absolute; inset: 0; }
+  .label { position: absolute; left: 120px; top: 84px; font: 400 22px var(--mono); letter-spacing: .32em; color: #6d685e; white-space: nowrap; }
+  .cap { position: absolute; left: 0; right: 0; text-align: center; font-family: var(--serif); font-weight: 900; color: var(--white);
+    text-shadow: 0 0 22px rgba(255,250,235,.28), 0 2px 6px rgba(0,0,0,.8); white-space: nowrap; }
+  .cap .ln { display: block; }
+  .cap span.c { display: inline-block; will-change: filter, opacity, transform; }
+  .grp { position: relative; display: inline-block; }
+  .strike { position: absolute; left: -4%; top: 54%; height: 7px; width: 0; background: var(--white); border-radius: 4px; box-shadow: 0 0 14px rgba(255,255,255,.6); }
+  .g { color: var(--gold); text-shadow: 0 0 26px rgba(245,215,110,.55), 0 2px 6px rgba(0,0,0,.8); }
+  .r { color: var(--red); text-shadow: 0 0 26px rgba(232,72,58,.6), 0 2px 6px rgba(0,0,0,.8); }
+  .meta { position: absolute; left: 0; right: 0; text-align: center; font: 400 20px var(--mono); letter-spacing: .3em; white-space: nowrap; }
+  .src { position: absolute; left: 0; right: 0; top: 1012px; text-align: center; font: 400 17px var(--mono); letter-spacing: .14em; color: #5f5a51; white-space: nowrap; }
+  #title { position: absolute; left: 0; right: 0; top: 400px; text-align: center; }
+  #title .kicker { font: 500 22px var(--sans); letter-spacing: .5em; color: #8f8063; margin-bottom: 34px; }
+  #title .main { font: 900 136px var(--serif); letter-spacing: .1em; color: var(--gold);
+    text-shadow: 0 0 40px rgba(245,215,110,.55), 0 0 90px rgba(245,190,90,.25); position: relative; display: inline-block; padding-left: .1em; }
+  #title .main span { display: inline-block; }
+  #title .dot { position: absolute; right: -34px; top: 54%; width: 14px; height: 14px; border-radius: 50%; background: var(--red); box-shadow: 0 0 16px var(--red); }
+  #title .sub { margin-top: 30px; font: 400 24px var(--mono); letter-spacing: .9em; color: #b49a5a; padding-left: .9em; }
+  #pills { position: absolute; left: 0; right: 0; top: 430px; display: flex; justify-content: center; gap: 48px; }
+  .pill { font: 700 44px var(--sans); padding: 18px 46px; border-radius: 999px; letter-spacing: .08em; border: 2px solid transparent; }
+  #toggle { position: absolute; left: 0; right: 0; top: 380px; display: flex; justify-content: center; align-items: center; gap: 44px; }
+  #toggle .name { font: 700 46px var(--sans); color: #e9e2cf; }
+  #toggle .track { position: relative; width: 220px; height: 104px; border-radius: 999px; border: 3px solid rgba(245,215,110,.6); }
+  #toggle .knob { position: absolute; top: 10px; width: 78px; height: 78px; border-radius: 50%; }
+  #toggle .state { font: 400 40px var(--mono); letter-spacing: .2em; width: 160px; }
+  #disclaimer { position: absolute; left: 0; right: 0; top: 990px; text-align: center; font: 500 20px var(--sans); letter-spacing: .12em; color: #6a655b; }
