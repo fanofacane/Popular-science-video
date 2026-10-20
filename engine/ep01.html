@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <link rel="stylesheet" href="node_modules/@fontsource/noto-serif-sc/900.css">
-<link rel="stylesheet" href="node_modules/@fontsource/noto-serif-sc/700.css">
 <link rel="stylesheet" href="node_modules/@fontsource/noto-sans-sc/500.css">
 <link rel="stylesheet" href="node_modules/@fontsource/noto-sans-sc/700.css">
 <link rel="stylesheet" href="node_modules/@fontsource/jetbrains-mono/400.css">
@@ -26,25 +25,10 @@
   .cap span.c { display: inline-block; will-change: filter, opacity, transform; }
   .grp { position: relative; display: inline-block; }
   .strike { position: absolute; left: -4%; top: 54%; height: 7px; width: 0; background: var(--white); border-radius: 4px; box-shadow: 0 0 14px rgba(255,255,255,.6); }
-  .card { position: absolute; top: 330px; width: 400px; padding: 34px 0; text-align: center; font: 700 36px var(--sans); color: #e8dcb8; border: 2px solid rgba(245,215,110,.5); border-radius: 18px; background: rgba(20,17,10,.85); box-shadow: 0 0 30px rgba(245,215,110,.18); }
-  .card .bar { position: absolute; left: 6%; top: 50%; height: 5px; width: 0; background: var(--red); box-shadow: 0 0 14px var(--red); border-radius: 3px; }
-  .rule { position: absolute; left: 0; right: 0; text-align: center; white-space: nowrap; }
-  .rule .en { font: 400 46px var(--mono); letter-spacing: .3em; color: var(--gold); text-shadow: 0 0 24px rgba(245,215,110,.5); }
-  .rule .zh { font: 900 46px var(--serif); color: var(--white); margin-left: 40px; }
-  .node { position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 50%; border: 3px solid #eee; display: flex; align-items: center; justify-content: center; font: 700 40px var(--sans); color: #f2efe8; box-shadow: 0 0 24px rgba(255,255,255,.18); background: #0b0b0b; }
-  .bubble { position: absolute; padding: 14px 30px; border-radius: 999px; font: 700 30px var(--sans); white-space: nowrap; }
-  .bubble.gold { background: var(--gold); color: #2a2108; box-shadow: 0 0 26px rgba(245,215,110,.55); }
-  .bubble.red { background: var(--red); color: #2a0806; box-shadow: 0 0 26px rgba(232,72,58,.6); }
-  .mono { font-family: var(--mono); }
-  #toggle { position: absolute; left: 0; right: 0; top: 330px; display: flex; justify-content: center; align-items: center; gap: 44px; }
-  #toggle .name { font: 700 46px var(--sans); color: #e9e2cf; }
-  #toggle .track { position: relative; width: 220px; height: 104px; border-radius: 999px; border: 3px solid rgba(245,215,110,.6); }
-  #toggle .knob { position: absolute; top: 10px; width: 78px; height: 78px; border-radius: 50%; }
-  #toggle .state { font: 400 40px var(--mono); letter-spacing: .2em; width: 160px; }
-  #disclaimer { position: absolute; left: 0; right: 0; top: 990px; text-align: center; font: 500 20px var(--sans); letter-spacing: .12em; color: #6a655b; }
   .g { color: var(--gold); text-shadow: 0 0 26px rgba(245,215,110,.55), 0 2px 6px rgba(0,0,0,.8); }
   .r { color: var(--red); text-shadow: 0 0 26px rgba(232,72,58,.6), 0 2px 6px rgba(0,0,0,.8); }
   .meta { position: absolute; left: 0; right: 0; text-align: center; font: 400 20px var(--mono); letter-spacing: .3em; white-space: nowrap; }
+  .src { position: absolute; left: 0; right: 0; top: 1012px; text-align: center; font: 400 17px var(--mono); letter-spacing: .14em; color: #5f5a51; white-space: nowrap; }
   #title { position: absolute; left: 0; right: 0; top: 400px; text-align: center; }
   #title .kicker { font: 500 22px var(--sans); letter-spacing: .5em; color: #8f8063; margin-bottom: 34px; }
   #title .main { font: 900 136px var(--serif); letter-spacing: .1em; color: var(--gold);
@@ -54,10 +38,12 @@
   #title .sub { margin-top: 30px; font: 400 24px var(--mono); letter-spacing: .9em; color: #b49a5a; padding-left: .9em; }
   #pills { position: absolute; left: 0; right: 0; top: 430px; display: flex; justify-content: center; gap: 48px; }
   .pill { font: 700 44px var(--sans); padding: 18px 46px; border-radius: 999px; letter-spacing: .08em; border: 2px solid transparent; }
-  #counter { position: absolute; left: 0; right: 0; top: 430px; text-align: center; white-space: nowrap; }
-  #counter .num { font: 900 190px var(--serif); color: var(--gold); text-shadow: 0 0 50px rgba(245,215,110,.5); letter-spacing: .02em; }
-  #counter .unit { font: 900 96px var(--serif); color: var(--white); margin-left: 18px; text-shadow: 0 0 22px rgba(255,250,235,.3); }
-  #source { position: absolute; left: 0; right: 0; top: 760px; text-align: center; font: 400 18px var(--mono); letter-spacing: .2em; color: #5c5850; }
+  #toggle { position: absolute; left: 0; right: 0; top: 380px; display: flex; justify-content: center; align-items: center; gap: 44px; }
+  #toggle .name { font: 700 46px var(--sans); color: #e9e2cf; }
+  #toggle .track { position: relative; width: 220px; height: 104px; border-radius: 999px; border: 3px solid rgba(245,215,110,.6); }
+  #toggle .knob { position: absolute; top: 10px; width: 78px; height: 78px; border-radius: 50%; }
+  #toggle .state { font: 400 40px var(--mono); letter-spacing: .2em; width: 160px; }
+  #disclaimer { position: absolute; left: 0; right: 0; top: 990px; text-align: center; font: 500 20px var(--sans); letter-spacing: .12em; color: #6a655b; }
 </style>
 </head>
 <body>
@@ -72,13 +58,8 @@
       <div class="sub">EMOTIONAL DETACHMENT</div>
     </div>
     <div id="pills"></div>
-    <div id="counter"><span class="num">0</span><span class="unit">万</span></div>
-    <div id="cards"></div>
-    <div id="rules"></div>
-    <div id="talk"></div>
     <div id="toggle"><span class="name">对家的感情</span><div class="track"><div class="knob"></div></div><span class="state">ON</span></div>
     <div id="disclaimer">"失望性情感隔离"是网络通俗说法，并非临床诊断</div>
-    <div id="source">来源：全国妇联《中国农村留守儿童、城乡流动儿童状况研究报告》· 2010 年人口普查</div>
   </div>
 </div>
 <script>
@@ -88,34 +69,36 @@ const lerp = (a, b, k) => a + (b - a) * k;
 const seg = (t, a, b) => clamp((t - a) / (b - a));
 const easeOut = k => 1 - Math.pow(1 - k, 3);
 const easeInOut = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
-// fade in over [a, a+fi], out over [b-fo, b]
 const env = (t, a, b, fi = .4, fo = .4) => Math.min(seg(t, a, a + fi), 1 - seg(t, b - fo, b));
 function hash(i, j) { let h = (i * 374761393 + j * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
+const GOLD = '245,215,110', RED = '232,72,58';
+const SANS = '"Noto Sans SC"', MONO = '"JetBrains Mono", "Noto Sans SC"', SERIF = '"Noto Serif SC"';
 
 const ui = document.getElementById('ui');
 const cv = document.getElementById('bg'); const ctx = cv.getContext('2d');
 const W = 1920, H = 1080;
+const ALLTEXT = [];
 
 // ---------- captions ----------
-// markup: {g:text} gold, {r:text} red ; lines: array of {text, delay}
+// markup: {g:text} gold, {r:text} red, {s:text} red + struck through
 const CUES = [];
 function cue(start, end, top, size, lines, extra = {}) {
   const el = document.createElement('div'); el.className = 'cap'; el.style.top = top + 'px'; el.style.fontSize = size + 'px';
   if (extra.lineHeight) el.style.lineHeight = extra.lineHeight;
   const chars = [], strikes = [];
-  lines.forEach((ln, li) => {
+  lines.forEach(ln => {
     const lineEl = document.createElement('span'); lineEl.className = 'ln';
     const delay = ln.delay || 0; let idx = 0;
     const re = /\{([grs]):([^}]*)\}|([^{]+)/g; let m;
     while ((m = re.exec(ln.text))) {
       let cls = m[1] || ''; const txt = m[2] ?? m[3]; let host = lineEl;
-      if (cls === 's') { // red word that gets struck through
+      if (cls === 's') {
         cls = 'r'; host = document.createElement('span'); host.className = 'grp'; lineEl.appendChild(host);
         const bar = document.createElement('i'); bar.className = 'strike'; host.appendChild(bar); strikes.push(bar);
       }
       for (const ch of txt) {
         const s = document.createElement('span'); s.className = 'c' + (cls ? ' ' + cls : '');
-        s.textContent = ch === ' ' ? '\u00a0' : ch; host.appendChild(s);
+        s.textContent = ch === ' ' ? ' ' : ch; host.appendChild(s);
         chars.push({ el: s, t0: start + delay + idx * 0.045 }); idx++;
       }
     }
@@ -131,8 +114,7 @@ function renderCues(t) {
     const out = seg(t, c.end - .4, c.end);
     for (const ch of c.chars) {
       const k = easeOut(seg(t, ch.t0, ch.t0 + .45));
-      const o = k * (1 - out);
-      ch.el.style.opacity = o;
+      ch.el.style.opacity = k * (1 - out);
       ch.el.style.filter = `blur(${(1 - k) * 14 + out * 10}px)`;
       ch.el.style.transform = `translateY(${(1 - k) * 10}px)`;
     }
@@ -140,57 +122,57 @@ function renderCues(t) {
   }
 }
 
-// ---------- metas / labels ----------
+// ---------- metas, sources, labels ----------
 const METAS = [];
-function meta(start, end, top, text, color) {
-  const el = document.createElement('div'); el.className = 'meta'; el.style.top = top + 'px'; el.style.color = color; el.textContent = text;
+function meta(start, end, top, text, color, cls = 'meta') {
+  const el = document.createElement('div'); el.className = cls; el.textContent = text;
+  if (top != null) el.style.top = top + 'px'; if (color) el.style.color = color;
   ui.appendChild(el); METAS.push({ start, end, el });
 }
-const LABELS = [ // [start, end, text]
+const src = (start, end, text) => meta(start, end, null, text, null, 'src');
+const LABELS = [
   [0.2, 9.8, 'UNREAD  ·  未读'],
-  [14.2, 19.8, 'SYMPTOMS  ·  表现'],
-  [20.2, 23.0, 'WHERE IT COMES FROM  ·  成因'],
-  [23.2, 29.8, 'ABSENT HOME  ·  缺席的家'],
-  [30.2, 35.8, 'VIOLENT HOME  ·  吵闹的家'],
-  [36.2, 43.8, 'BROKEN PROMISES  ·  失约的家'],
-  [44.2, 51.8, 'PUSHED AWAY  ·  被推开的家'],
-  [52.2, 61.8, 'HOW IT WORKS  ·  原理'],
+  [14.2, 18.9, 'SYMPTOMS  ·  表现'],
+  [19.2, 30.8, 'ACE STUDY  ·  童年不良经历'],
+  [31.2, 38.8, 'LEFT-BEHIND  ·  留守儿童'],
+  [39.2, 45.8, 'CHINA  ·  儿童受虐待发生率'],
+  [46.2, 53.8, 'DEPRESSION RISK  ·  成年抑郁风险'],
+  [54.2, 61.8, 'HOW IT WORKS  ·  原理'],
 ];
 const labelEl = document.getElementById('label');
 
-// ---------- timeline content ----------
-// Scene A: hook (0–10)
+// ---------- timeline text ----------
+// A. hook (0–10)
 meta(0.3, 9.7, 405, 'DAY 47  ·  0 CALLS', '#b8483c');
 cue(0.4, 2.55, 460, 76, [{ text: '你已经 {g:47} 天，没给家里打过电话。' }]);
 cue(2.65, 5.05, 460, 76, [{ text: '受了委屈，你宁愿告诉{g:陌生人}。' }]);
 cue(5.15, 7.55, 460, 76, [{ text: '你也问过自己：我是不是太{r:冷血}了？' }]);
 cue(7.7, 9.8, 460, 76, [{ text: '不是。' }, { text: '你只是，{r:失望}过太多次。', delay: .55 }], { lineHeight: 1.45 });
-// Scene C: symptoms (14–20)
-cue(17.3, 19.8, 640, 64, [{ text: '和父母待久了，甚至会{r:焦虑}。' }]);
-// Scene D: doors (20–23)
-cue(20.3, 23.0, 150, 64, [{ text: '失望，很少来自某一句话。' }, { text: '它来自{g:一整个家的氛围}。', delay: .9 }], { lineHeight: 1.55 });
-// Door 1 (23–30)
-meta(23.4, 26.7, 250, 'DOOR 01 / 04', '#9b8a5c');
-cue(23.5, 26.7, 720, 64, [{ text: '有的家，父母常年不在身边。' }, { text: '一年只见{g:一次}。', delay: 1.3 }], { lineHeight: 1.55 });
-cue(26.9, 29.7, 300, 56, [{ text: '{g:2010} 年，中国农村留守儿童' }]);
-// Door 2 (30–36)
-meta(30.3, 35.7, 250, 'DOOR 02 / 04', '#b8483c');
-cue(30.5, 33.2, 720, 64, [{ text: '有的家，摔门、争吵、{r:动手}。' }]);
-cue(33.4, 35.8, 720, 64, [{ text: '孩子学会的第一件事，' }, { text: '是{r:屏住呼吸，别出声}。', delay: .9 }], { lineHeight: 1.55 });
-// Door 3 (36–44)
-meta(36.3, 43.7, 250, 'DOOR 03 / 04', '#c9803f');
-cue(36.5, 39.9, 720, 64, [{ text: '有的家，酒、烟、牌桌，比你更重要。' }, { text: '承诺一次次{r:落空}。', delay: 1.5 }], { lineHeight: 1.55 });
-cue(40.1, 43.8, 720, 60, [{ text: '心理学家发现，这样的家里有三条{g:潜规则}。' }]);
-// Door 4 (44–52)
-meta(44.3, 51.7, 250, 'DOOR 04 / 04', '#b9b2a2');
-cue(44.4, 47.6, 720, 64, [{ text: '也有的家，看起来什么都不缺。' }]);
-cue(47.8, 51.8, 720, 64, [{ text: '只是每次伸手，都{r:落了空}。' }]);
-// Mechanism (52–62)
-meta(52.3, 55.6, 250, 'ACE STUDY  ·  1998  ·  童年不良经历', '#9b8a5c');
-cue(52.4, 55.6, 720, 64, [{ text: '四种家，教会孩子同一条规则：' }]);
-cue(55.8, 58.9, 440, 104, [{ text: '{g:不期待，就不会失望。}' }]);
-cue(59.1, 61.9, 600, 64, [{ text: '于是大脑把对家的感情，调成了{g:静音}。' }]);
-// Ending (62–75)
+// C. symptoms (14–19)
+cue(16.4, 18.9, 640, 64, [{ text: '和父母待久了，甚至会{r:焦虑}。' }]);
+// D1. ACE household bars (19–27)
+cue(19.3, 22.7, 150, 54, [{ text: '1998 年，一项 {g:9508} 人的研究，' }, { text: '追问他们：小时候的家里，发生过什么？', delay: .8 }], { lineHeight: 1.5 });
+cue(22.9, 26.7, 150, 54, [{ text: '排第一的，是家人{r:酗酒或吸毒}。' }, { text: '母亲被家暴，占 {r:13%}。', delay: 1.1 }], { lineHeight: 1.5 });
+src(19.4, 30.7, 'Felitti et al. · 1998 · Am J Prev Med · Kaiser–CDC ACE Study');
+// D2. ACE score distribution (27–31)
+cue(27.0, 30.8, 720, 64, [{ text: '超过一半的人，至少经历过{g:一项}。' }]);
+// E. left-behind line chart (31–39)
+cue(31.3, 34.9, 140, 54, [{ text: '在中国，更常见的是另一种：{g:缺席}。' }]);
+cue(35.1, 38.8, 140, 54, [{ text: '2010 年，农村留守儿童一度超过 {g:6100 万}。' }]);
+src(31.4, 38.7, '段成荣等（2000–2015）· 全国妇联 · 第七次全国人口普查（2020，官方口径）');
+// F. China maltreatment waffles (39–46)
+cue(39.3, 42.7, 140, 54, [{ text: '中国 68 项研究汇总：' }, { text: '每 {g:4} 个孩子里，就有 1 个被{r:忽视}过。', delay: .7 }], { lineHeight: 1.5 });
+cue(42.9, 45.8, 140, 54, [{ text: '近 {g:1/5}，经历过{r:情感虐待}。' }]);
+src(39.4, 45.7, 'Fang et al. · 2015 · Bulletin of the World Health Organization · 68 项研究');
+// G. radar (46–54)
+cue(46.3, 49.6, 862, 52, [{ text: '哪一种经历，和成年后的{r:抑郁}关系最大？' }]);
+cue(49.8, 53.8, 832, 52, [{ text: '排前两位的，不是挨打，' }, { text: '而是{r:情感虐待}和{r:被忽视}。', delay: .9 }], { lineHeight: 1.5 });
+src(46.4, 53.7, 'Mandelli et al. · 2015 · European Psychiatry · 与成年抑郁的关联（比值比 OR）');
+// H. mechanism (54–62)
+cue(54.2, 57.6, 330, 54, [{ text: '这些家，教会孩子同一条规则：' }]);
+cue(54.9, 57.6, 450, 104, [{ text: '{g:不期待，就不会失望。}' }]);
+cue(57.8, 61.9, 620, 64, [{ text: '于是大脑把对家的感情，调成了{g:静音}。' }]);
+// I. ending (62–75)
 cue(62.4, 65.4, 470, 76, [{ text: '所以，不想回家，不是{s:冷血}。' }], { strikeAt: 63.7 });
 cue(65.6, 68.5, 470, 76, [{ text: '这是一个人在那样的环境里，' }, { text: '{g:最正常的反应}。', delay: 1.0 }], { lineHeight: 1.5 });
 cue(68.7, 71.7, 470, 76, [{ text: '你没有坏掉。' }, { text: '你只是，{g:学会了保护自己}。', delay: .9 }], { lineHeight: 1.5 });
@@ -200,108 +182,199 @@ const PILL_TEXT = ['不恋家', '不思念', '不想倾诉', '抗拒亲密'];
 const pillsEl = document.getElementById('pills');
 const pills = PILL_TEXT.map(s => { const p = document.createElement('div'); p.className = 'pill'; p.textContent = s; pillsEl.appendChild(p); return p; });
 
-// ---------- canvas layers ----------
+// ---------- canvas: backgrounds ----------
 function pixelWall(t, alpha) {
   if (alpha <= 0) return;
   ctx.save(); ctx.globalAlpha = alpha;
   ctx.translate(W / 2, H / 2); ctx.rotate(-0.17); ctx.translate(-W / 2, -H / 2);
   const cell = 22, gap = 7, step = cell + gap; const scroll = t * 18;
   for (let r = -14; r < 52; r++) {
-    if (((r % 4) + 4) % 4 === 3) continue; // dark band between groups
-    const y = r * step - 200;
-    const off = (r % 2 ? scroll : -scroll * .7);
+    if (((r % 4) + 4) % 4 === 3) continue;
+    const y = r * step - 200; const off = (r % 2 ? scroll : -scroll * .7);
     const c0 = Math.floor((-400 - off) / step) - 1;
     for (let c = c0; c < c0 + 100; c++) {
-      const x = c * step + off;
-      if (x < -400 || x > W + 400) continue;
+      const x = c * step + off; if (x < -400 || x > W + 400) continue;
       const h = hash(c, r), b = 0.55 + 0.45 * hash(r, c * 7);
-      let col;
-      if (h < 0.025) col = `rgba(245,215,110,${0.85 * b})`;
-      else if (h < 0.13) col = `rgba(150,128,58,${0.75 * b})`;
-      else col = `rgba(${Math.round(120 * b)},${Math.round(30 * b)},${Math.round(26 * b)},0.9)`;
-      ctx.fillStyle = col; ctx.fillRect(x, y, cell, cell);
+      ctx.fillStyle = h < 0.025 ? `rgba(245,215,110,${0.85 * b})` : h < 0.13 ? `rgba(150,128,58,${0.75 * b})` : `rgba(${Math.round(120 * b)},${Math.round(30 * b)},${Math.round(26 * b)},0.9)`;
+      ctx.fillRect(x, y, cell, cell);
     }
   }
   ctx.restore();
-  // darken behind text
   const g = ctx.createRadialGradient(W / 2, 500, 50, W / 2, 500, 900);
   g.addColorStop(0, `rgba(7,7,7,${0.72 * alpha})`); g.addColorStop(0.6, `rgba(7,7,7,${0.35 * alpha})`); g.addColorStop(1, 'rgba(7,7,7,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 }
-
 function floor(alpha, horizon = 640) {
   if (alpha <= 0) return;
   ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = 'rgba(255,214,150,0.10)'; ctx.lineWidth = 1.2;
-  const vx = W / 2, vy = horizon - 140;
-  for (let i = -24; i <= 24; i++) { const x = vx + i * 160; ctx.beginPath(); ctx.moveTo(vx + (x - vx) * 0.12, horizon); ctx.lineTo(x * 1 + (x - vx) * 2.2, H + 300); ctx.stroke(); }
+  const vx = W / 2;
+  for (let i = -24; i <= 24; i++) { const x = vx + i * 160; ctx.beginPath(); ctx.moveTo(vx + (x - vx) * 0.12, horizon); ctx.lineTo(x + (x - vx) * 2.2, H + 300); ctx.stroke(); }
   for (let k = 1; k < 16; k++) { const y = horizon + Math.pow(k / 15, 2.1) * (H - horizon + 80); ctx.globalAlpha = alpha * (0.3 + 0.7 * k / 15); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
   ctx.restore();
-  // horizon glow
   const g = ctx.createRadialGradient(W / 2, horizon, 10, W / 2, horizon, 700);
   g.addColorStop(0, `rgba(255,200,120,${0.10 * alpha})`); g.addColorStop(1, 'rgba(255,200,120,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 }
-
-const DOORS = [
-  { col: [245, 215, 110] }, { col: [232, 72, 58] }, { col: [240, 138, 60] }, { col: [216, 208, 192] },
-];
-function doors(t) {
-  const a = env(t, 20.0, 23.4, .6, .5); if (a <= 0) return;
-  const dw = 190, dh = 330, gapX = 140, total = 4 * dw + 3 * gapX, x0 = (W - total) / 2, y0 = 420;
-  const zoom = easeInOut(seg(t, 22.0, 22.6));
-  DOORS.forEach((d, i) => {
-    const appear = easeOut(seg(t, 20.2 + i * 0.22, 20.9 + i * 0.22));
-    let alpha = a * appear * (i === 0 ? 1 : 1 - zoom);
-    if (alpha <= 0) return;
-    let x = x0 + i * (dw + gapX), y = y0, w = dw, h = dh;
-    if (i === 0) { // slide to centre, then dissolve into a flash of light
-      const mv = easeInOut(seg(t, 22.2, 22.9)); const s = 1 + 0.08 * mv;
-      const cx = lerp(x + dw / 2, W / 2, mv); w = dw * s; h = dh * s; x = cx - w / 2; y = y0 + dh - h;
-      alpha *= 1 - seg(t, 23.0, 23.4);
-    }
-    const [r, g, b] = d.col; const flick = i === 1 ? 0.7 + 0.3 * Math.abs(Math.sin(t * 11)) : 1;
-    ctx.save(); ctx.globalAlpha = alpha;
-    // light spilling under the door
-    const lg = ctx.createRadialGradient(x + w / 2, y + h, 2, x + w / 2, y + h, w * 1.1);
-    lg.addColorStop(0, `rgba(${r},${g},${b},${0.45 * flick})`); lg.addColorStop(1, `rgba(${r},${g},${b},0)`);
-    ctx.fillStyle = lg; ctx.fillRect(x - w, y + h - w * .2, w * 3, w * 1.3);
-    // door body
-    ctx.fillStyle = '#0c0c0c'; ctx.fillRect(x, y, w, h);
-    ctx.strokeStyle = `rgba(${r},${g},${b},0.55)`; ctx.lineWidth = 2; ctx.shadowColor = `rgba(${r},${g},${b},0.8)`; ctx.shadowBlur = 18; ctx.strokeRect(x, y, w, h);
-    // slit of light at the bottom
-    ctx.fillStyle = `rgba(${r},${g},${b},${0.95 * flick})`; ctx.shadowBlur = 24; ctx.fillRect(x + 3, y + h - 5, w - 6, 4);
-    // knob
-    ctx.beginPath(); ctx.arc(x + w * 0.82, y + h * 0.53, Math.max(3, w * 0.025), 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  });
+function text(s, x, y, font, color, align = 'left', alpha = 1, glow = 0) {
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (glow) { ctx.shadowColor = color; ctx.shadowBlur = glow; } ctx.fillText(s, x, y); ctx.restore();
 }
 
-function calendar(t) {
-  const a = env(t, 23.1, 29.8, .5, .5); if (a <= 0) return;
-  const dim = 1 - 0.75 * easeInOut(seg(t, 26.6, 27.3));
-  const cols = 53, rows = 7, cell = 20, gap = 6, step = cell + gap;
-  const total = cols * step - gap, x0 = (W - total) / 2, y0 = 360 + 40 * easeInOut(seg(t, 26.6, 27.3));
-  const special = 5 * 7 + 3; // late Jan / early Feb: Spring Festival
-  for (let c = 0; c < cols; c++) for (let r = 0; r < rows; r++) {
-    const i = c * 7 + r; if (i >= 365) continue;
-    const appear = easeOut(seg(t, 23.3 + c * 0.018, 23.7 + c * 0.018));
-    const x = x0 + c * step, y = y0 + r * step;
-    ctx.save(); ctx.globalAlpha = a * appear * dim;
-    if (i === special) {
-      const lit = easeOut(seg(t, 25.2, 25.8));
-      ctx.fillStyle = lit > 0 ? `rgba(245,215,110,${0.25 + 0.75 * lit})` : '#2b2a28';
-      if (lit > 0) { ctx.shadowColor = 'rgba(245,215,110,.95)'; ctx.shadowBlur = 50 * lit; }
-      ctx.fillRect(x, y, cell, cell);
-      if (lit > 0) { ctx.shadowBlur = 0; ctx.globalAlpha = a * dim * lit * 0.9; ctx.font = '400 16px "JetBrains Mono"'; ctx.fillStyle = '#c9b071'; ctx.textAlign = 'center'; ctx.fillText('春节', x + cell / 2, y - 16); }
-    } else {
-      const v = 34 + Math.round(10 * hash(c, r)); ctx.fillStyle = `rgb(${v},${v - 1},${v - 3})`; ctx.fillRect(x, y, cell, cell);
-    }
-    ctx.restore();
+// ---------- chart 1: ACE household categories (horizontal bars) ----------
+const ACE = [ // Felitti 1998, prevalence %
+  ['家人酗酒 / 吸毒', 26, true], ['家人有精神疾病', 19], ['母亲遭受暴力', 13, true], ['父母言语 / 情感虐待', 11], ['父母躯体虐待', 11], ['家人入狱', 3],
+];
+ACE.forEach(r => ALLTEXT.push(r[0]));
+function aceBars(t) {
+  const a = env(t, 19.0, 27.0, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const x0 = 760, maxW = 860, scale = maxW / 30, y0 = 400, step = 82, bh = 36;
+  for (const v of [0, 10, 20, 30]) {
+    const x = x0 + v * scale, k = seg(t, 19.4, 19.9);
+    ctx.strokeStyle = `rgba(255,240,210,${v ? .07 : .25})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y0 - 40); ctx.lineTo(x, y0 - 40 + (step * 6 + 10) * k); ctx.stroke();
+    text(v + '%', x, y0 - 62, `400 20px ${MONO}`, '#6d685e', 'center', k);
   }
-  // axis labels
-  ctx.save(); ctx.globalAlpha = a * dim * seg(t, 23.6, 24.2); ctx.font = '400 15px "JetBrains Mono"'; ctx.fillStyle = '#4d4a44';
-  ctx.textAlign = 'left'; ctx.fillText('JAN', x0, y0 + rows * step + 22); ctx.textAlign = 'right'; ctx.fillText('DEC', x0 + total, y0 + rows * step + 22);
-  ctx.textAlign = 'center'; ctx.fillText('365 DAYS', W / 2, y0 + rows * step + 22);
+  const hi = easeInOut(seg(t, 22.9, 23.4));
+  ACE.forEach(([name, v, flag], i) => {
+    const y = y0 + i * step, k = easeOut(seg(t, 19.7 + i * .22, 20.7 + i * .22));
+    const emph = flag ? hi : 0, dim = 1 - .55 * hi * (flag ? 0 : 1);
+    const col = flag ? `rgb(${Math.round(lerp(245, 232, emph))},${Math.round(lerp(215, 72, emph))},${Math.round(lerp(110, 58, emph))})` : `rgb(${GOLD})`;
+    text(name, x0 - 34, y + bh / 2, `700 32px ${SANS}`, emph > .5 ? '#f2d0c8' : '#d9d2c2', 'right', k * dim);
+    ctx.save(); ctx.globalAlpha *= k * dim; ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 12 + 22 * emph;
+    ctx.fillRect(x0, y, v * scale * k, bh); ctx.restore();
+    text(Math.round(v * k) + '%', x0 + v * scale * k + 18, y + bh / 2, `900 34px ${SERIF}`, emph > .5 ? `rgb(${RED})` : '#efe6cc', 'left', k * dim);
+  });
+  ctx.restore();
+}
+
+// ---------- chart 2: ACE score distribution (100% stacked bar) ----------
+const ACEN = [['0 项', 48, '70,67,60'], ['1 项', 25, '245,215,110'], ['2 项', 13, '242,170,90'], ['3 项', 7, '238,120,70'], ['4+ 项', 7, '232,72,58']];
+function aceStack(t) {
+  const a = env(t, 26.8, 31.0, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const x0 = 360, w = 1200, y = 500, h = 70; let x = x0;
+  text('ACE 分数分布  ·  经历过几类不良经历', W / 2, 340, `400 22px ${MONO}`, '#9b8a5c', 'center', seg(t, 27.0, 27.5));
+  ACEN.forEach(([name, v, col], i) => {
+    const k = easeOut(seg(t, 27.2 + i * .28, 27.8 + i * .28)), sw = w * v / 100;
+    ctx.save(); ctx.globalAlpha *= k; ctx.fillStyle = `rgb(${col})`; if (i) { ctx.shadowColor = `rgb(${col})`; ctx.shadowBlur = 16; }
+    ctx.fillRect(x + 2, y, (sw - 4) * k, h); ctx.restore();
+    text(v + '%', x + sw / 2, y + h + 44, `900 34px ${SERIF}`, i ? `rgb(${col})` : '#8a857a', 'center', k);
+    text(name, x + sw / 2, y + h + 92, `500 24px ${SANS}`, '#8a857a', 'center', k);
+    x += sw;
+  });
+  const k = easeOut(seg(t, 28.9, 29.5)), bx0 = x0 + w * .48 + 4, bx1 = x0 + w - 2, by = y - 34;
+  ctx.save(); ctx.globalAlpha *= k; ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 3; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 12;
+  ctx.beginPath(); ctx.moveTo(bx0, by + 16); ctx.lineTo(bx0, by); ctx.lineTo(bx1, by); ctx.lineTo(bx1, by + 16); ctx.stroke(); ctx.restore();
+  text('至少一项  52%', (bx0 + bx1) / 2, by - 36, `900 40px ${SERIF}`, `rgb(${GOLD})`, 'center', k, 20);
+  ctx.restore();
+}
+
+// ---------- chart 3: left-behind children by year (line) ----------
+const LB = [[2000, 2699], [2005, 5861], [2010, 6103], [2015, 5493], [2020, 4177]];
+function lbLine(t) {
+  const a = env(t, 31.0, 39.0, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const px0 = 480, px1 = 1440, py0 = 820, py1 = 330, ymax = 7000;
+  const X = yr => lerp(px0, px1, (yr - 2000) / 20), Y = v => lerp(py0, py1, v / ymax);
+  const gk = seg(t, 31.3, 31.9);
+  for (const v of [0, 2000, 4000, 6000]) {
+    ctx.strokeStyle = `rgba(255,240,210,${v ? .07 : .25})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px0 - 20, Y(v)); ctx.lineTo(lerp(px0 - 20, px1 + 40, gk), Y(v)); ctx.stroke();
+    text(v ? v.toLocaleString('en-US') + ' 万' : '0', px0 - 40, Y(v), `400 20px ${MONO}`, '#6d685e', 'right', gk);
+  }
+  LB.forEach(([yr]) => text(String(yr), X(yr), py0 + 36, `400 22px ${MONO}`, '#8a857a', 'center', gk));
+  const p = easeInOut(seg(t, 31.8, 34.2)) * (LB.length - 1);
+  const pts = LB.map(([yr, v]) => [X(yr), Y(v)]);
+  const i0 = Math.min(Math.floor(p), LB.length - 2), f = p - i0, tip = [lerp(pts[i0][0], pts[i0 + 1][0], f), lerp(pts[i0][1], pts[i0 + 1][1], f)];
+  // area under the line
+  ctx.save(); ctx.beginPath(); ctx.moveTo(pts[0][0], py0);
+  for (let i = 0; i <= i0; i++) ctx.lineTo(...pts[i]);
+  ctx.lineTo(...tip); ctx.lineTo(tip[0], py0); ctx.closePath();
+  const ag = ctx.createLinearGradient(0, py1, 0, py0); ag.addColorStop(0, `rgba(${GOLD},.22)`); ag.addColorStop(1, `rgba(${GOLD},0)`); ctx.fillStyle = ag; ctx.fill(); ctx.restore();
+  // line (last segment dashed: different definition)
+  ctx.save(); ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 4; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 16; ctx.lineJoin = 'round';
+  for (let i = 0; i < LB.length - 1; i++) {
+    const k = clamp(p - i); if (k <= 0) break;
+    if (i === LB.length - 2) ctx.setLineDash([12, 10]);
+    ctx.beginPath(); ctx.moveTo(...pts[i]); ctx.lineTo(lerp(pts[i][0], pts[i + 1][0], k), lerp(pts[i][1], pts[i + 1][1], k)); ctx.stroke();
+  }
+  ctx.restore();
+  const hi = easeInOut(seg(t, 35.1, 35.6));
+  LB.forEach(([yr, v], i) => {
+    const at = 31.8 + (i / (LB.length - 1)) * 2.4, k = easeOut(seg(t, at, at + .4));
+    if (k <= 0) return;
+    const [x, y] = pts[i], peak = i === 2, last = i === LB.length - 1;
+    ctx.save(); ctx.globalAlpha *= k;
+    if (peak && hi > 0) { const ph = (t * 1.2) % 1; ctx.strokeStyle = `rgba(${GOLD},${.6 * (1 - ph) * hi})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 14 + 26 * ph, 0, 7); ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(x, y, peak ? 9 + 3 * hi : 8, 0, 7);
+    if (last) { ctx.fillStyle = '#070707'; ctx.fill(); ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 3; ctx.stroke(); }
+    else { ctx.fillStyle = `rgb(${GOLD})`; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 18; ctx.fill(); }
+    ctx.restore();
+    const lbl = v.toLocaleString('en-US') + ' 万' + (last ? '*' : '');
+    text(lbl, i === 0 ? x - 18 : x, i === 0 ? y - 30 : y - 42, peak ? `900 ${Math.round(34 + 12 * hi)}px ${SERIF}` : `900 30px ${SERIF}`, peak ? `rgb(${GOLD})` : '#d9d2c2', i === 0 ? 'right' : 'center', k * (peak ? 1 : 1 - .45 * hi), peak ? 20 * hi : 0);
+  });
+  text('* 2020 年为第七次人口普查官方口径，与此前研究口径不同', px1 + 40, py0 + 84, `400 18px ${SANS}`, '#6d685e', 'right', seg(t, 34.2, 34.8));
+  ctx.restore();
+}
+
+// ---------- chart 4: China maltreatment prevalence (waffles) ----------
+const CN = [['躯体虐待', 26.6], ['忽视', 26.0], ['情感虐待', 19.6], ['性虐待', 8.7]];
+CN.forEach(r => ALLTEXT.push(r[0]));
+function waffles(t) {
+  const a = env(t, 39.0, 46.0, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const cell = 18, gap = 6, step = cell + gap, gw = 10 * step - gap, sp = 130, total = 4 * gw + 3 * sp, x0 = (W - total) / 2, y0 = 400;
+  const focus = t < 42.9 ? (t > 40.0 ? 1 : -1) : 2; // waffle the caption talks about
+  const fk = t < 42.9 ? easeInOut(seg(t, 40.0, 40.5)) : 1;
+  CN.forEach(([name, v], gi) => {
+    const gx = x0 + gi * (gw + sp), lit = Math.round(v), fillK = seg(t, 39.6 + gi * .15, 41.0 + gi * .15);
+    const isF = gi === focus, dim = focus < 0 ? 1 : (isF ? 1 : 1 - .5 * fk);
+    for (let n = 0; n < 100; n++) {
+      const c = n % 10, r = 9 - Math.floor(n / 10), x = gx + c * step, y = y0 + r * step;
+      const on = n < lit * fillK;
+      ctx.save(); ctx.globalAlpha *= dim * seg(t, 39.2 + n * .004, 39.6 + n * .004);
+      if (on) { const col = isF ? RED : GOLD; ctx.fillStyle = `rgb(${col})`; ctx.shadowColor = `rgb(${col})`; ctx.shadowBlur = isF ? 14 : 8; }
+      else ctx.fillStyle = '#222120';
+      ctx.fillRect(x, y, cell, cell); ctx.restore();
+    }
+    const k = seg(t, 40.4 + gi * .15, 40.9 + gi * .15);
+    text(v.toFixed(1) + '%', gx + gw / 2, y0 + 10 * step + 50, `900 46px ${SERIF}`, isF ? `rgb(${RED})` : `rgb(${GOLD})`, 'center', k * dim, isF ? 18 : 0);
+    text(name, gx + gw / 2, y0 + 10 * step + 106, `700 30px ${SANS}`, '#d9d2c2', 'center', k * dim);
+  });
+  text('每格 = 1% 的儿童', W / 2, y0 - 40, `400 20px ${MONO}`, '#6d685e', 'center', seg(t, 39.4, 39.9));
+  ctx.restore();
+}
+
+// ---------- chart 5: depression odds ratio by trauma type (radar) ----------
+const RAD = [['情感虐待', 2.78, true], ['忽视', 2.75, true], ['性侵害', 2.42], ['家庭暴力', 2.06], ['躯体虐待', 1.98]];
+RAD.forEach(r => ALLTEXT.push(r[0]));
+function radar(t) {
+  const a = env(t, 46.0, 54.0, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const cx = W / 2, cy = 465, R = 290, n = RAD.length, vmax = 3;
+  const ang = i => -Math.PI / 2 + i * 2 * Math.PI / n;
+  const gk = easeOut(seg(t, 46.2, 47.0));
+  for (let ring = 1; ring <= 3; ring++) {
+    const r = R * ring / vmax * gk; ctx.beginPath();
+    for (let i = 0; i <= n; i++) { const q = ang(i % n); i ? ctx.lineTo(cx + r * Math.cos(q), cy + r * Math.sin(q)) : ctx.moveTo(cx + r * Math.cos(q), cy + r * Math.sin(q)); }
+    ctx.strokeStyle = `rgba(255,240,210,${ring === 3 ? .16 : .08})`; ctx.lineWidth = 1.5; ctx.stroke();
+    text('OR ' + ring, cx + 8, cy - R * ring / vmax * gk - 2, `400 16px ${MONO}`, '#5f5a51', 'left', gk);
+  }
+  for (let i = 0; i < n; i++) { const q = ang(i); ctx.strokeStyle = 'rgba(255,240,210,.08)'; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + R * gk * Math.cos(q), cy + R * gk * Math.sin(q)); ctx.stroke(); }
+  const pk = easeInOut(seg(t, 46.8, 48.2)), hi = easeInOut(seg(t, 49.9, 50.5));
+  const P = RAD.map(([, v], i) => [cx + R * v / vmax * pk * Math.cos(ang(i)), cy + R * v / vmax * pk * Math.sin(ang(i))]);
+  ctx.beginPath(); P.forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.closePath();
+  ctx.fillStyle = `rgba(${GOLD},${.14 * pk})`; ctx.fill();
+  ctx.save(); ctx.strokeStyle = `rgba(${GOLD},${pk})`; ctx.lineWidth = 3; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 16; ctx.stroke(); ctx.restore();
+  if (hi > 0) { ctx.save(); ctx.strokeStyle = `rgba(${RED},${hi})`; ctx.lineWidth = 5; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 22; ctx.beginPath(); ctx.moveTo(...P[0]); ctx.lineTo(...P[1]); ctx.stroke(); ctx.restore(); }
+  RAD.forEach(([name, v, top], i) => {
+    const q = ang(i), k = seg(t, 47.6 + i * .12, 48.1 + i * .12), red = top ? hi : 0;
+    const col = red > .5 ? `rgb(${RED})` : `rgb(${GOLD})`;
+    ctx.save(); ctx.globalAlpha *= k; ctx.beginPath(); ctx.arc(...P[i], 8 + 4 * red, 0, 7); ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 16 + 16 * red; ctx.fill(); ctx.restore();
+    const lx = cx + (R + 70) * Math.cos(q), ly = cy + (R + 56) * Math.sin(q), al = Math.abs(Math.cos(q)) < .2 ? 'center' : Math.cos(q) > 0 ? 'left' : 'right';
+    const dimO = top ? 1 : 1 - .5 * hi;
+    text(name, lx, ly - 18, `700 ${top ? 34 : 30}px ${SANS}`, red > .5 ? '#f6cfc8' : '#d9d2c2', al, k * dimO);
+    text(v.toFixed(2), lx, ly + 22, `900 32px ${SERIF}`, col, al, k * dimO, red > .5 ? 18 : 0);
+  });
   ctx.restore();
 }
 
@@ -309,119 +382,45 @@ function calendar(t) {
 const titleEl = document.getElementById('title');
 const titleChars = [...titleEl.querySelectorAll('.main span')];
 const kicker = titleEl.querySelector('.kicker'), sub = titleEl.querySelector('.sub'), dot = titleEl.querySelector('.dot');
-const counterEl = document.getElementById('counter'), numEl = counterEl.querySelector('.num');
-const sourceEl = document.getElementById('source');
+const toggleEl = document.getElementById('toggle'), knob = toggleEl.querySelector('.knob'), track = toggleEl.querySelector('.track'), stateEl = toggleEl.querySelector('.state');
+const disclaimer = document.getElementById('disclaimer');
 
 function renderDOM(t) {
-  // label
   let lt = '', la = 0;
   for (const [a, b, s] of LABELS) if (t >= a && t <= b) { lt = s; la = env(t, a, b, .5, .4); }
   labelEl.textContent = lt; labelEl.style.opacity = la;
   for (const m of METAS) m.el.style.opacity = env(t, m.start, m.end, .5, .4);
 
-  // title (10–14)
-  const T0 = t >= 71.5 ? 71.8 : 10.0, T1 = t >= 71.5 ? 75.0 : 14.0;
-  const ta = env(t, T0, T1, .3, t >= 71.5 ? 1.0 : .45); t = t >= 71.5 ? t - 61.8 : t; // replay title animation
+  // title at 10–14, replayed at 71.8–75
+  const end = t >= 71.5, tt = end ? t - 61.8 : t;
+  const ta = env(tt, 10.0, end ? 13.2 : 14.0, .3, end ? 1.0 : .45);
   titleEl.style.display = ta > 0 ? 'block' : 'none';
   if (ta > 0) {
-    titleEl.style.opacity = ta;
-    titleEl.style.transform = `scale(${1 + 0.035 * seg(t, 10, 14)})`;
-    kicker.style.opacity = seg(t, 10.2, 10.8);
-    titleChars.forEach((c, i) => { const k = easeOut(seg(t, 10.35 + i * 0.09, 10.95 + i * 0.09)); c.style.opacity = k; c.style.filter = `blur(${(1 - k) * 18}px)`; });
-    dot.style.opacity = seg(t, 11.2, 11.5) * (0.75 + 0.25 * Math.sin(t * 6));
-    const sk = easeOut(seg(t, 11.3, 12.1)); sub.style.opacity = sk; sub.style.letterSpacing = `${0.5 + 0.4 * sk}em`;
+    titleEl.style.opacity = ta; titleEl.style.transform = `scale(${1 + 0.035 * seg(tt, 10, 14)})`;
+    kicker.style.opacity = seg(tt, 10.2, 10.8);
+    titleChars.forEach((c, i) => { const k = easeOut(seg(tt, 10.35 + i * 0.09, 10.95 + i * 0.09)); c.style.opacity = k; c.style.filter = `blur(${(1 - k) * 18}px)`; });
+    dot.style.opacity = seg(tt, 11.2, 11.5) * (0.75 + 0.25 * Math.sin(t * 6));
+    const sk = easeOut(seg(tt, 11.3, 12.1)); sub.style.opacity = sk; sub.style.letterSpacing = `${0.5 + 0.4 * sk}em`;
   }
 
-  // pills (14–20)
-  const pa = env(t, 14.0, 19.9, .2, .45);
+  // symptom pills (14–19)
+  const pa = env(t, 14.0, 19.0, .2, .45);
   pillsEl.style.display = pa > 0 ? 'flex' : 'none';
   if (pa > 0) {
     pillsEl.style.opacity = pa;
     pills.forEach((p, i) => {
-      const k = easeOut(seg(t, 14.4 + i * 0.55, 14.85 + i * 0.55));
-      const off = easeInOut(seg(t, 16.5 + i * 0.2, 17.1 + i * 0.2));
+      const k = easeOut(seg(t, 14.3 + i * 0.45, 14.75 + i * 0.45)), off = easeInOut(seg(t, 16.1 + i * 0.18, 16.6 + i * 0.18));
       p.style.opacity = k; p.style.transform = `translateY(${(1 - k) * 14}px) scale(${0.92 + 0.08 * k})`; p.style.filter = `blur(${(1 - k) * 10}px)`;
       p.style.background = `rgba(${Math.round(lerp(245, 38, off))},${Math.round(lerp(215, 14, off))},${Math.round(lerp(110, 12, off))},1)`;
-      p.style.color = off < .5 ? '#2a2108' : '#b9473a';
-      p.style.borderColor = `rgba(150,45,35,${off})`;
+      p.style.color = off < .5 ? '#2a2108' : '#b9473a'; p.style.borderColor = `rgba(150,45,35,${off})`;
       p.style.boxShadow = `0 0 ${36 * (1 - off)}px rgba(245,215,110,${0.6 * (1 - off)})`;
     });
   }
 
-  // counter (27–30)
-  const ca = env(t, 27.0, 29.8, .4, .45);
-  counterEl.style.display = ca > 0 ? 'block' : 'none'; sourceEl.style.opacity = ca * seg(t, 28.2, 28.8);
-  if (ca > 0) {
-    counterEl.style.opacity = ca; const k = easeOut(seg(t, 27.1, 28.5));
-    numEl.textContent = Math.round(6102 * k).toString();
-    counterEl.style.filter = `blur(${(1 - seg(t, 27.0, 27.4)) * 12}px)`;
-  }
-}
-
-// ---------- door 3: promise cards & rules ----------
-const cardsEl = document.getElementById('cards');
-const CARDS = ['周末带你去公园', '这次一定戒了', '下次不赌了'].map((txt, i) => {
-  const c = document.createElement('div'); c.className = 'card'; c.style.left = (W / 2 - 660 + i * 460) + 'px'; c.textContent = txt;
-  const b = document.createElement('i'); b.className = 'bar'; c.appendChild(b); cardsEl.appendChild(c); return { c, b };
-});
-const rulesEl = document.getElementById('rules');
-const RULES = [['DON\'T TALK', '不说'], ['DON\'T TRUST', '不信'], ['DON\'T FEEL', '不感受']].map(([en, zh], i) => {
-  const r = document.createElement('div'); r.className = 'rule'; r.style.top = (330 + i * 92) + 'px';
-  r.innerHTML = `<span class="en">${en}</span><span class="zh">${zh}</span>`; rulesEl.appendChild(r); return r;
-});
-const ruleSrc = document.createElement('div'); ruleSrc.className = 'meta'; ruleSrc.style.top = '620px'; ruleSrc.style.color = '#6d685e';
-ruleSrc.textContent = 'CLAUDIA BLACK  ·  1981  ·  酗酒家庭研究'; rulesEl.appendChild(ruleSrc);
-
-// ---------- door 4: reaching out ----------
-const talkEl = document.getElementById('talk');
-const mk = (cls, html, x, y) => { const e = document.createElement('div'); e.className = cls; e.innerHTML = html; e.style.left = x + 'px'; e.style.top = y + 'px'; talkEl.appendChild(e); return e; };
-const youNode = mk('node', '你', 620, 420), parNode = mk('node', '父母', 1300, 420);
-const askB = mk('bubble gold', '我今天被老师批评了…', 0, 0);
-const REPLIES = [['这点事也哭？', 45.7], ['你懂什么', 46.3], ['肯定是你自己的问题', 46.9]].map(([s, at], i) => ({ e: mk('bubble red', s, 0, 0), at, i }));
-const expLabel = mk('meta', '', 0, 572); expLabel.style.color = '#8f8063';
-const barBox = document.createElement('div'); barBox.style.cssText = 'position:absolute;left:660px;top:612px;width:600px;height:12px;border-radius:6px;background:#1e1c18;overflow:hidden';
-const barFill = document.createElement('div'); barFill.style.cssText = 'height:100%;background:#F5D76E;box-shadow:0 0 16px rgba(245,215,110,.8)'; barBox.appendChild(barFill); talkEl.appendChild(barBox);
-
-const toggleEl = document.getElementById('toggle'), knob = toggleEl.querySelector('.knob'), track = toggleEl.querySelector('.track'), stateEl = toggleEl.querySelector('.state');
-const disclaimer = document.getElementById('disclaimer');
-
-function renderLate(t) {
-  // door 3 cards
-  const ca = env(t, 36.2, 40.2, .3, .5); cardsEl.style.display = ca > 0 ? 'block' : 'none';
-  if (ca > 0) CARDS.forEach(({ c, b }, i) => {
-    const k = easeOut(seg(t, 36.4 + i * .4, 36.9 + i * .4)), x = easeInOut(seg(t, 37.9 + i * .45, 38.3 + i * .45));
-    c.style.opacity = ca * k * (1 - .55 * x); c.style.transform = `translateY(${(1 - k) * 16}px)`; c.style.filter = `blur(${(1 - k) * 10}px)`;
-    c.style.borderColor = `rgba(${Math.round(lerp(245, 232, x))},${Math.round(lerp(215, 72, x))},${Math.round(lerp(110, 58, x))},.55)`;
-    c.style.color = x > .5 ? '#8a6a60' : '#e8dcb8'; b.style.width = (88 * x) + '%';
-  });
-  const ra = env(t, 40.1, 43.9, .3, .45); rulesEl.style.display = ra > 0 ? 'block' : 'none';
-  if (ra > 0) { RULES.forEach((r, i) => { const k = easeOut(seg(t, 40.4 + i * .5, 40.9 + i * .5)); r.style.opacity = ra * k; r.style.filter = `blur(${(1 - k) * 12}px)`; }); ruleSrc.style.opacity = ra * seg(t, 42.0, 42.5); }
-
-  // door 4 conversation
-  const da = env(t, 44.1, 51.9, .4, .5); talkEl.style.display = da > 0 ? 'block' : 'none';
-  if (da > 0) {
-    talkEl.style.opacity = da;
-    const g = easeInOut(seg(t, 49.6, 50.6)); youNode.style.borderColor = `rgb(${Math.round(lerp(238, 70, g))},${Math.round(lerp(238, 68, g))},${Math.round(lerp(238, 64, g))})`;
-    youNode.style.color = g > .5 ? '#55524c' : '#f2efe8'; youNode.style.boxShadow = `0 0 ${24 * (1 - g)}px rgba(255,255,255,.18)`;
-    const ak = easeOut(seg(t, 44.6, 45.3)), aout = seg(t, 47.4, 47.9);
-    askB.style.opacity = ak * (1 - aout); askB.style.left = lerp(720, 800, ak) + 'px'; askB.style.top = '300px';
-    askB.style.filter = `blur(${(1 - ak) * 8 + aout * 8}px)`;
-    REPLIES.forEach(({ e, at, i }) => {
-      const k = easeOut(seg(t, at, at + .35)), out = seg(t, 49.0, 49.6);
-      e.style.opacity = k * (1 - out); e.style.left = '1420px'; e.style.top = (300 + i * 82) + 'px';
-      e.style.transform = `scale(${0.6 + 0.4 * k}) translateX(${(1 - k) * -60}px)`; e.style.transformOrigin = 'left center';
-    });
-    // expectation drains, reach-out counter ticks
-    let lvl = 1 - 0.18 * (seg(t, 45.7, 45.9) + seg(t, 46.3, 46.5) + seg(t, 46.9, 47.1));
-    lvl *= 1 - easeInOut(seg(t, 47.9, 49.6)); barFill.style.width = (lvl * 100) + '%';
-    const n = t < 45.7 ? 0 : t < 47.9 ? (t < 46.3 ? 1 : t < 46.9 ? 2 : 3) : Math.min(100, 3 + Math.round(97 * Math.pow(seg(t, 47.9, 49.6), 1.6)));
-    expLabel.textContent = `期待值 EXPECTATION    ·    伸手 ×${n}`;
-  }
-
-  // mechanism toggle
-  const ta2 = env(t, 59.0, 62.0, .4, .45); toggleEl.style.display = ta2 > 0 ? 'flex' : 'none';
+  // toggle (57.8–62)
+  const ta2 = env(t, 57.8, 62.0, .4, .45); toggleEl.style.display = ta2 > 0 ? 'flex' : 'none';
   if (ta2 > 0) {
-    toggleEl.style.opacity = ta2; const k = easeInOut(seg(t, 59.8, 60.4));
+    toggleEl.style.opacity = ta2; const k = easeInOut(seg(t, 58.7, 59.3));
     knob.style.left = lerp(126, 10, k) + 'px';
     knob.style.background = k < .5 ? '#F5D76E' : '#4a4740'; knob.style.boxShadow = `0 0 ${30 * (1 - k)}px rgba(245,215,110,.9)`;
     track.style.borderColor = `rgba(${Math.round(lerp(245, 90, k))},${Math.round(lerp(215, 86, k))},${Math.round(lerp(110, 78, k))},.7)`;
@@ -430,81 +429,25 @@ function renderLate(t) {
   disclaimer.style.opacity = env(t, 62.6, 75, .8, .6);
 }
 
-// door 2: violent flashes
-const HITS = [30.55, 31.15, 31.45, 32.3, 32.75];
-function hitAt(t) { let v = 0; for (const h of HITS) v = Math.max(v, t >= h ? Math.exp(-(t - h) * 7) : 0); return v; }
-function violentHome(t) {
-  const a = env(t, 30.0, 36.1, .4, .5); if (a <= 0) return 0;
-  const hit = hitAt(t), calm = seg(t, 33.4, 34.6);
-  // red flash wash
-  const g = ctx.createRadialGradient(W / 2 - 240, 520, 20, W / 2 - 240, 520, 1100);
-  g.addColorStop(0, `rgba(232,72,58,${a * (0.08 + 0.35 * hit)})`); g.addColorStop(1, 'rgba(232,72,58,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // the closed door with red light leaking under it
-  const dw = 210, dh = 360, x = W / 2 - 360, y = 300, flick = (0.55 + 0.45 * hit) * (1 - 0.6 * calm);
-  ctx.save(); ctx.globalAlpha = a;
-  const lg = ctx.createRadialGradient(x + dw / 2, y + dh, 2, x + dw / 2, y + dh, 260);
-  lg.addColorStop(0, `rgba(232,72,58,${0.6 * flick})`); lg.addColorStop(1, 'rgba(232,72,58,0)'); ctx.fillStyle = lg; ctx.fillRect(x - 260, y + dh - 60, dw + 520, 320);
-  ctx.fillStyle = '#0c0c0c'; ctx.fillRect(x, y, dw, dh);
-  ctx.strokeStyle = `rgba(232,72,58,${0.4 + 0.5 * flick})`; ctx.lineWidth = 2; ctx.shadowColor = 'rgba(232,72,58,.9)'; ctx.shadowBlur = 20; ctx.strokeRect(x, y, dw, dh);
-  ctx.fillStyle = `rgba(232,72,58,${flick})`; ctx.shadowBlur = 26; ctx.fillRect(x + 3, y + dh - 5, dw - 6, 4);
-  ctx.restore();
-  // the child: a small circle in the corner, shrinking and dimming
-  const r = lerp(34, 22, calm), cx = W / 2 + 330, cy = y + dh - r;
-  ctx.save(); ctx.globalAlpha = a * lerp(1, 0.55, calm); ctx.strokeStyle = '#eee'; ctx.lineWidth = 3; ctx.shadowColor = 'rgba(255,255,255,.4)'; ctx.shadowBlur = 14;
-  ctx.beginPath(); ctx.arc(cx + (hit > .3 ? (Math.random() - .5) * 4 : 0), cy, r, 0, Math.PI * 2); ctx.stroke();
-  ctx.shadowBlur = 0; ctx.font = '500 22px "Noto Sans SC"'; ctx.fillStyle = '#9a958b'; ctx.textAlign = 'center'; ctx.fillText('孩子', cx, cy + r + 36); ctx.restore();
-  return hit * (1 - calm) * a;
-}
-
-// mechanism: four doors converge into one
-function converge(t) {
-  const a = env(t, 52.0, 55.8, .4, .5); if (a <= 0) return;
-  const cols = [[245, 215, 110], [232, 72, 58], [240, 138, 60], [216, 208, 192]], names = ['缺席', '吵闹', '失约', '推开'];
-  const k = easeInOut(seg(t, 53.4, 54.8)); const dw = 150, dh = 260, gap = 120, total = 4 * dw + 3 * gap, x0 = (W - total) / 2, y = 360;
-  cols.forEach(([r, g, b], i) => {
-    const x = lerp(x0 + i * (dw + gap), W / 2 - dw / 2, k);
-    ctx.save(); ctx.globalAlpha = a * easeOut(seg(t, 52.2 + i * .15, 52.7 + i * .15));
-    ctx.fillStyle = '#0c0c0c'; ctx.fillRect(x, y, dw, dh);
-    ctx.strokeStyle = `rgba(${r},${g},${b},.6)`; ctx.lineWidth = 2; ctx.shadowColor = `rgba(${r},${g},${b},.8)`; ctx.shadowBlur = 16; ctx.strokeRect(x, y, dw, dh);
-    ctx.fillStyle = `rgba(${r},${g},${b},${0.9 * (1 - k * .8)})`; ctx.fillRect(x + 3, y + dh - 5, dw - 6, 4);
-    ctx.shadowBlur = 0; ctx.globalAlpha *= 1 - k; ctx.font = '500 24px "Noto Sans SC"'; ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.textAlign = 'center'; ctx.fillText(names[i], x + dw / 2, y + dh + 44);
-    ctx.restore();
-  });
-}
-
 // ---------- frame ----------
 window.render = function (t) {
   ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#070707'; ctx.fillRect(0, 0, W, H);
   pixelWall(t, env(t, 0, 10.0, .6, .5) * 0.85);
   floor(env(t, 9.9, 14.1, .5, .4), 700);
-  floor(env(t, 19.9, 23.3, .5, .6) * 0.8, 780);
-  doors(t);
-  const fl = Math.min(seg(t, 22.85, 23.15), 1 - seg(t, 23.15, 23.8));
-  if (fl > 0) { const g = ctx.createRadialGradient(W / 2, 640, 10, W / 2, 640, 1100); g.addColorStop(0, `rgba(255,226,150,${0.4 * fl})`); g.addColorStop(1, 'rgba(255,226,150,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
-  calendar(t);
-  const shake = violentHome(t);
-  floor(env(t, 51.9, 62.1, .5, .5) * 0.6, 760);
-  converge(t);
-  // door flashes at the start of doors 2, 3, 4
-  for (const [at, col] of [[30.0, '232,72,58'], [36.0, '240,138,60'], [44.0, '216,208,192']]) {
-    const f = Math.min(seg(t, at - .25, at), 1 - seg(t, at, at + .6));
-    if (f > 0) { const g = ctx.createRadialGradient(W / 2, 600, 10, W / 2, 600, 1100); g.addColorStop(0, `rgba(${col},${0.35 * f})`); g.addColorStop(1, `rgba(${col},0)`); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
-  }
-  // ending: the wall returns, quieter, slowly pulling back
+  aceBars(t); aceStack(t); lbLine(t); waffles(t); radar(t);
+  floor(env(t, 53.9, 62.1, .5, .5) * 0.6, 760);
   const ea = env(t, 62.0, 75.0, 1.0, 1.2);
   if (ea > 0) { ctx.save(); const s = 1.12 - 0.12 * seg(t, 62, 75); ctx.translate(W / 2, H / 2); ctx.scale(s, s); ctx.translate(-W / 2, -H / 2); pixelWall(t, ea * 0.55); ctx.restore(); }
-  stage.style.transform = shake > 0.02 ? `translate(${(Math.sin(t * 97) * 9 * shake).toFixed(1)}px, ${(Math.cos(t * 83) * 6 * shake).toFixed(1)}px)` : 'none';
-  renderDOM(t); renderLate(t); renderCues(t);
+  renderDOM(t); renderCues(t);
 };
 window.DURATION = 75;
-const stage = document.getElementById('stage');
 
 window.ready = (async () => {
-  const text = [...document.querySelectorAll('.cap, #title, #pills, #counter, #source, .meta')].map(e => e.textContent).join('') + '春节0123456789万';
+  const txt = [...document.querySelectorAll('#ui *')].map(e => e.textContent).join('') + ALLTEXT.join('') +
+    '0123456789%万千项至少一*年为第七次人口普查官方口径与此前研究不同每格的儿童分数分布经历过几类不良OR.,/·+ ';
   await Promise.all([
-    document.fonts.load('900 64px "Noto Serif SC"', text), document.fonts.load('700 64px "Noto Serif SC"', text),
-    document.fonts.load('500 22px "Noto Sans SC"', text), document.fonts.load('700 44px "Noto Sans SC"', text),
-    document.fonts.load('400 20px "JetBrains Mono"', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·/'),
+    document.fonts.load(`900 64px ${SERIF}`, txt), document.fonts.load(`500 22px ${SANS}`, txt),
+    document.fonts.load(`700 44px ${SANS}`, txt), document.fonts.load(`400 20px ${MONO}`, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789·/–.%'),
   ]);
   await document.fonts.ready; window.render(0); return true;
 })();
