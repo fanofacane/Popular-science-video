@@ -43,70 +43,85 @@ const RUNMAX = []; NDX_DCA.reduce((m, r, i) => (RUNMAX[i] = Math.max(m, r[2]), R
 function rowIndex(day) { let lo = 0, hi = ROWDAY.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; ROWDAY[m] <= day ? lo = m : hi = m - 1; } return lo; }
 function ndxAt(day) { const i = rowIndex(day), j = Math.min(i + 1, NDX_DCA.length - 1); const f = j > i ? clamp((day - ROWDAY[i]) / (ROWDAY[j] - ROWDAY[i])) : 0; return lerp(NDX_DCA[i][2], NDX_DCA[j][2], f); }
 
-const RUN0 = 5.0, RUN1 = 19.0; // the 20 years play out continuously in 14 seconds
-const clockDay = t => END_DAY * Math.pow(seg(t, RUN0, RUN1), 1.0);
+const RUN0 = 4.6, RUN1 = 19.0;
+// time starts slow and keeps accelerating
+const clockDay = t => END_DAY * Math.pow(seg(t, RUN0, RUN1), 2.0);
+// smoothed Nasdaq value, used only to frame the camera (so daily noise doesn't shake it)
+const EMA = []; NDX_DCA.reduce((e, r, i) => (EMA[i] = i ? e + (r[2] - e) * 0.04 : r[2], EMA[i]), 0);
 function race(t) {
-  const a = env(t, 4.2, 26.3, .6, .6); if (a <= 0) return;
-  const day = clockDay(t), i = rowIndex(day), vN = ndxAt(day), vB = bankAt(day);
+  const a = env(t, 4.0, 26.3, .6, .6); if (a <= 0) return;
+  const p = seg(t, RUN0, RUN1), day = clockDay(t), i = rowIndex(day), vN = ndxAt(day), vB = bankAt(day);
+  const z = (k => k * k * (3 - 2 * k))(seg(p, 0.04, 1.0));        // camera pull-back: 0 = close-up, 1 = full view
   const px0 = 200, px1 = 1500, py0 = 800, py1 = 140;
-  const yMax = Math.max(4e4, Math.max(RUNMAX[i], vN, vB) * 1.18);       // the axis keeps stretching to fit
-  const span = Math.max(day, 420) / 0.97;                                 // the time axis zooms out too
-  const X = d => lerp(px0, px1, d / span), Y = v => lerp(py0, py1, v / yMax);
+  // camera window in data space
+  const padR = lerp(18, (day + 1) * 0.03, z), xr = Math.max(day + padR, 170), xl = Math.max(0, xr - lerp(150, xr, z));
+  const eN = EMA[i], m = 0.28;
+  const lo = 0, hi = Math.max(3000, lerp(Math.max(vB, eN) * (1 + m), Math.max(RUNMAX[i], vN, vB) * 1.18, z), xr * 100 * 0.35);
+  const X = d => lerp(px0, px1, (d - xl) / (xr - xl)), Y = v => lerp(py0, py1, (v - lo) / (hi - lo));
   ctx.save(); ctx.globalAlpha = a;
-  // grid: several "nice" step sizes cross-fade as the scale grows
-  for (let e = 3; e <= 7; e++) for (const m of [1, 2, 5]) {
-    const step = m * Math.pow(10, e), spacing = (py0 - py1) * step / yMax, al = clamp((spacing - 60) / 80) * clamp((260 - spacing) / 80);
-    if (al <= 0.01) continue;
-    for (let v = step; v < yMax; v += step) {
-      ctx.strokeStyle = `rgba(255,240,210,${.07 * al})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px0, Y(v)); ctx.lineTo(px1, Y(v)); ctx.stroke();
-      text((v / 1e4 >= 1 ? Math.round(v / 1e4) : (v / 1e4).toFixed(1)) + ' 万', px0 - 18, Y(v), `400 18px ${MONO}`, `rgba(140,133,122,${al})`, 'right');
+  // axes and grid fade in as the camera pulls back
+  const ax = seg(z, 0.18, 0.6);
+  if (ax > 0) {
+    for (let e = 2; e <= 7; e++) for (const mm of [1, 2, 5]) {
+      const step = mm * Math.pow(10, e), spacing = (py0 - py1) * step / (hi - lo), al = ax * clamp((spacing - 60) / 80) * clamp((260 - spacing) / 80);
+      if (al <= 0.01) continue;
+      for (let v = Math.ceil(lo / step) * step; v < hi; v += step) {
+        if (v <= 0) continue;
+        ctx.strokeStyle = `rgba(255,240,210,${.07 * al})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px0, Y(v)); ctx.lineTo(px1, Y(v)); ctx.stroke();
+        text((v >= 1e4 ? Math.round(v / 1e4) : (v / 1e4).toFixed(1)) + ' 万', px0 - 18, Y(v), `400 18px ${MONO}`, `rgba(140,133,122,${al})`, 'right');
+      }
     }
-  }
-  ctx.strokeStyle = 'rgba(255,240,210,.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px0, py1); ctx.lineTo(px0, py0); ctx.lineTo(px1, py0); ctx.stroke();
-  for (const ys of [1, 2, 5, 10]) {
-    const spacing = (px1 - px0) * 365.25 * ys / span, al = clamp((spacing - 120) / 30) * clamp((300 - spacing) / 40);
-    if (al <= 0.01) continue;
-    for (let y = 2007; y <= 2026; y++) if ((y - 2006) % ys === 0) {
-      const x = X((Date.parse(y + '-01-01') - D0) / DAY); if (x < px0 + 10 || x > px1 + 5) continue;
-      ctx.strokeStyle = `rgba(255,240,210,${.05 * al})`; ctx.beginPath(); ctx.moveTo(x, py1); ctx.lineTo(x, py0); ctx.stroke();
-      text(String(y), x, py0 + 30, `400 20px ${MONO}`, `rgba(120,114,104,${al})`, 'center');
+    for (const ys of [1, 2, 5, 10]) {
+      const spacing = (px1 - px0) * 365.25 * ys / (xr - xl), al = ax * clamp((spacing - 120) / 30) * clamp((300 - spacing) / 40);
+      if (al <= 0.01) continue;
+      for (let y = 2007; y <= 2026; y++) if ((y - 2006) % ys === 0) {
+        const x = X((Date.parse(y + '-01-01') - D0) / DAY); if (x < px0 + 10 || x > px1 + 5) continue;
+        ctx.strokeStyle = `rgba(255,240,210,${.05 * al})`; ctx.beginPath(); ctx.moveTo(x, py1); ctx.lineTo(x, py0); ctx.stroke();
+        text(String(y), x, py0 + 30, `400 20px ${MONO}`, `rgba(120,114,104,${al})`, 'center');
+      }
     }
+    ctx.save(); ctx.globalAlpha *= ax; ctx.strokeStyle = 'rgba(255,240,210,.3)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(px0, py1); ctx.lineTo(px0, py0); ctx.lineTo(px1, py0); ctx.stroke(); ctx.restore();
   }
-  // paths
+  // lines, clipped to the plot (soft-edged at the left while zoomed in)
+  ctx.save(); ctx.beginPath(); ctx.rect(px0 - (1 - ax) * 400, 0, px1 - px0 + 420 + (1 - ax) * 400, py0 + 2); ctx.clip();
+  const first = Math.max(0, rowIndex(Math.max(0, xl - 10))), stepK = (i - first) > 1800 ? 2 : 1;
   const nPts = [], bPts = [];
-  for (let k = 0; k <= i; k += (i > 1500 ? 2 : 1)) nPts.push([X(ROWDAY[k]), Y(NDX_DCA[k][2])]);
+  for (let k = first; k <= i; k += stepK) nPts.push([X(ROWDAY[k]), Y(NDX_DCA[k][2])]);
   nPts.push([X(day), Y(vN)]);
-  for (let k = 0; k <= 160; k++) { const d = day * k / 160; bPts.push([X(d), Y(bankAt(d))]); }
-  // the gap between them, filled
-  ctx.beginPath(); nPts.forEach((p, k) => k ? ctx.lineTo(...p) : ctx.moveTo(...p)); for (let k = bPts.length - 1; k >= 0; k--) ctx.lineTo(...bPts[k]); ctx.closePath();
-  const gg = ctx.createLinearGradient(0, py1, 0, py0); gg.addColorStop(0, `rgba(${GOLD},.28)`); gg.addColorStop(1, `rgba(${GOLD},.04)`); ctx.fillStyle = gg; ctx.fill();
-  // bank line
+  const b0 = Math.max(0, xl - 10);
+  for (let k = 0; k <= 160; k++) { const d = lerp(b0, day, k / 160); bPts.push([X(d), Y(bankAt(d))]); }
+  ctx.beginPath(); nPts.forEach((q, k) => k ? ctx.lineTo(...q) : ctx.moveTo(...q)); for (let k = bPts.length - 1; k >= 0; k--) ctx.lineTo(...bPts[k]); ctx.closePath();
+  const gg = ctx.createLinearGradient(0, py1, 0, py0); gg.addColorStop(0, `rgba(${GOLD},.28)`); gg.addColorStop(1, `rgba(${GOLD},.05)`); ctx.fillStyle = gg; ctx.fill();
   ctx.save(); ctx.strokeStyle = '#e4dccb'; ctx.lineWidth = 3.5; ctx.shadowColor = 'rgba(255,255,255,.5)'; ctx.shadowBlur = 8; ctx.beginPath();
-  bPts.forEach((p, k) => k ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.stroke(); ctx.restore();
-  // nasdaq line
+  bPts.forEach((q, k) => k ? ctx.lineTo(...q) : ctx.moveTo(...q)); ctx.stroke(); ctx.restore();
   ctx.save(); ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 16; ctx.beginPath();
-  nPts.forEach((p, k) => k ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.stroke(); ctx.restore();
-  // glowing heads + line names riding along
+  nPts.forEach((q, k) => k ? ctx.lineTo(...q) : ctx.moveTo(...q)); ctx.stroke(); ctx.restore();
+  ctx.restore();
+  // left edge fade while zoomed in, so the lines seem to come from nowhere
+  if (ax < 1 && xl > 0) { const fg = ctx.createLinearGradient(px0 - 400, 0, px0 + 260, 0); fg.addColorStop(0, `rgba(7,7,7,${(1 - ax) * clamp(xl / 60)})`); fg.addColorStop(1, 'rgba(7,7,7,0)'); ctx.fillStyle = fg; ctx.fillRect(0, 0, px0 + 260, H); }
+  // glowing heads + names
   const heads = [[X(day), Y(vB), '#e4dccb', '存银行'], [X(day), Y(vN), vN < vB ? `rgb(${RED})` : `rgb(${GOLD})`, '定投纳指']];
-  const sep = Math.abs(heads[0][1] - heads[1][1]) < 40 ? 22 : 0; // keep the two names apart at the start
+  const sep = Math.max(0, 40 - Math.abs(heads[0][1] - heads[1][1])) / 2 + 2;
+  const nameA = seg(t, 4.6, 5.2) * (1 - seg(t, 19.0, 19.4));
   heads.forEach(([x, y, c, name], k) => {
-    ctx.save(); ctx.fillStyle = c; ctx.shadowColor = c; ctx.shadowBlur = 22; ctx.beginPath(); ctx.arc(x, y, 8, 0, 7); ctx.fill(); ctx.restore();
-    text(name, x + 18, y + (k ? -sep : sep), `700 24px ${SANS}`, c, 'left', seg(t, 4.6, 5.2) * (1 - seg(t, 19.0, 19.4)));
+    ctx.save(); ctx.globalAlpha *= seg(t, 4.0, 4.6); ctx.fillStyle = c; ctx.shadowColor = c; ctx.shadowBlur = 24; ctx.beginPath(); ctx.arc(x, y, 8, 0, 7); ctx.fill(); ctx.restore();
+    const below = (k === 0) === (heads[0][1] >= heads[1][1]);
+    text(name, x + 18, y + (below ? sep : -sep), `700 24px ${SANS}`, c, 'left', nameA);
   });
-  // the year at the head
-  text(String(new Date(D0 + day * DAY).getUTCFullYear()), X(day), py0 - 24, `400 22px ${MONO}`, '#cfc5a6', 'center', seg(t, RUN0, RUN0 + .3) * (1 - seg(t, RUN1, RUN1 + .4)));
+  text(String(new Date(D0 + day * DAY).getUTCFullYear()), X(day), Math.min(py0 - 24, Math.max(Y(vN), Y(vB)) + 60), `400 22px ${MONO}`, '#cfc5a6', 'center', seg(t, RUN0, RUN0 + .4) * (1 - seg(t, RUN1, RUN1 + .4)));
   // the end: values, principal, and the gap
   const ek = easeOut(seg(t, 19.3, 20.0));
   if (ek > 0) {
     const yP = Y(730500);
     ctx.save(); ctx.globalAlpha *= ek; ctx.setLineDash([10, 10]); ctx.strokeStyle = 'rgba(170,162,148,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px0, yP); ctx.lineTo(px1, yP); ctx.stroke(); ctx.restore();
     text('本金 73 万', px0 + 16, yP - 20, `500 24px ${SANS}`, '#a8a08e', 'left', ek);
-    text('557 万', px1 - 20, Y(vN) - 6, `900 64px ${SERIF}`, `rgb(${GOLD})`, 'right', ek, 22);
-    text('86 万', px1 - 20, Y(vB) - 40, `900 48px ${SERIF}`, '#efe9da', 'right', ek, 8);
+    text('557 万', X(day) - 20, Y(vN) - 6, `900 64px ${SERIF}`, `rgb(${GOLD})`, 'right', ek, 22);
+    text('86 万', X(day) - 20, Y(vB) - 40, `900 48px ${SERIF}`, '#efe9da', 'right', ek, 8);
   }
   const gk = easeInOut(seg(t, 22.6, 23.4));
   if (gk > 0) {
-    const bx = px1 + 44, yb = Y(vB), yt = lerp(yb, Y(vN), gk);
+    const bx = X(day) + 44, yb = Y(vB), yt = lerp(yb, Y(vN), gk);
     ctx.save(); ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 5; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 16;
     ctx.beginPath(); ctx.moveTo(bx - 14, yb); ctx.lineTo(bx, yb); ctx.lineTo(bx, yt); ctx.lineTo(bx - 14, yt); ctx.stroke(); ctx.restore();
     text('差距', bx + 24, (yb + Y(vN)) / 2 - 34, `700 28px ${SANS}`, '#e8b0a6', 'left', seg(t, 23.2, 23.6));
@@ -114,6 +129,7 @@ function race(t) {
   }
   ctx.restore();
 }
+
 
 // ---------- B. title (16–20) ----------
 const title = makeTitle('冷知识 · 03', '复利', 'EXPONENTIAL GROWTH BIAS', [[26.2, 30.2]]);
