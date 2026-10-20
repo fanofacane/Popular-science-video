@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-serif-sc/900.css">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-serif-sc/700.css">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-sc/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-sc/700.css">
+<link rel="stylesheet" href="node_modules/@fontsource/jetbrains-mono/400.css">
+<style>
+  :root {
+    --gold: #F5D76E; --red: #E8483A; --white: #F2EFE8;
+    --serif: 'Noto Serif SC', serif; --sans: 'Noto Sans SC', sans-serif; --mono: 'JetBrains Mono', 'Noto Sans SC', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; background: #070707; overflow: hidden; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #070707; }
+  canvas { position: absolute; inset: 0; }
+  #vignette { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 62% 62% at 50% 50%, rgba(0,0,0,0) 35%, rgba(0,0,0,.55) 75%, rgba(0,0,0,.92) 100%); }
+  .layer { position: absolute; inset: 0; }
+  .label { position: absolute; left: 120px; top: 84px; font: 400 22px var(--mono); letter-spacing: .32em; color: #6d685e; white-space: nowrap; }
+  .cap { position: absolute; left: 0; right: 0; text-align: center; font-family: var(--serif); font-weight: 900; color: var(--white);
+    text-shadow: 0 0 22px rgba(255,250,235,.28), 0 2px 6px rgba(0,0,0,.8); white-space: nowrap; }
+  .cap .ln { display: block; }
+  .cap span.c { display: inline-block; will-change: filter, opacity, transform; }
+  .g { color: var(--gold); text-shadow: 0 0 26px rgba(245,215,110,.55), 0 2px 6px rgba(0,0,0,.8); }
+  .r { color: var(--red); text-shadow: 0 0 26px rgba(232,72,58,.6), 0 2px 6px rgba(0,0,0,.8); }
+  .meta { position: absolute; left: 0; right: 0; text-align: center; font: 400 20px var(--mono); letter-spacing: .3em; white-space: nowrap; }
+  #title { position: absolute; left: 0; right: 0; top: 400px; text-align: center; }
+  #title .kicker { font: 500 22px var(--sans); letter-spacing: .5em; color: #8f8063; margin-bottom: 34px; }
+  #title .main { font: 900 136px var(--serif); letter-spacing: .1em; color: var(--gold);
+    text-shadow: 0 0 40px rgba(245,215,110,.55), 0 0 90px rgba(245,190,90,.25); position: relative; display: inline-block; padding-left: .1em; }
+  #title .main span { display: inline-block; }
+  #title .dot { position: absolute; right: -34px; top: 54%; width: 14px; height: 14px; border-radius: 50%; background: var(--red); box-shadow: 0 0 16px var(--red); }
+  #title .sub { margin-top: 30px; font: 400 24px var(--mono); letter-spacing: .9em; color: #b49a5a; padding-left: .9em; }
+  #pills { position: absolute; left: 0; right: 0; top: 430px; display: flex; justify-content: center; gap: 48px; }
+  .pill { font: 700 44px var(--sans); padding: 18px 46px; border-radius: 999px; letter-spacing: .08em; border: 2px solid transparent; }
+  #counter { position: absolute; left: 0; right: 0; top: 430px; text-align: center; white-space: nowrap; }
+  #counter .num { font: 900 190px var(--serif); color: var(--gold); text-shadow: 0 0 50px rgba(245,215,110,.5); letter-spacing: .02em; }
+  #counter .unit { font: 900 96px var(--serif); color: var(--white); margin-left: 18px; text-shadow: 0 0 22px rgba(255,250,235,.3); }
+  #source { position: absolute; left: 0; right: 0; top: 760px; text-align: center; font: 400 18px var(--mono); letter-spacing: .2em; color: #5c5850; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="bg" width="1920" height="1080"></canvas>
+  <div id="vignette"></div>
+  <div class="layer" id="ui">
+    <div class="label" id="label"></div>
+    <div id="title">
+      <div class="kicker">心理学冷知识 · 01</div>
+      <div class="main"><span>失</span><span>望</span><span>性</span><span>情</span><span>感</span><span>隔</span><span>离</span><i class="dot"></i></div>
+      <div class="sub">EMOTIONAL DETACHMENT</div>
+    </div>
+    <div id="pills"></div>
+    <div id="counter"><span class="num">0</span><span class="unit">万</span></div>
+    <div id="source">来源：全国妇联《中国农村留守儿童、城乡流动儿童状况研究报告》· 2010 年人口普查</div>
+  </div>
+</div>
+<script>
+// ---------- helpers ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const easeOut = k => 1 - Math.pow(1 - k, 3);
+const easeInOut = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+// fade in over [a, a+fi], out over [b-fo, b]
+const env = (t, a, b, fi = .4, fo = .4) => Math.min(seg(t, a, a + fi), 1 - seg(t, b - fo, b));
+function hash(i, j) { let h = (i * 374761393 + j * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
+
+const ui = document.getElementById('ui');
+const cv = document.getElementById('bg'); const ctx = cv.getContext('2d');
+const W = 1920, H = 1080;
+
+// ---------- captions ----------
+// markup: {g:text} gold, {r:text} red ; lines: array of {text, delay}
+const CUES = [];
+function cue(start, end, top, size, lines, extra = {}) {
+  const el = document.createElement('div'); el.className = 'cap'; el.style.top = top + 'px'; el.style.fontSize = size + 'px';
+  if (extra.lineHeight) el.style.lineHeight = extra.lineHeight;
+  const chars = [];
+  lines.forEach((ln, li) => {
+    const lineEl = document.createElement('span'); lineEl.className = 'ln';
+    const delay = ln.delay || 0; let idx = 0;
+    const re = /\{([gr]):([^}]*)\}|([^{]+)/g; let m;
+    while ((m = re.exec(ln.text))) {
+      const cls = m[1] || ''; const txt = m[2] ?? m[3];
+      for (const ch of txt) {
+        const s = document.createElement('span'); s.className = 'c' + (cls ? ' ' + cls : '');
+        s.textContent = ch === ' ' ? ' ' : ch; lineEl.appendChild(s);
+        chars.push({ el: s, t0: start + delay + idx * 0.045 }); idx++;
+      }
+    }
+    el.appendChild(lineEl);
+  });
+  ui.appendChild(el);
+  CUES.push({ start, end, el, chars });
+}
+function renderCues(t) {
+  for (const c of CUES) {
+    const vis = t >= c.start - .01 && t <= c.end + .01;
+    c.el.style.display = vis ? 'block' : 'none'; if (!vis) continue;
+    const out = seg(t, c.end - .4, c.end);
+    for (const ch of c.chars) {
+      const k = easeOut(seg(t, ch.t0, ch.t0 + .45));
+      const o = k * (1 - out);
+      ch.el.style.opacity = o;
+      ch.el.style.filter = `blur(${(1 - k) * 14 + out * 10}px)`;
+      ch.el.style.transform = `translateY(${(1 - k) * 10}px)`;
+    }
+  }
+}
+
+// ---------- metas / labels ----------
+const METAS = [];
+function meta(start, end, top, text, color) {
+  const el = document.createElement('div'); el.className = 'meta'; el.style.top = top + 'px'; el.style.color = color; el.textContent = text;
+  ui.appendChild(el); METAS.push({ start, end, el });
+}
+const LABELS = [ // [start, end, text]
+  [0.2, 9.8, 'UNREAD  ·  未读'],
+  [14.2, 19.8, 'SYMPTOMS  ·  表现'],
+  [20.2, 23.0, 'WHERE IT COMES FROM  ·  成因'],
+  [23.2, 29.8, 'ABSENT HOME  ·  缺席的家'],
+];
+const labelEl = document.getElementById('label');
+
+// ---------- timeline content ----------
+// Scene A: hook (0–10)
+meta(0.3, 9.7, 405, 'DAY 47  ·  0 CALLS', '#b8483c');
+cue(0.4, 2.55, 460, 76, [{ text: '你已经 {g:47} 天，没给家里打过电话。' }]);
+cue(2.65, 5.05, 460, 76, [{ text: '受了委屈，你宁愿告诉{g:陌生人}。' }]);
+cue(5.15, 7.55, 460, 76, [{ text: '你也问过自己：我是不是太{r:冷血}了？' }]);
+cue(7.7, 9.8, 460, 76, [{ text: '不是。' }, { text: '你只是，{r:失望}过太多次。', delay: .55 }], { lineHeight: 1.45 });
+// Scene C: symptoms (14–20)
+cue(17.3, 19.8, 640, 64, [{ text: '和父母待久了，甚至会{r:焦虑}。' }]);
+// Scene D: doors (20–23)
+cue(20.3, 23.0, 150, 64, [{ text: '失望，很少来自某一句话。' }, { text: '它来自{g:一整个家的氛围}。', delay: .9 }], { lineHeight: 1.55 });
+// Door 1 (23–30)
+meta(23.4, 26.7, 250, 'DOOR 01 / 04', '#9b8a5c');
+cue(23.5, 26.7, 720, 64, [{ text: '有的家，父母常年不在身边。' }, { text: '一年只见{g:一次}。', delay: 1.3 }], { lineHeight: 1.55 });
+cue(26.9, 29.7, 300, 56, [{ text: '{g:2010} 年，中国农村留守儿童' }]);
+
+// pills
+const PILL_TEXT = ['不恋家', '不思念', '不想倾诉', '抗拒亲密'];
+const pillsEl = document.getElementById('pills');
+const pills = PILL_TEXT.map(s => { const p = document.createElement('div'); p.className = 'pill'; p.textContent = s; pillsEl.appendChild(p); return p; });
+
+// ---------- canvas layers ----------
+function pixelWall(t, alpha) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.translate(W / 2, H / 2); ctx.rotate(-0.17); ctx.translate(-W / 2, -H / 2);
+  const cell = 22, gap = 7, step = cell + gap; const scroll = t * 18;
+  for (let r = -14; r < 52; r++) {
+    if (((r % 4) + 4) % 4 === 3) continue; // dark band between groups
+    const y = r * step - 200;
+    const off = (r % 2 ? scroll : -scroll * .7);
+    const c0 = Math.floor((-400 - off) / step) - 1;
+    for (let c = c0; c < c0 + 100; c++) {
+      const x = c * step + off;
+      if (x < -400 || x > W + 400) continue;
+      const h = hash(c, r), b = 0.55 + 0.45 * hash(r, c * 7);
+      let col;
+      if (h < 0.025) col = `rgba(245,215,110,${0.85 * b})`;
+      else if (h < 0.13) col = `rgba(150,128,58,${0.75 * b})`;
+      else col = `rgba(${Math.round(120 * b)},${Math.round(30 * b)},${Math.round(26 * b)},0.9)`;
+      ctx.fillStyle = col; ctx.fillRect(x, y, cell, cell);
+    }
+  }
+  ctx.restore();
+  // darken behind text
+  const g = ctx.createRadialGradient(W / 2, 500, 50, W / 2, 500, 900);
+  g.addColorStop(0, `rgba(7,7,7,${0.72 * alpha})`); g.addColorStop(0.6, `rgba(7,7,7,${0.35 * alpha})`); g.addColorStop(1, 'rgba(7,7,7,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+
+function floor(alpha, horizon = 640) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = 'rgba(255,214,150,0.10)'; ctx.lineWidth = 1.2;
+  const vx = W / 2, vy = horizon - 140;
+  for (let i = -24; i <= 24; i++) { const x = vx + i * 160; ctx.beginPath(); ctx.moveTo(vx + (x - vx) * 0.12, horizon); ctx.lineTo(x * 1 + (x - vx) * 2.2, H + 300); ctx.stroke(); }
+  for (let k = 1; k < 16; k++) { const y = horizon + Math.pow(k / 15, 2.1) * (H - horizon + 80); ctx.globalAlpha = alpha * (0.3 + 0.7 * k / 15); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  ctx.restore();
+  // horizon glow
+  const g = ctx.createRadialGradient(W / 2, horizon, 10, W / 2, horizon, 700);
+  g.addColorStop(0, `rgba(255,200,120,${0.10 * alpha})`); g.addColorStop(1, 'rgba(255,200,120,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+
+const DOORS = [
+  { col: [245, 215, 110] }, { col: [232, 72, 58] }, { col: [240, 138, 60] }, { col: [216, 208, 192] },
+];
+function doors(t) {
+  const a = env(t, 20.0, 23.4, .6, .5); if (a <= 0) return;
+  const dw = 190, dh = 330, gapX = 140, total = 4 * dw + 3 * gapX, x0 = (W - total) / 2, y0 = 420;
+  const zoom = easeInOut(seg(t, 22.0, 22.6));
+  DOORS.forEach((d, i) => {
+    const appear = easeOut(seg(t, 20.2 + i * 0.22, 20.9 + i * 0.22));
+    let alpha = a * appear * (i === 0 ? 1 : 1 - zoom);
+    if (alpha <= 0) return;
+    let x = x0 + i * (dw + gapX), y = y0, w = dw, h = dh;
+    if (i === 0) { // slide to centre, then dissolve into a flash of light
+      const mv = easeInOut(seg(t, 22.2, 22.9)); const s = 1 + 0.08 * mv;
+      const cx = lerp(x + dw / 2, W / 2, mv); w = dw * s; h = dh * s; x = cx - w / 2; y = y0 + dh - h;
+      alpha *= 1 - seg(t, 23.0, 23.4);
+    }
+    const [r, g, b] = d.col; const flick = i === 1 ? 0.7 + 0.3 * Math.abs(Math.sin(t * 11)) : 1;
+    ctx.save(); ctx.globalAlpha = alpha;
+    // light spilling under the door
+    const lg = ctx.createRadialGradient(x + w / 2, y + h, 2, x + w / 2, y + h, w * 1.1);
+    lg.addColorStop(0, `rgba(${r},${g},${b},${0.45 * flick})`); lg.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    ctx.fillStyle = lg; ctx.fillRect(x - w, y + h - w * .2, w * 3, w * 1.3);
+    // door body
+    ctx.fillStyle = '#0c0c0c'; ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = `rgba(${r},${g},${b},0.55)`; ctx.lineWidth = 2; ctx.shadowColor = `rgba(${r},${g},${b},0.8)`; ctx.shadowBlur = 18; ctx.strokeRect(x, y, w, h);
+    // slit of light at the bottom
+    ctx.fillStyle = `rgba(${r},${g},${b},${0.95 * flick})`; ctx.shadowBlur = 24; ctx.fillRect(x + 3, y + h - 5, w - 6, 4);
+    // knob
+    ctx.beginPath(); ctx.arc(x + w * 0.82, y + h * 0.53, Math.max(3, w * 0.025), 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  });
+}
+
+function calendar(t) {
+  const a = env(t, 23.1, 29.8, .5, .5); if (a <= 0) return;
+  const dim = 1 - 0.75 * easeInOut(seg(t, 26.6, 27.3));
+  const cols = 53, rows = 7, cell = 20, gap = 6, step = cell + gap;
+  const total = cols * step - gap, x0 = (W - total) / 2, y0 = 360 + 40 * easeInOut(seg(t, 26.6, 27.3));
+  const special = 5 * 7 + 3; // late Jan / early Feb: Spring Festival
+  for (let c = 0; c < cols; c++) for (let r = 0; r < rows; r++) {
+    const i = c * 7 + r; if (i >= 365) continue;
+    const appear = easeOut(seg(t, 23.3 + c * 0.018, 23.7 + c * 0.018));
+    const x = x0 + c * step, y = y0 + r * step;
+    ctx.save(); ctx.globalAlpha = a * appear * dim;
+    if (i === special) {
+      const lit = easeOut(seg(t, 25.2, 25.8));
+      ctx.fillStyle = lit > 0 ? `rgba(245,215,110,${0.25 + 0.75 * lit})` : '#2b2a28';
+      if (lit > 0) { ctx.shadowColor = 'rgba(245,215,110,.95)'; ctx.shadowBlur = 50 * lit; }
+      ctx.fillRect(x, y, cell, cell);
+      if (lit > 0) { ctx.shadowBlur = 0; ctx.globalAlpha = a * dim * lit * 0.9; ctx.font = '400 16px "JetBrains Mono"'; ctx.fillStyle = '#c9b071'; ctx.textAlign = 'center'; ctx.fillText('春节', x + cell / 2, y - 16); }
+    } else {
+      const v = 34 + Math.round(10 * hash(c, r)); ctx.fillStyle = `rgb(${v},${v - 1},${v - 3})`; ctx.fillRect(x, y, cell, cell);
+    }
+    ctx.restore();
+  }
+  // axis labels
+  ctx.save(); ctx.globalAlpha = a * dim * seg(t, 23.6, 24.2); ctx.font = '400 15px "JetBrains Mono"'; ctx.fillStyle = '#4d4a44';
+  ctx.textAlign = 'left'; ctx.fillText('JAN', x0, y0 + rows * step + 22); ctx.textAlign = 'right'; ctx.fillText('DEC', x0 + total, y0 + rows * step + 22);
+  ctx.textAlign = 'center'; ctx.fillText('365 DAYS', W / 2, y0 + rows * step + 22);
+  ctx.restore();
+}
+
+// ---------- DOM blocks ----------
+const titleEl = document.getElementById('title');
+const titleChars = [...titleEl.querySelectorAll('.main span')];
+const kicker = titleEl.querySelector('.kicker'), sub = titleEl.querySelector('.sub'), dot = titleEl.querySelector('.dot');
+const counterEl = document.getElementById('counter'), numEl = counterEl.querySelector('.num');
+const sourceEl = document.getElementById('source');
+
+function renderDOM(t) {
+  // label
+  let lt = '', la = 0;
+  for (const [a, b, s] of LABELS) if (t >= a && t <= b) { lt = s; la = env(t, a, b, .5, .4); }
+  labelEl.textContent = lt; labelEl.style.opacity = la;
+  for (const m of METAS) m.el.style.opacity = env(t, m.start, m.end, .5, .4);
+
+  // title (10–14)
+  const ta = env(t, 10.0, 14.0, .3, .45);
+  titleEl.style.display = ta > 0 ? 'block' : 'none';
+  if (ta > 0) {
+    titleEl.style.opacity = ta;
+    titleEl.style.transform = `scale(${1 + 0.035 * seg(t, 10, 14)})`;
+    kicker.style.opacity = seg(t, 10.2, 10.8);
+    titleChars.forEach((c, i) => { const k = easeOut(seg(t, 10.35 + i * 0.09, 10.95 + i * 0.09)); c.style.opacity = k; c.style.filter = `blur(${(1 - k) * 18}px)`; });
+    dot.style.opacity = seg(t, 11.2, 11.5) * (0.75 + 0.25 * Math.sin(t * 6));
+    const sk = easeOut(seg(t, 11.3, 12.1)); sub.style.opacity = sk; sub.style.letterSpacing = `${0.5 + 0.4 * sk}em`;
+  }
+
+  // pills (14–20)
+  const pa = env(t, 14.0, 19.9, .2, .45);
+  pillsEl.style.display = pa > 0 ? 'flex' : 'none';
+  if (pa > 0) {
+    pillsEl.style.opacity = pa;
+    pills.forEach((p, i) => {
+      const k = easeOut(seg(t, 14.4 + i * 0.55, 14.85 + i * 0.55));
+      const off = easeInOut(seg(t, 16.5 + i * 0.2, 17.1 + i * 0.2));
+      p.style.opacity = k; p.style.transform = `translateY(${(1 - k) * 14}px) scale(${0.92 + 0.08 * k})`; p.style.filter = `blur(${(1 - k) * 10}px)`;
+      p.style.background = `rgba(${Math.round(lerp(245, 38, off))},${Math.round(lerp(215, 14, off))},${Math.round(lerp(110, 12, off))},1)`;
+      p.style.color = off < .5 ? '#2a2108' : '#b9473a';
+      p.style.borderColor = `rgba(150,45,35,${off})`;
+      p.style.boxShadow = `0 0 ${36 * (1 - off)}px rgba(245,215,110,${0.6 * (1 - off)})`;
+    });
+  }
+
+  // counter (27–30)
+  const ca = env(t, 27.0, 29.8, .4, .45);
+  counterEl.style.display = ca > 0 ? 'block' : 'none'; sourceEl.style.opacity = ca * seg(t, 28.2, 28.8);
+  if (ca > 0) {
+    counterEl.style.opacity = ca; const k = easeOut(seg(t, 27.1, 28.5));
+    numEl.textContent = Math.round(6102 * k).toString();
+    counterEl.style.filter = `blur(${(1 - seg(t, 27.0, 27.4)) * 12}px)`;
+  }
+}
+
+// ---------- frame ----------
+window.render = function (t) {
+  ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#070707'; ctx.fillRect(0, 0, W, H);
+  pixelWall(t, env(t, 0, 10.0, .6, .5) * 0.85);
+  floor(env(t, 9.9, 14.1, .5, .4), 700);
+  floor(env(t, 19.9, 23.3, .5, .6) * 0.8, 780);
+  doors(t);
+  const fl = Math.min(seg(t, 22.85, 23.15), 1 - seg(t, 23.15, 23.8));
+  if (fl > 0) { const g = ctx.createRadialGradient(W / 2, 640, 10, W / 2, 640, 1100); g.addColorStop(0, `rgba(255,226,150,${0.4 * fl})`); g.addColorStop(1, 'rgba(255,226,150,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+  calendar(t);
+  renderDOM(t); renderCues(t);
+};
+window.DURATION = 30;
+
+window.ready = (async () => {
+  const text = [...document.querySelectorAll('.cap, #title, #pills, #counter, #source, .meta')].map(e => e.textContent).join('') + '春节0123456789万';
+  await Promise.all([
+    document.fonts.load('900 64px "Noto Serif SC"', text), document.fonts.load('700 64px "Noto Serif SC"', text),
+    document.fonts.load('500 22px "Noto Sans SC"', text), document.fonts.load('700 44px "Noto Sans SC"', text),
+    document.fonts.load('400 20px "JetBrains Mono"', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·/'),
+  ]);
+  await document.fonts.ready; window.render(0); return true;
+})();
+</script>
+</body>
+</html>
