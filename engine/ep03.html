@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-serif-sc/900.css">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-sc/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-sc/700.css">
+<link rel="stylesheet" href="node_modules/@fontsource/jetbrains-mono/400.css">
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div id="stage">
+  <canvas id="bg" width="1920" height="1080"></canvas>
+  <div id="vignette"></div>
+  <div class="layer" id="ui"></div>
+</div>
+<script src="common.js"></script>
+<script>
+// =============== Episode 03 · 复利（指数增长偏差） ===============
+window.DURATION = 34; // sample: 0–34s of the 150s script
+
+LABELS.push(
+  [0.2, 15.8, 'QUIZ  ·  先考你一道题'],
+  [20.2, 33.8, 'BIAS  ·  偏差'],
+);
+
+// ---------- A. the pond quiz (0–16) ----------
+cue(0.4, 3.9, 780, 58, [{ text: '池塘里的荷叶，每天面积{g:翻一倍}，第 {g:30} 天正好铺满。' }]);
+cue(4.1, 6.9, 780, 64, [{ text: '请问：第几天，铺满{g:一半}？' }]);
+cue(7.1, 9.4, 780, 64, [{ text: '很多人脱口而出：{s:15 天}。' }], { strikeAt: 8.5 });
+cue(9.6, 11.9, 780, 64, [{ text: '答案是：第 {g:29} 天。' }]);
+cue(12.1, 15.9, 780, 58, [{ text: '而第 25 天，池塘里只有 {r:3%} 是荷叶。' }, { text: '你几乎看不见它。', delay: 1.4 }], { lineHeight: 1.5 });
+
+// cells light up in an organic order: spreading from one corner, with jitter
+const ORDER = [...Array(100).keys()].sort((a, b) => {
+  const d = i => Math.hypot(i % 10 - 2.2, Math.floor(i / 10) - 2.6) + hash(i, 7) * 2.2;
+  return d(a) - d(b);
+});
+const RANK = []; ORDER.forEach((cell, r) => RANK[cell] = r);
+// which day the pond shows at time t
+function pondDay(t) {
+  if (t < 0.6) return 0;
+  if (t < 3.6) return 1 + 29 * easeInOut(seg(t, 0.6, 3.4)); // a quick run-through: day 1 → 30
+  if (t < 4.0) return 30;
+  if (t < 7.1) return 0;        // the question: empty pond
+  if (t < 9.6) return 15;       // the wrong guess
+  if (t < 12.1) return 29;      // the answer
+  return 25;                    // the punchline
+}
+function pond(t) {
+  const a = env(t, 0.0, 16.4, .5, .6); if (a <= 0) return;
+  const cell = 42, gap = 8, step = cell + gap, gw = 10 * step - gap, x0 = (W - gw) / 2, y0 = 190;
+  const day = pondDay(t), frac = Math.min(1, Math.pow(2, day - 30)), lit = day <= 0 ? 0 : frac * 100;
+  const isAns = t >= 9.6 && t < 12.1, is25 = t >= 12.1, isWrong = t >= 7.1 && t < 9.6;
+  ctx.save(); ctx.globalAlpha = a;
+  for (let i = 0; i < 100; i++) {
+    const x = x0 + (i % 10) * step, y = y0 + Math.floor(i / 10) * step, r = RANK[i];
+    const on = clamp(lit - r); // partial cell for smooth growth
+    roundRect(x, y, cell, cell, 6); ctx.fillStyle = '#1b1a18'; ctx.fill();
+    if (on > 0) {
+      const col = is25 ? RED : GOLD, pulse = is25 ? .75 + .25 * Math.sin(t * 5) : 1;
+      ctx.save(); ctx.globalAlpha *= on * pulse; ctx.fillStyle = `rgb(${col})`; ctx.shadowColor = `rgb(${col})`; ctx.shadowBlur = is25 ? 24 : 12;
+      roundRect(x, y, cell, cell, 6); ctx.fill(); ctx.restore();
+    }
+  }
+  // the answer: outline the lit half
+  if (isAns) { const k = easeOut(seg(t, 10.0, 10.6)); ctx.save(); ctx.globalAlpha *= k; ctx.strokeStyle = `rgb(${GOLD})`; ctx.setLineDash([10, 8]); ctx.lineWidth = 2; ctx.strokeRect(x0 - 14, y0 - 14, gw + 28, gw + 28); ctx.restore(); }
+  // day counter + coverage readout
+  const dshow = Math.max(0, Math.round(day));
+  const label = day <= 0 ? (t < 4.1 ? 'DAY 00' : 'DAY ??') : 'DAY ' + String(dshow).padStart(2, '0');
+  text(label + '  /  30', W / 2, y0 - 52, `400 30px ${MONO}`, isWrong ? `rgb(${RED})` : `rgb(${GOLD})`, 'center', 1, 10);
+  const pct = lit >= 99.5 ? '100%' : lit >= 10 ? Math.round(lit) + '%' : lit >= 1 ? lit.toFixed(1) + '%' : lit > 0 ? lit.toFixed(3) + '%' : '0%';
+  text('覆盖  ' + pct, x0 + gw + 34, y0 + gw - 10, `400 24px ${MONO}`, is25 || isWrong ? `rgb(${RED})` : '#9b8a5c', 'left', day > 0 ? 1 : 0);
+  // countdown bar while viewers think
+  const cd = seg(t, 4.4, 7.0);
+  if (t > 4.3 && t < 7.1) { ctx.fillStyle = '#26241f'; ctx.fillRect(x0, y0 + gw + 26, gw, 6); ctx.fillStyle = `rgb(${GOLD})`; ctx.fillRect(x0, y0 + gw + 26, gw * (1 - cd), 6);
+    text(Math.ceil(3 * (1 - cd)) + 's', x0 + gw + 34, y0 + gw + 30, `400 22px ${MONO}`, '#9b8a5c', 'left'); }
+  ctx.restore();
+}
+
+// ---------- B. title (16–20) ----------
+const title = makeTitle('冷知识 · 03', '复利', 'EXPONENTIAL GROWTH BIAS', [[16.0, 20.0]]);
+
+// ---------- C. straight line vs curve (20–34) ----------
+cue(20.4, 23.9, 880, 60, [{ text: '我们的大脑，习惯用{g:直线}想象未来。' }]);
+cue(24.1, 27.9, 880, 60, [{ text: '所以前期，总觉得"怎么还{g:没动静}"；' }]);
+cue(28.1, 30.9, 880, 60, [{ text: '后期，又总被{r:吓一跳}。' }]);
+cue(31.1, 34.0, 880, 60, [{ text: '心理学把这叫作：{g:指数增长偏差}。' }]);
+ALLTEXT.push('你以为的', '实际的', '失望区', '震惊区', '怎么还没动静', '怎么突然这么多', '时间', '增长');
+
+const K = 4.6;
+const expY = x => (Math.exp(K * x) - 1) / (Math.exp(K) - 1);
+const linY = x => 0.62 * x;
+function lineVsCurve(t) {
+  const a = env(t, 20.0, 34.2, .5, .5); if (a <= 0) return;
+  const px0 = 380, px1 = 1540, py0 = 790, py1 = 190;
+  const X = x => lerp(px0, px1, x), Y = y => lerp(py0, py1, y);
+  ctx.save(); ctx.globalAlpha = a;
+  // axes
+  const ak = easeOut(seg(t, 20.2, 20.9));
+  ctx.strokeStyle = 'rgba(255,240,210,.3)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(px0, py0 - (py0 - py1) * ak); ctx.lineTo(px0, py0); ctx.lineTo(px0 + (px1 - px0) * ak, py0); ctx.stroke();
+  text('时间 →', px1, py0 + 34, `400 22px ${MONO}`, '#6d685e', 'right', ak);
+  text('增长', px0 - 20, py1, `400 22px ${MONO}`, '#6d685e', 'right', ak);
+  // regions between the two lines
+  const xc = (() => { let lo = .3, hi = 1; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; expY(m) < linY(m) ? lo = m : hi = m; } return lo; })();
+  const p1 = easeInOut(seg(t, 24.2, 27.4)) * xc;                 // curve drawn up to here during "没动静"
+  const p2 = p1 + easeInOut(seg(t, 28.1, 29.8)) * (1 - xc);      // then the jump
+  const fillBetween = (xa, xb, col) => {
+    if (xb <= xa) return; ctx.beginPath();
+    for (let i = 0; i <= 60; i++) { const x = lerp(xa, xb, i / 60); i ? ctx.lineTo(X(x), Y(linY(x))) : ctx.moveTo(X(x), Y(linY(x))); }
+    for (let i = 60; i >= 0; i--) { const x = lerp(xa, xb, i / 60); ctx.lineTo(X(x), Y(expY(x))); }
+    ctx.closePath(); ctx.fillStyle = col; ctx.fill();
+  };
+  fillBetween(0, Math.min(p1, xc), 'rgba(160,152,138,.16)');
+  fillBetween(xc, p2, `rgba(${RED},.22)`);
+  // the straight line you imagine
+  const lk = easeInOut(seg(t, 20.8, 22.8));
+  ctx.save(); ctx.setLineDash([12, 10]); ctx.strokeStyle = '#e9e2cf'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(lk), Y(linY(lk))); ctx.stroke(); ctx.restore();
+  text('你以为的', X(1) + 16, Y(linY(1)), `700 26px ${SANS}`, '#e9e2cf', 'left', seg(t, 22.4, 22.9));
+  // the real curve
+  if (p2 > 0) {
+    ctx.save(); ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 5; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 18; ctx.beginPath();
+    for (let i = 0; i <= 120; i++) { const x = p2 * i / 120; i ? ctx.lineTo(X(x), Y(expY(x))) : ctx.moveTo(X(x), Y(expY(x))); }
+    ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.fillStyle = `rgb(${GOLD})`; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 20; ctx.beginPath(); ctx.arc(X(p2), Y(expY(p2)), 9, 0, 7); ctx.fill(); ctx.restore();
+    text('实际的', X(1) + 16, Y(1), `700 26px ${SANS}`, `rgb(${GOLD})`, 'left', seg(t, 29.6, 30.1));
+  }
+  // region labels
+  const gl = seg(t, 25.6, 26.2), rl = seg(t, 29.2, 29.8);
+  text('失望区', X(xc * .55), Y(linY(xc * .55)) - 60, `900 34px ${SERIF}`, '#b8b0a0', 'center', gl);
+  text('"怎么还没动静"', X(xc * .55), Y(linY(xc * .55)) - 22, `500 20px ${SANS}`, '#8a857a', 'center', gl);
+  text('震惊区', X(.955) - 70, Y(.82), `900 34px ${SERIF}`, `rgb(${RED})`, 'right', rl, 14);
+  text('"怎么突然这么多"', X(.955) - 70, Y(.82) + 38, `500 20px ${SANS}`, '#c98a80', 'right', rl);
+  // the crossing point
+  const ck = seg(t, 28.1, 28.6);
+  if (p2 >= xc && ck > 0) { ctx.save(); ctx.globalAlpha *= ck; ctx.strokeStyle = 'rgba(255,240,210,.35)'; ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.moveTo(X(xc), Y(linY(xc))); ctx.lineTo(X(xc), py0); ctx.stroke(); ctx.restore(); }
+  ctx.restore();
+}
+
+// ---------- frame ----------
+window.render = function (t) {
+  clearFrame();
+  dotGrid(env(t, 0, 16.2, .6, .5) * .6);
+  pond(t);
+  floor(env(t, 15.9, 20.1, .5, .4), 700);
+  dotGrid(env(t, 20.0, 34.2, .5, .5) * .5);
+  lineVsCurve(t);
+  renderMeta(t); title(t); renderCues(t);
+};
+window.ready = (async () => { await loadFonts('DAY覆盖?s'); window.render(0); return true; })();
+</script>
+</body>
+</html>
