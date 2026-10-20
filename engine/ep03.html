@@ -17,78 +17,84 @@
 <script src="common.js"></script>
 <script>
 // =============== Episode 03 · 复利（指数增长偏差） ===============
-window.DURATION = 34; // sample: 0–34s of the 150s script
+window.DURATION = 36.5; // sample: first ~36s of the ~152s script
 
 LABELS.push(
-  [0.2, 15.8, 'QUESTION  ·  一个问题'],
-  [20.2, 33.8, 'BIAS  ·  偏差'],
+  [0.2, 18.0, 'QUESTION  ·  一个问题'],
+  [22.5, 36.1, 'BIAS  ·  偏差'],
 );
 
-// ---------- A. the question: how long to save 1 million? (0–16) ----------
-cue(0.4, 3.4, 820, 64, [{ text: '每月存 {g:2000} 块，多久能攒到 {g:100 万}？' }]);
-cue(3.6, 6.4, 820, 64, [{ text: '只存不投，要 {r:41.7} 年。' }]);
-cue(6.6, 9.4, 820, 64, [{ text: '如果每年有 6% 的收益，要 {g:21} 年。' }]);
-cue(9.6, 12.4, 820, 64, [{ text: '那第二个 100 万呢？只要 {g:9} 年。' }]);
-cue(12.6, 15.9, 820, 64, [{ text: '第三个，{g:6} 年。第四个，{g:4} 年。' }]);
-src(3.6, 15.9, '假设每月月初存 2000 元，年化 6% 按月复利  ·  数学示意，不构成投资建议');
+// ---------- A. the question, then 10万 over 30 years (0–18) ----------
+cue(0.3, 3.4, 470, 84, [{ text: '10 万块，放 {g:30} 年，' }, { text: '会变成多少？', delay: .7 }], { lineHeight: 1.45 });
+cue(3.7, 6.6, 880, 56, [{ text: '假设每年 6% 的收益，第 10 年：{g:17.9 万}。' }]);
+cue(6.8, 9.6, 880, 56, [{ text: '第 20 年：{g:32.1 万}。' }]);
+cue(9.8, 12.6, 880, 56, [{ text: '第 30 年：{g:57.4 万}。' }]);
+cue(12.8, 15.6, 880, 56, [{ text: '三个 10 年，分别多赚了 7.9 万、14.2 万、{g:25.4 万}。' }]);
+cue(15.8, 18.0, 880, 56, [{ text: '最后 10 年赚的，比前 20 年{r:加起来还多}。' }]);
+src(3.8, 17.9, '假设一次性存入 10 万元，年化 6% 复利  ·  数学示意，不构成投资建议');
+ALLTEXT.push('本金 10 万', '7.9 + 14.2 = 22.1  <  25.4', '+7.9 万', '+14.2 万', '+25.4 万', '17.9 万', '32.1 万', '57.4 万');
 
-const ROWS = [ // label, years, start time, colour
-  ['只存不投', 41.7, 3.7, 'gray'],
-  ['第 1 个 100 万', 21.2, 6.7, 'gold'],
-  ['第 2 个 100 万', 9.2, 9.7, 'gold'],
-  ['第 3 个 100 万', 5.9, 12.7, 'gold'],
-  ['第 4 个 100 万', 4.4, 14.0, 'gold'],
-];
-ROWS.forEach(r => ALLTEXT.push(r[0]));
-ALLTEXT.push('攒到 100 万要多少年', '一个比一个快', '年化 6%');
-function millionBars(t) {
-  const a = env(t, 0.0, 16.3, .5, .6); if (a <= 0) return;
-  const x0 = 640, pxPerYear = 23, y0 = 300, step = 92, bh = 44;
+const val = y => 10 * Math.pow(1.06, y); // 万元
+function lumpLine(t) {
+  const a = env(t, 3.5, 18.3, .6, .6); if (a <= 0) return;
+  const px0 = 420, px1 = 1500, py0 = 790, py1 = 190, vmax = 60;
+  const X = y => lerp(px0, px1, y / 30), Y = v => lerp(py0, py1, v / vmax);
   ctx.save(); ctx.globalAlpha = a;
-  const gk = easeOut(seg(t, 0.3, 1.0));
-  text('攒到 100 万要多少年', W / 2, 200, `400 24px ${MONO}`, '#9b8a5c', 'center', gk);
-  for (const yr of [0, 10, 20, 30, 40]) {
-    const x = x0 + yr * pxPerYear;
-    ctx.strokeStyle = `rgba(255,240,210,${yr ? .07 : .3})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y0 - 30); ctx.lineTo(x, y0 - 30 + (step * 5 + 10) * gk); ctx.stroke();
-    text(yr + ' 年', x, y0 - 52, `400 20px ${MONO}`, '#6d685e', 'center', gk);
+  // axes and grid appear only now
+  const gk = easeOut(seg(t, 3.6, 4.3));
+  for (const v of [0, 20, 40, 60]) {
+    ctx.strokeStyle = `rgba(255,240,210,${v ? .07 : .3})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px0, Y(v)); ctx.lineTo(lerp(px0, px1 + 30, gk), Y(v)); ctx.stroke();
+    text(v + ' 万', px0 - 24, Y(v), `400 20px ${MONO}`, '#6d685e', 'right', gk);
   }
-  // the 6% group bracket
-  const bk = seg(t, 6.7, 7.2);
-  if (bk > 0) { ctx.save(); ctx.globalAlpha *= bk; ctx.strokeStyle = 'rgba(245,215,110,.5)'; ctx.lineWidth = 2;
-    const top = y0 + step - 8, bot = y0 + step * (1 + Math.min(3, Math.floor(clamp((t - 6.7) / 3, 0, 3)) + (t > 14 ? 1 : 0))) + bh + 8;
-    ctx.beginPath(); ctx.moveTo(x0 - 240, top); ctx.lineTo(x0 - 252, top); ctx.lineTo(x0 - 252, bot); ctx.lineTo(x0 - 240, bot); ctx.stroke(); ctx.restore();
-    text("年化 6%", x0 - 264, (top + bot) / 2, `400 20px ${MONO}`, `rgb(${GOLD})`, 'right', bk); }
-  const ends = [];
-  ROWS.forEach(([name, yrs, at, col], i) => {
-    const k = easeOut(seg(t, at, at + 1.1)), y = y0 + i * step, w = yrs * pxPerYear * k;
-    if (seg(t, at - .1, at) <= 0) return;
-    const gold = col === 'gold', c = gold ? `rgb(${GOLD})` : '#5d5a54';
-    text(name, x0 - 30, y + bh / 2, `700 32px ${SANS}`, gold ? '#efe6cc' : '#9a958b', 'right', seg(t, at - .1, at + .3));
-    ctx.save(); ctx.fillStyle = c; if (gold) { ctx.shadowColor = c; ctx.shadowBlur = 16; } ctx.fillRect(x0, y, w, bh); ctx.restore();
-    text((yrs * k).toFixed(1) + ' 年', x0 + w + 18, y + bh / 2, `900 36px ${SERIF}`, gold ? `rgb(${GOLD})` : `rgb(${RED})`, 'left', seg(t, at, at + .3));
-    if (gold) ends.push([x0 + yrs * pxPerYear, y + bh / 2, k]);
+  for (const y of [0, 10, 20, 30]) text('第 ' + y + ' 年', X(y), py0 + 34, `400 20px ${MONO}`, '#8a857a', 'center', gk);
+  // principal: flat dashed line
+  ctx.save(); ctx.setLineDash([10, 10]); ctx.strokeStyle = 'rgba(170,162,148,.6)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(X(0), Y(10)); ctx.lineTo(lerp(X(0), X(30), gk), Y(10)); ctx.stroke(); ctx.restore();
+  text('本金 10 万', X(30) + 16, Y(10), `500 22px ${SANS}`, '#8a857a', 'left', gk);
+  // the gold line, drawn decade by decade in step with the captions
+  const yr = 10 * easeInOut(seg(t, 3.9, 6.2)) + 10 * easeInOut(seg(t, 6.9, 9.2)) + 10 * easeInOut(seg(t, 9.9, 12.2));
+  if (yr > 0) {
+    // area
+    ctx.beginPath(); ctx.moveTo(X(0), Y(0));
+    for (let i = 0; i <= 90; i++) { const y = yr * i / 90; ctx.lineTo(X(y), Y(val(y))); }
+    ctx.lineTo(X(yr), Y(0)); ctx.closePath();
+    const ag = ctx.createLinearGradient(0, py1, 0, py0); ag.addColorStop(0, `rgba(${GOLD},.20)`); ag.addColorStop(1, `rgba(${GOLD},0)`); ctx.fillStyle = ag; ctx.fill();
+    ctx.save(); ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 5; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 18; ctx.beginPath();
+    for (let i = 0; i <= 90; i++) { const y = yr * i / 90; i ? ctx.lineTo(X(y), Y(val(y))) : ctx.moveTo(X(y), Y(val(y))); }
+    ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.fillStyle = `rgb(${GOLD})`; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 22; ctx.beginPath(); ctx.arc(X(yr), Y(val(yr)), 9, 0, 7); ctx.fill(); ctx.restore();
+  }
+  // milestone dots and values
+  [[10, '17.9 万', 6.0], [20, '32.1 万', 9.0], [30, '57.4 万', 12.0]].forEach(([y, lbl, at]) => {
+    const k = easeOut(seg(t, at, at + .4)); if (k <= 0) return;
+    ctx.save(); ctx.globalAlpha *= k; ctx.fillStyle = `rgb(${GOLD})`; ctx.beginPath(); ctx.arc(X(y), Y(val(y)), 7, 0, 7); ctx.fill(); ctx.restore();
+    text(lbl, X(y) - 14, Y(val(y)) - 36, `900 34px ${SERIF}`, `rgb(${GOLD})`, 'right', k, 12);
   });
-  // a red arrow down the side of the gold bars: each million comes faster
-  const sk = easeInOut(seg(t, 14.8, 15.5));
-  if (sk > 0 && ends.length === 4) {
-    const ax = ends[0][0] + 190, ay0 = ends[0][1] - 10, ay1 = lerp(ay0, ends[3][1] + 10, sk);
-    ctx.save(); ctx.strokeStyle = `rgb(${RED})`; ctx.fillStyle = `rgb(${RED})`; ctx.lineWidth = 4; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 12;
-    ctx.beginPath(); ctx.moveTo(ax, ay0); ctx.lineTo(ax, ay1); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(ax - 12, ay1 - 14); ctx.lineTo(ax, ay1 + 4); ctx.lineTo(ax + 12, ay1 - 14); ctx.closePath(); ctx.fill(); ctx.restore();
-    text('一个比一个快', ax + 26, (ay0 + ends[3][1]) / 2, `900 32px ${SERIF}`, `rgb(${RED})`, 'left', seg(t, 15.2, 15.6), 12);
-  }
+  // gain per decade: vertical brackets on the right of each decade
+  const hi = easeInOut(seg(t, 15.8, 16.4));
+  [[0, 10, '+7.9 万', 12.9], [10, 20, '+14.2 万', 13.5], [20, 30, '+25.4 万', 14.1]].forEach(([y0, y1, lbl, at], i) => {
+    const k = easeOut(seg(t, at, at + .6)); if (k <= 0) return;
+    const last = i === 2, x = X(y1) + 26, v0 = Y(val(y0)), v1 = lerp(v0, Y(val(y1)), k);
+    const col = last ? (hi > .5 ? `rgb(${RED})` : `rgb(${GOLD})`) : `rgba(${GOLD},${1 - .5 * hi})`;
+    ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = last ? 6 : 4; ctx.shadowColor = col; ctx.shadowBlur = last ? 10 + 16 * hi : 8;
+    ctx.beginPath(); ctx.moveTo(x - 8, v0); ctx.lineTo(x, v0); ctx.lineTo(x, v1); ctx.lineTo(x - 8, v1); ctx.stroke(); ctx.restore();
+    // dashed guide from the previous level
+    ctx.save(); ctx.globalAlpha *= .4 * k; ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(255,240,210,.6)'; ctx.beginPath(); ctx.moveTo(X(y0), v0); ctx.lineTo(x, v0); ctx.stroke(); ctx.restore();
+    text(lbl, x + 14, (v0 + v1) / 2, `900 ${last ? 34 : 28}px ${SERIF}`, last ? col : `rgba(239,230,204,${1 - .5 * hi})`, 'left', k, last ? 14 : 0);
+  });
+  text('7.9 + 14.2 = 22.1  <  25.4', W / 2, 140, `400 28px ${MONO}`, `rgb(${RED})`, 'center', seg(t, 16.2, 16.7), 10);
   ctx.restore();
 }
 
 
 // ---------- B. title (16–20) ----------
-const title = makeTitle('冷知识 · 03', '复利', 'EXPONENTIAL GROWTH BIAS', [[16.0, 20.0]]);
+const title = makeTitle('冷知识 · 03', '复利', 'EXPONENTIAL GROWTH BIAS', [[18.3, 22.3]]);
 
 // ---------- C. straight line vs curve (20–34) ----------
-cue(20.4, 23.9, 880, 60, [{ text: '我们的大脑，习惯用{g:直线}想象未来。' }]);
-cue(24.1, 27.9, 880, 60, [{ text: '所以前期，总觉得"怎么还{g:没动静}"；' }]);
-cue(28.1, 30.9, 880, 60, [{ text: '后期，又总被{r:吓一跳}。' }]);
-cue(31.1, 34.0, 880, 60, [{ text: '心理学把这叫作：{g:指数增长偏差}。' }]);
+cue(22.7, 26.2, 880, 60, [{ text: '我们的大脑，习惯用{g:直线}想象未来。' }]);
+cue(26.4, 30.2, 880, 60, [{ text: '所以前期，总觉得"怎么还{g:没动静}"；' }]);
+cue(30.4, 33.2, 880, 60, [{ text: '后期，又总被{r:吓一跳}。' }]);
+cue(33.4, 36.3, 880, 60, [{ text: '心理学把这叫作：{g:指数增长偏差}。' }]);
 ALLTEXT.push('你以为的', '实际的', '失望区', '震惊区', '怎么还没动静', '怎么突然这么多', '时间', '增长');
 
 const K = 4.6;
@@ -145,11 +151,11 @@ function lineVsCurve(t) {
 // ---------- frame ----------
 window.render = function (t) {
   clearFrame();
-  dotGrid(env(t, 0, 16.2, .6, .5) * .6);
-  millionBars(t);
-  floor(env(t, 15.9, 20.1, .5, .4), 700);
-  dotGrid(env(t, 20.0, 34.2, .5, .5) * .5);
-  lineVsCurve(t);
+  dotGrid(env(t, 0, 18.3, .6, .5) * .6);
+  lumpLine(t);
+  floor(env(t, 18.2, 22.4, .5, .4), 700);
+  dotGrid(env(t, 22.3, 36.5, .5, .5) * .5);
+  lineVsCurve(t - 2.3); // section C is authored on a 20–34s clock
   renderMeta(t); title(t); renderCues(t);
 };
 window.ready = (async () => { await loadFonts(); window.render(0); return true; })();
