@@ -1,4 +1,4 @@
-// Usage: node render.mjs <page.html> <out.mp4> [--fps 30] [--from 0] [--to DURATION] [--stills 1,5.5,12]
+// Usage: node render.mjs <page.html[#variant]> <out.mp4> [--fps 30] [--from 0] [--to DURATION] [--stills 1,5.5,12]
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
@@ -6,14 +6,14 @@ import fs from 'node:fs';
 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
-const page_ = path.resolve(args[0]); const out = path.resolve(args[1]);
+const [pagePath, hash] = args[0].split('#'); const page_ = path.resolve(pagePath); const out = path.resolve(args[1]);
 const fps = +opt('fps', 30);
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 page.on('console', m => console.log('[page]', m.text()));
 page.on('pageerror', e => console.error('[page error]', e));
-await page.goto('file://' + page_);
+await page.goto('file://' + page_ + (hash ? '#' + hash : ''));
 await page.evaluate(() => window.ready);
 const duration = await page.evaluate(() => window.DURATION);
 

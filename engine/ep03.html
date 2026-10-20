@@ -45,7 +45,9 @@ function ndxAt(day) { const i = rowIndex(day), j = Math.min(i + 1, NDX_DCA.lengt
 
 const RUN0 = 4.6, RUN1 = 19.0;
 // time starts slow and keeps accelerating
-const clockDay = t => END_DAY * Math.pow(seg(t, RUN0, RUN1), 2.0);
+// two camera moves: '#pull' = close-up that keeps pulling back; '#track' = follow the heads, then reveal at the end
+const CAM = (location.hash.slice(1) || 'track');
+const clockDay = t => CAM === 'track' ? END_DAY * Math.pow(seg(t, RUN0, 17.8), 1.6) : END_DAY * Math.pow(seg(t, RUN0, RUN1), 2.0);
 // smoothed Nasdaq value, used only to frame the camera (so daily noise doesn't shake it)
 const EMA = []; NDX_DCA.reduce((e, r, i) => (EMA[i] = i ? e + (r[2] - e) * 0.04 : r[2], EMA[i]), 0);
 function race(t) {
@@ -54,13 +56,23 @@ function race(t) {
   const z = (k => k * k * (3 - 2 * k))(seg(p, 0.04, 1.0));        // camera pull-back: 0 = close-up, 1 = full view
   const px0 = 200, px1 = 1500, py0 = 800, py1 = 140;
   // camera window in data space
-  const padR = lerp(18, (day + 1) * 0.03, z), xr = Math.max(day + padR, 170), xl = Math.max(0, xr - lerp(150, xr, z));
-  const eN = EMA[i], m = 0.28;
-  const lo = 0, hi = Math.max(3000, lerp(Math.max(vB, eN) * (1 + m), Math.max(RUNMAX[i], vN, vB) * 1.18, z), xr * 100 * 0.35);
+  const eN = EMA[i], m = 0.28, full = Math.max(RUNMAX[i], vN, vB) * 1.18;
+  let xl, xr, lo, hi, zz = z;
+  if (CAM === 'track') {
+    // a fixed 3-year window that slides with the heads; the y range hugs both lines
+    zz = (k => k * k * (3 - 2 * k))(seg(t, 17.6, 19.2));
+    const Wd = Math.min(1100, Math.max(230, day / 0.65)), txr = Math.max(day + Wd * 0.35, Wd), txl = txr - Wd;
+    const tlo = Math.min(vB, eN) * 0.72 * seg(day, 300, 1400), thi = Math.max(3000, Math.max(vB, eN) * 1.22);
+    xl = lerp(txl, 0, zz); xr = lerp(txr, (day + 1) * 1.03, zz); lo = lerp(tlo, 0, zz); hi = lerp(thi, full, zz);
+  } else {
+    const padR = lerp(18, (day + 1) * 0.03, z); xr = Math.max(day + padR, 170); xl = Math.max(0, xr - lerp(150, xr, z));
+    lo = 0; hi = Math.max(3000, lerp(Math.max(vB, eN) * (1 + m), full, z), xr * 100 * 0.35);
+  }
   const X = d => lerp(px0, px1, (d - xl) / (xr - xl)), Y = v => lerp(py0, py1, (v - lo) / (hi - lo));
   ctx.save(); ctx.globalAlpha = a;
   // axes and grid fade in as the camera pulls back
-  const ax = seg(z, 0.18, 0.6);
+  const ax = CAM === 'track' ? Math.max(zz, .45 * seg(t, 7.5, 9.5)) : seg(z, 0.18, 0.6);
+  const la = CAM === 'track' ? seg(t, 8.5, 10) : 1; // grid labels
   if (ax > 0) {
     for (let e = 2; e <= 7; e++) for (const mm of [1, 2, 5]) {
       const step = mm * Math.pow(10, e), spacing = (py0 - py1) * step / (hi - lo), al = ax * clamp((spacing - 60) / 80) * clamp((260 - spacing) / 80);
@@ -68,7 +80,7 @@ function race(t) {
       for (let v = Math.ceil(lo / step) * step; v < hi; v += step) {
         if (v <= 0) continue;
         ctx.strokeStyle = `rgba(255,240,210,${.07 * al})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px0, Y(v)); ctx.lineTo(px1, Y(v)); ctx.stroke();
-        text((v >= 1e4 ? Math.round(v / 1e4) : (v / 1e4).toFixed(1)) + ' 万', px0 - 18, Y(v), `400 18px ${MONO}`, `rgba(140,133,122,${al})`, 'right');
+        text((v >= 1e4 ? Math.round(v / 1e4) : (v / 1e4).toFixed(1)) + ' 万', px0 - 18, Y(v), `400 18px ${MONO}`, `rgba(140,133,122,${al * la})`, 'right');
       }
     }
     for (const ys of [1, 2, 5, 10]) {
@@ -77,7 +89,7 @@ function race(t) {
       for (let y = 2007; y <= 2026; y++) if ((y - 2006) % ys === 0) {
         const x = X((Date.parse(y + '-01-01') - D0) / DAY); if (x < px0 + 10 || x > px1 + 5) continue;
         ctx.strokeStyle = `rgba(255,240,210,${.05 * al})`; ctx.beginPath(); ctx.moveTo(x, py1); ctx.lineTo(x, py0); ctx.stroke();
-        text(String(y), x, py0 + 30, `400 20px ${MONO}`, `rgba(120,114,104,${al})`, 'center');
+        text(String(y), x, py0 + 30, `400 20px ${MONO}`, `rgba(120,114,104,${al * la})`, 'center');
       }
     }
     ctx.save(); ctx.globalAlpha *= ax; ctx.strokeStyle = 'rgba(255,240,210,.3)'; ctx.lineWidth = 2;
@@ -99,7 +111,7 @@ function race(t) {
   nPts.forEach((q, k) => k ? ctx.lineTo(...q) : ctx.moveTo(...q)); ctx.stroke(); ctx.restore();
   ctx.restore();
   // left edge fade while zoomed in, so the lines seem to come from nowhere
-  if (ax < 1 && xl > 0) { const fg = ctx.createLinearGradient(px0 - 400, 0, px0 + 260, 0); fg.addColorStop(0, `rgba(7,7,7,${(1 - ax) * clamp(xl / 60)})`); fg.addColorStop(1, 'rgba(7,7,7,0)'); ctx.fillStyle = fg; ctx.fillRect(0, 0, px0 + 260, H); }
+  if ((CAM === 'track' ? zz < 1 : ax < 1) && xl > 0) { const fg = ctx.createLinearGradient(px0 - 400, 0, px0 + 260, 0); fg.addColorStop(0, `rgba(7,7,7,${(CAM === 'track' ? 1 - zz : 1 - ax) * clamp(xl / 60)})`); fg.addColorStop(1, 'rgba(7,7,7,0)'); ctx.fillStyle = fg; ctx.fillRect(0, 0, px0 + 260, H); }
   // glowing heads + names
   const heads = [[X(day), Y(vB), '#e4dccb', '存银行'], [X(day), Y(vN), vN < vB ? `rgb(${RED})` : `rgb(${GOLD})`, '定投纳指']];
   const sep = Math.max(0, 40 - Math.abs(heads[0][1] - heads[1][1])) / 2 + 2;
