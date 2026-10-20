@@ -18,7 +18,7 @@
 <script src="data/ep03_ndx_dca.js"></script>
 <script>
 // =============== Episode 03 · 复利（指数增长偏差） ===============
-window.DURATION = 44.4; // first ~44s of the script
+window.DURATION = 150; // full episode, 2:30
 
 LABELS.push(
   [4.4, 25.9, 'BACKTEST  ·  20 年回测'],
@@ -46,7 +46,7 @@ function ndxAt(day) { const i = rowIndex(day), j = Math.min(i + 1, NDX_DCA.lengt
 const RUN0 = 4.6, RUN1 = 19.0;
 // time starts slow and keeps accelerating
 // two camera moves: '#pull' = close-up that keeps pulling back; '#track' = follow the heads, then reveal at the end
-const CAM = (location.hash.slice(1) || 'track');
+const CAM = (location.hash.slice(1) || 'pull');
 const clockDay = t => CAM === 'track' ? END_DAY * Math.pow(seg(t, RUN0, 17.8), 1.6) : END_DAY * Math.pow(seg(t, RUN0, RUN1), 2.0);
 // smoothed Nasdaq value, used only to frame the camera (so daily noise doesn't shake it)
 const EMA = []; NDX_DCA.reduce((e, r, i) => (EMA[i] = i ? e + (r[2] - e) * 0.04 : r[2], EMA[i]), 0);
@@ -144,7 +144,7 @@ function race(t) {
 
 
 // ---------- B. title (16–20) ----------
-const title = makeTitle('冷知识 · 03', '复利', 'EXPONENTIAL GROWTH BIAS', [[26.2, 30.2]]);
+const title = makeTitle('冷知识 · 03', '复利', 'EXPONENTIAL GROWTH BIAS', [[26.2, 30.2], [146.2, 150.0]]);
 
 // ---------- C. straight line vs curve (20–34) ----------
 cue(30.6, 34.1, 880, 60, [{ text: '我们的大脑，习惯用{g:直线}想象未来。' }]);
@@ -204,6 +204,298 @@ function lineVsCurve(t) {
   ctx.restore();
 }
 
+// ======================= D–L: the rest of the episode (44–150) =======================
+LABELS.push(
+  [44.2, 56.8, '1975  ·  第一次实验'],
+  [57.2, 69.8, '2020  ·  疫情预测'],
+  [70.2, 81.8, '2009  ·  家庭财务'],
+  [82.2, 94.8, '2015  ·  养老储蓄'],
+  [95.2, 106.8, '2014  ·  全球测试'],
+  [107.2, 118.8, 'DEBT  ·  欠款'],
+  [119.2, 128.8, 'INFLATION  ·  通胀'],
+  [129.2, 136.8, 'RULE OF 72  ·  72 法则'],
+);
+const CAPY = 880, CAPS = 52;
+
+// ---------- D. 1975: the first experiment (44–57) ----------
+cue(44.3, 47.6, CAPY, CAPS, [{ text: '{g:1975} 年，心理学家第一次用实验，测量人对指数增长的判断。' }]);
+cue(47.8, 51.6, CAPY, CAPS, [{ text: '结果：{r:2/3} 的人，估出的数字连正确答案的 {r:1/10} 都不到。' }]);
+cue(51.8, 54.4, CAPY, CAPS, [{ text: '提前给他们{s:讲解原理}，没用；' }], { strikeAt: 53.0 });
+cue(54.6, 57.0, CAPY, CAPS, [{ text: '平时就接触增长的人，也{r:没有更准}。' }]);
+src(44.4, 56.9, 'Wagenaar & Sagaria · 1975 · Perception & Psychophysics  ·  估计值分布为示意，"2/3 低于正确值的 1/10" 来自论文');
+ALLTEXT.push('正确答案', '受试者的估计', '正确答案的 1/10', '讲解原理', '日常经验');
+const EST = [.04, .07, .03, .5, .06, .02, .08, .3, .05, .09, .04, .62, .06, .2, .03]; // 10 of 15 below 0.1
+function exp1975(t) {
+  const a = env(t, 44.0, 57.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const base = 760, top = 200, h = base - top, bx = 420, bw = 120;
+  const tk = easeOut(seg(t, 44.4, 45.4));
+  ctx.save(); ctx.fillStyle = `rgb(${GOLD})`; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 22; ctx.fillRect(bx, base - h * tk, bw, h * tk); ctx.restore();
+  text('正确答案', bx + bw / 2, base + 36, `700 28px ${SANS}`, '#efe6cc', 'center', tk);
+  const x0 = 680, sw = 44, sg = 26, red = seg(t, 47.9, 48.5);
+  EST.forEach((v, i) => {
+    const k = easeOut(seg(t, 45.4 + i * .1, 46.1 + i * .1)), x = x0 + i * (sw + sg), bh = h * v * k, low = v < .1;
+    ctx.save(); ctx.fillStyle = low ? `rgb(${Math.round(lerp(110, 232, red))},${Math.round(lerp(106, 72, red))},${Math.round(lerp(98, 58, red))})` : '#6e6a62';
+    if (low && red > 0) { ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 14 * red; }
+    ctx.fillRect(x, base - bh, sw, bh); ctx.restore();
+  });
+  text('受试者的估计', x0 + (EST.length * (sw + sg) - sg) / 2, base + 36, `700 28px ${SANS}`, '#a8a08e', 'center', seg(t, 45.6, 46.2));
+  // the 1/10 line
+  const lk = seg(t, 47.9, 48.6), ly = base - h * .1;
+  ctx.save(); ctx.globalAlpha *= lk; ctx.setLineDash([10, 8]); ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx - 20, ly); ctx.lineTo(x0 + EST.length * (sw + sg), ly); ctx.stroke(); ctx.restore();
+  text('正确答案的 1/10', x0 + EST.length * (sw + sg) + 10, ly, `700 24px ${SANS}`, `rgb(${RED})`, 'left', lk);
+  ctx.strokeStyle = 'rgba(255,240,210,.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx - 40, base); ctx.lineTo(x0 + EST.length * (sw + sg) + 20, base); ctx.stroke();
+  // things that did not help
+  [['讲解原理', 51.9], ['日常经验', 54.7]].forEach(([s, at], i) => {
+    const k = seg(t, at, at + .4), xk = easeInOut(seg(t, at + .9, at + 1.3)), cx = 1560, cy = 330 + i * 110;
+    if (k <= 0) return;
+    ctx.save(); ctx.globalAlpha *= k; roundRect(cx - 120, cy - 34, 240, 68, 34); ctx.strokeStyle = 'rgba(255,240,210,.4)'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+    text(s, cx, cy, `700 30px ${SANS}`, '#d9d2c2', 'center', k * (1 - .5 * xk));
+    if (xk > 0) { ctx.save(); ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 5; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 12; ctx.beginPath(); ctx.moveTo(cx - 130, cy); ctx.lineTo(cx - 130 + 260 * xk, cy); ctx.stroke(); ctx.restore(); }
+  });
+  ctx.restore();
+}
+
+// ---------- E. 2020: predicting COVID (57–70) ----------
+cue(57.3, 60.0, CAPY, CAPS, [{ text: '45 年后，它在现实里付出了代价。' }]);
+cue(60.2, 63.4, CAPY, CAPS, [{ text: '{g:2020} 年 3 月，心理学家请人预测：新冠病例会涨多快。' }]);
+cue(63.6, 66.8, CAPY, CAPS, [{ text: '大多数人严重{r:低估}。低估越多的人，越不支持保持社交距离。' }]);
+cue(67.0, 70.0, CAPY, CAPS, [{ text: '但只要让他们{g:一步一步地算}，判断就准了很多。' }]);
+src(57.4, 69.9, 'Lammers, Crusius & Gast · 2020 · PNAS  ·  曲线为示意');
+ALLTEXT.push('实际病例', '人们的预测', '第 0 天', '第 14 天', '×2');
+function covid(t) {
+  const a = env(t, 57.0, 70.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const px0 = 360, px1 = 1500, py0 = 780, py1 = 170, X = d => lerp(px0, px1, d / 14), Y = v => lerp(py0, py1, v / 140);
+  const real = d => Math.pow(2, d / 2) ; // doubles every 2 days → 128 at day 14
+  const gk = seg(t, 57.3, 57.9);
+  ctx.strokeStyle = 'rgba(255,240,210,.3)'; ctx.lineWidth = 2; ctx.globalAlpha = a * gk; ctx.beginPath(); ctx.moveTo(px0, py1); ctx.lineTo(px0, py0); ctx.lineTo(px1, py0); ctx.stroke(); ctx.globalAlpha = a;
+  text('第 0 天', px0, py0 + 30, `400 20px ${MONO}`, '#6d685e', 'center', gk); text('第 14 天', px1, py0 + 30, `400 20px ${MONO}`, '#6d685e', 'center', gk);
+  const rk = easeInOut(seg(t, 57.6, 59.6)) * 14;
+  ctx.save(); ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 5; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 16; ctx.beginPath();
+  for (let i = 0; i <= 80; i++) { const d = rk * i / 80; i ? ctx.lineTo(X(d), Y(real(d))) : ctx.moveTo(X(d), Y(real(d))); } ctx.stroke(); ctx.restore();
+  text('实际病例', X(14) + 16, Y(real(14)), `700 26px ${SANS}`, `rgb(${GOLD})`, 'left', seg(t, 59.4, 59.8));
+  // predictions: straight-ish lines far below, pulled up during "step by step"
+  const fix = easeInOut(seg(t, 67.6, 69.4));
+  const preds = [12, 20, 30, 9];
+  preds.forEach((end, j) => {
+    const k = easeInOut(seg(t, 60.6 + j * .25, 61.8 + j * .25)) * 14; if (k <= 0) return;
+    ctx.save(); ctx.setLineDash([10, 8]); ctx.strokeStyle = `rgba(190,182,168,${.75})`; ctx.lineWidth = 2.5; ctx.beginPath();
+    for (let i = 0; i <= 40; i++) { const d = k * i / 40, v = lerp(1 + (end - 1) * d / 14, real(d) * (0.85 + .05 * j), fix); i ? ctx.lineTo(X(d), Y(v)) : ctx.moveTo(X(d), Y(v)); }
+    ctx.stroke(); ctx.restore();
+  });
+  text('人们的预测', X(14) + 16, Y(lerp(18, 110, fix)), `700 24px ${SANS}`, '#bdb5a5', 'left', seg(t, 61.8, 62.3));
+  // the gap
+  const gp = seg(t, 63.7, 64.3) * (1 - fix);
+  if (gp > 0) { ctx.save(); ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 5; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 14; ctx.globalAlpha *= gp;
+    ctx.beginPath(); ctx.moveTo(X(14) - 30, Y(real(14))); ctx.lineTo(X(14) - 30, Y(30)); ctx.stroke(); ctx.restore(); }
+  // step by step: ×2 markers every 2 days
+  for (let s = 1; s <= 7; s++) {
+    const k = seg(t, 67.0 + s * .22, 67.3 + s * .22); if (k <= 0) continue;
+    const d = s * 2; ctx.save(); ctx.globalAlpha *= k; ctx.fillStyle = `rgb(${GOLD})`; ctx.beginPath(); ctx.arc(X(d), Y(real(d)), 7, 0, 7); ctx.fill(); ctx.restore();
+    text('×2', X(d) - 14, Y(real(d)) - 26, `400 20px ${MONO}`, `rgb(${GOLD})`, 'right', k);
+  }
+  ctx.restore();
+}
+
+// ---------- F. 2009: households (70–82) ----------
+cue(70.3, 73.2, CAPY, CAPS, [{ text: '这个偏差，也藏在每个家庭的账本里。' }]);
+cue(73.4, 77.4, CAPY, CAPS, [{ text: '{g:2009} 年的研究发现：越习惯用直线估算利息的家庭，' }]);
+cue(77.6, 82.0, CAPY, 60, [{ text: '{r:借得越多，存得越少}。' }]);
+src(70.4, 81.9, 'Stango & Zinman · 2009 · Journal of Finance  ·  控制收入、教育等家庭特征后  ·  条形长度为示意');
+ALLTEXT.push('偏差小的家庭', '偏差大的家庭', '存款', '借款');
+function households(t) {
+  const a = env(t, 70.0, 82.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const groups = [['偏差小的家庭', .72, .3, 520], ['偏差大的家庭', .36, .66, 1400]];
+  const show = seg(t, 70.4, 71.0), grow = easeOut(seg(t, 73.6, 74.8)), shift = easeInOut(seg(t, 77.7, 78.6));
+  groups.forEach(([name, sv, dv, cx], gi) => {
+    text(name, cx, 300, `700 36px ${SANS}`, gi ? '#f0c8c0' : '#efe6cc', 'center', show);
+    const bw = 560, x0 = cx - bw / 2;
+    [['存款', sv, GOLD, 400], ['借款', dv, RED, 520]].forEach(([lbl, v, col, y]) => {
+      text(lbl, x0 - 20, y + 24, `500 26px ${SANS}`, '#a8a08e', 'right', show);
+      ctx.fillStyle = '#1e1d1b'; ctx.fillRect(x0, y, bw, 48);
+      const vv = gi ? lerp(.5, v, shift) : v, w = bw * vv * grow;
+      ctx.save(); ctx.fillStyle = `rgb(${col})`; ctx.shadowColor = `rgb(${col})`; ctx.shadowBlur = 14; ctx.fillRect(x0, y, w, 48); ctx.restore();
+    });
+  });
+  ctx.restore();
+}
+
+// ---------- G. 2015: retirement savings (82–95) ----------
+cue(82.3, 85.6, CAPY, CAPS, [{ text: '2015 年的研究算了笔账：偏差每大一个标准差，' }]);
+cue(85.8, 89.2, CAPY, CAPS, [{ text: '养老储蓄就少大约 {r:13,400 美元}。' }]);
+cue(89.4, 95.0, 840, CAPS, [{ text: '如果消除这种偏差（和"只顾眼前"的倾向），' }, { text: '养老储蓄能多 {g:12%}，最多可达 {g:70%}。', delay: 1.2 }], { lineHeight: 1.5 });
+src(82.4, 94.9, 'Goda, Levy, Manchester, Sojourner & Tasoff · NBER w21482 · 2015  ·  柱高为示意');
+ALLTEXT.push('一般人', '偏差大 1 个标准差', '−$13,400', '现在', '消除偏差后', '+12%', '最多 +70%');
+function retirement(t) {
+  const a = env(t, 82.0, 95.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const base = 720, unit = 3.2;
+  const p1 = 1 - easeInOut(seg(t, 89.0, 89.6)), p2 = easeInOut(seg(t, 89.4, 90.2));
+  if (p1 > 0) {
+    ctx.save(); ctx.globalAlpha *= p1;
+    const k = easeOut(seg(t, 82.5, 83.5)), k2 = easeOut(seg(t, 85.9, 86.8));
+    const bars = [['一般人', 140, GOLD, 760], ['偏差大 1 个标准差', lerp(140, 100, k2), RED, 1160]];
+    bars.forEach(([n, v, col, x]) => {
+      ctx.save(); ctx.fillStyle = `rgb(${col})`; ctx.shadowColor = `rgb(${col})`; ctx.shadowBlur = 14; ctx.fillRect(x - 90, base - v * unit * k, 180, v * unit * k); ctx.restore();
+      text(n, x, base + 40, `700 28px ${SANS}`, '#d9d2c2', 'center', k);
+    });
+    if (k2 > .3) {
+      const yTop = base - 140 * unit, yLow = base - 100 * unit;
+      ctx.save(); ctx.setLineDash([8, 8]); ctx.strokeStyle = 'rgba(255,240,210,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(850, yTop); ctx.lineTo(1260, yTop); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(1280, yTop); ctx.lineTo(1280, yLow); ctx.stroke(); ctx.restore();
+      text('−$13,400', 1300, (yTop + yLow) / 2, `900 48px ${SERIF}`, `rgb(${RED})`, 'left', seg(t, 86.4, 86.9), 16);
+    }
+    ctx.restore();
+  }
+  if (p2 > 0) {
+    ctx.save(); ctx.globalAlpha *= p2;
+    const k = easeOut(seg(t, 89.6, 90.6)), k3 = easeInOut(seg(t, 91.6, 92.6));
+    const h0 = 100 * unit * 1.2;
+    ctx.save(); ctx.fillStyle = '#6e6a62'; ctx.fillRect(670, base - h0 * k, 180, h0 * k); ctx.restore();
+    text('现在', 760, base + 40, `700 28px ${SANS}`, '#d9d2c2', 'center', k);
+    ctx.save(); ctx.fillStyle = `rgb(${GOLD})`; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 16; ctx.fillRect(1070, base - h0 * 1.12 * k, 180, h0 * 1.12 * k); ctx.restore();
+    text('+12%', 1160, base - h0 * 1.12 * k - 30, `900 40px ${SERIF}`, `rgb(${GOLD})`, 'center', k);
+    if (k3 > 0) { ctx.save(); ctx.setLineDash([10, 8]); ctx.strokeStyle = `rgba(${GOLD},.8)`; ctx.lineWidth = 3; const yt = base - h0 * lerp(1.12, 1.7, k3); ctx.strokeRect(1070, yt, 180, base - h0 * 1.12 - yt); ctx.restore();
+      text('最多 +70%', 1270, base - h0 * 1.7, `900 40px ${SERIF}`, `rgb(${GOLD})`, 'left', k3, 14); }
+    text('消除偏差后', 1160, base + 40, `700 28px ${SANS}`, '#efe6cc', 'center', k);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// ---------- H. 2014: the global test (95–107) ----------
+cue(95.3, 98.0, CAPY, CAPS, [{ text: '它也不只是美国人的问题。' }]);
+cue(98.2, 102.2, CAPY, CAPS, [{ text: '2014 年，覆盖 {g:140} 多个国家、15 万人的调查，考了基础金融题。' }]);
+cue(102.4, 107.0, CAPY, CAPS, [{ text: '全球只有约 {g:1/3} 的成年人及格。在中国，是 {r:28%}。' }]);
+src(95.4, 106.9, 'S&P Global FinLit Survey · 2014（标普 × 盖洛普 × 世界银行）  ·  及格 = 4 类概念中答对 3 类  ·  题目为示意题型');
+ALLTEXT.push('存 100 元，年利率 2%，5 年后你有：', 'A 多于 102', 'B 正好 102', 'C 少于 102', '全球成年人', '中国成年人', '及格率');
+function finlit(t) {
+  const a = env(t, 95.0, 107.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const qk = seg(t, 95.4, 96.0), ans = seg(t, 99.6, 100.1);
+  text('存 100 元，年利率 2%，5 年后你有：', W / 2, 230, `700 36px ${SANS}`, '#e9e2cf', 'center', qk);
+  ['A 多于 102', 'B 正好 102', 'C 少于 102'].forEach((o, i) => {
+    const x = 610 + i * 350, k = seg(t, 95.8 + i * .15, 96.3 + i * .15), hit = i === 0 ? ans : 0;
+    ctx.save(); ctx.globalAlpha *= k; roundRect(x - 140, 290, 280, 66, 33);
+    ctx.fillStyle = hit ? `rgba(245,215,110,${.9 * hit})` : 'rgba(30,29,27,.9)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,240,210,.25)'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+    text(o, x, 323, `700 28px ${SANS}`, hit > .5 ? '#2a2108' : '#cfc8b8', 'center', k);
+  });
+  const bx = 640, bw = 900;
+  [['全球成年人', 33, GOLD, 520, 102.5], ['中国成年人', 28, RED, 640, 103.6]].forEach(([n, v, col, y, at]) => {
+    const k = easeOut(seg(t, at, at + 1.0));
+    text(n, bx - 24, y + 26, `700 30px ${SANS}`, '#d9d2c2', 'right', seg(t, 102.4, 102.8));
+    ctx.fillStyle = '#1e1d1b'; ctx.globalAlpha = a * seg(t, 102.4, 102.8); ctx.fillRect(bx, y, bw, 52); ctx.globalAlpha = a;
+    ctx.save(); ctx.fillStyle = `rgb(${col})`; ctx.shadowColor = `rgb(${col})`; ctx.shadowBlur = 16; ctx.fillRect(bx, y, bw * v / 100 * k, 52); ctx.restore();
+    text(Math.round(v * k) + '%', bx + bw * v / 100 * k + 18, y + 26, `900 42px ${SERIF}`, `rgb(${col})`, 'left', k);
+  });
+  text('及格率', bx + bw, 490, `400 20px ${MONO}`, '#6d685e', 'right', seg(t, 102.4, 102.8));
+  ctx.restore();
+}
+
+// ---------- I. debt: 0.05% a day (107–119) ----------
+cue(107.3, 110.4, CAPY, CAPS, [{ text: '回到我们自己。"日息{g:万分之五}"，听起来很少？' }]);
+cue(110.6, 114.2, CAPY, CAPS, [{ text: '换算成一年，大约是 {r:18%}。' }]);
+cue(114.4, 119.0, CAPY, CAPS, [{ text: '如果一直利滚利，欠款不到 {r:4} 年就{r:翻一倍}。' }]);
+src(107.4, 118.9, '按日复利的数学示意：ln2 ÷ ln(1.0005) ≈ 1386 天 ≈ 3.8 年  ·  各机构实际计息方式不同');
+ALLTEXT.push('日息 0.05%', '× 365 ≈ 18.25% / 年', '欠款 1 万', '2 万', '3.8 年', '第 0 年', '第 5 年');
+function debt(t) {
+  const a = env(t, 107.0, 119.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const s1 = env(t, 107.3, 114.6, .4, .5);
+  text('日息 0.05%', W / 2, 360, `900 ${Math.round(lerp(30, 110, easeOut(seg(t, 107.6, 109.2))))}px ${SERIF}`, `rgb(${GOLD})`, 'center', s1, 20);
+  text('× 365 ≈ 18.25% / 年', W / 2, 520, `900 72px ${SERIF}`, `rgb(${RED})`, 'center', s1 * seg(t, 110.7, 111.3), 18);
+  const ck = env(t, 114.4, 119.2, .5, .5);
+  if (ck > 0) {
+    ctx.save(); ctx.globalAlpha *= ck;
+    const px0 = 380, px1 = 1500, py0 = 760, py1 = 220, X = y => lerp(px0, px1, y / 5), Y = v => lerp(py0, py1, (v - 0) / 2.6);
+    ctx.strokeStyle = 'rgba(255,240,210,.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px0, py1); ctx.lineTo(px0, py0); ctx.lineTo(px1, py0); ctx.stroke();
+    text('第 0 年', px0, py0 + 30, `400 20px ${MONO}`, '#6d685e', 'center'); text('第 5 年', px1, py0 + 30, `400 20px ${MONO}`, '#6d685e', 'center');
+    const f = y => Math.pow(1.0005, y * 365), k = easeInOut(seg(t, 114.6, 116.6)) * 5;
+    ctx.save(); ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 5; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 14; ctx.beginPath();
+    for (let i = 0; i <= 80; i++) { const y = k * i / 80; i ? ctx.lineTo(X(y), Y(f(y))) : ctx.moveTo(X(y), Y(f(y))); } ctx.stroke(); ctx.restore();
+    text('欠款 1 万', px0 + 16, Y(1) - 26, `500 24px ${SANS}`, '#a8a08e', 'left');
+    const mk = seg(t, 116.6, 117.2), xd = X(3.8), yd = Y(2);
+    ctx.save(); ctx.globalAlpha *= mk; ctx.setLineDash([8, 8]); ctx.strokeStyle = 'rgba(255,240,210,.5)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(px0, yd); ctx.lineTo(xd, yd); ctx.lineTo(xd, py0); ctx.stroke(); ctx.restore();
+    text('2 万', px0 - 16, yd, `900 32px ${SERIF}`, `rgb(${RED})`, 'right', mk);
+    text('3.8 年', xd, py0 + 30, `900 32px ${SERIF}`, `rgb(${RED})`, 'center', mk);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// ---------- J. inflation (119–129) ----------
+cue(119.3, 122.6, CAPY, CAPS, [{ text: '就算你不借钱，复利也在{g:悄悄起作用}。' }]);
+cue(122.8, 129.0, CAPY, CAPS, [{ text: '每年通胀 3%，{r:24} 年后，100 块只能买到今天 {r:49 块}的东西。' }]);
+src(119.4, 128.9, '数学示意：100 ÷ 1.03²⁴ ≈ 49.2  ·  3% 为示意值');
+ALLTEXT.push('今天的 100 元', '24 年后的购买力', '49.2', '第 24 年', '第 0 年');
+function inflation(t) {
+  const a = env(t, 119.0, 129.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const yrs = 24 * easeInOut(seg(t, 123.0, 127.0)), pw = Math.pow(1.03, -yrs);
+  // the banknote shrinks with its buying power
+  const nw = 420 * Math.sqrt(pw), nh = 220 * Math.sqrt(pw), cx = 520, cy = 470, nk = seg(t, 119.4, 120.0);
+  ctx.save(); ctx.globalAlpha *= nk * lerp(.6, 1, pw); roundRect(cx - nw / 2, cy - nh / 2, nw, nh, 14); ctx.fillStyle = `rgba(245,215,110,${.08 + .1 * pw})`; ctx.fill();
+  ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 3; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 18 * pw; ctx.stroke(); ctx.restore();
+  text((100 * pw).toFixed(1), cx, cy, `900 ${Math.round(110 * Math.sqrt(pw))}px ${SERIF}`, pw < .6 ? `rgb(${RED})` : `rgb(${GOLD})`, 'center', nk, 16);
+  text(yrs < .1 ? '今天的 100 元' : '24 年后的购买力', cx, cy + 180, `700 28px ${SANS}`, '#a8a08e', 'center', nk);
+  // the decay curve
+  const px0 = 900, px1 = 1600, py0 = 700, py1 = 260, X = y => lerp(px0, px1, y / 24), Y = v => lerp(py0, py1, v / 100);
+  const gk = seg(t, 122.8, 123.3);
+  ctx.save(); ctx.globalAlpha *= gk; ctx.strokeStyle = 'rgba(255,240,210,.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px0, py1); ctx.lineTo(px0, py0); ctx.lineTo(px1, py0); ctx.stroke(); ctx.restore();
+  text('第 0 年', px0, py0 + 30, `400 20px ${MONO}`, '#6d685e', 'center', gk); text('第 24 年', px1, py0 + 30, `400 20px ${MONO}`, '#6d685e', 'center', gk);
+  if (yrs > 0) { ctx.save(); ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 5; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 12; ctx.beginPath();
+    for (let i = 0; i <= 60; i++) { const y = yrs * i / 60; i ? ctx.lineTo(X(y), Y(100 * Math.pow(1.03, -y))) : ctx.moveTo(X(y), Y(100)); } ctx.stroke(); ctx.restore(); }
+  text('49.2', X(24) + 16, Y(49.2), `900 40px ${SERIF}`, `rgb(${RED})`, 'left', seg(t, 126.8, 127.3), 14);
+  ctx.restore();
+}
+
+// ---------- K. rule of 72 (129–137) ----------
+cue(129.3, 132.6, CAPY, CAPS, [{ text: '既然直觉靠不住，就用一个{g:算式}替它：' }]);
+cue(132.8, 137.0, CAPY, CAPS, [{ text: '{g:72 ÷ 利率}，约等于翻一倍需要的年数。' }]);
+ALLTEXT.push('72 ÷ 年利率 ≈ 翻倍年数', '3% → 24 年', '7% → 约 10 年', '18% → 4 年', '通胀让钱减半', '欠款翻倍');
+function rule72(t) {
+  const a = env(t, 129.0, 137.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const fk = easeOut(seg(t, 129.6, 130.6));
+  text('72 ÷ 年利率 ≈ 翻倍年数', W / 2, 360, `900 96px ${SERIF}`, `rgb(${GOLD})`, 'center', fk, 30);
+  [['3% → 24 年', '通胀让钱减半', 133.3, '#e9e2cf'], ['7% → 约 10 年', '', 134.1, `rgb(${GOLD})`], ['18% → 4 年', '欠款翻倍', 134.9, `rgb(${RED})`]].forEach(([s, note, at, col], i) => {
+    const k = easeOut(seg(t, at, at + .5)), x = 560 + i * 400;
+    ctx.save(); ctx.globalAlpha *= k; roundRect(x - 170, 520, 340, 110, 20); ctx.fillStyle = 'rgba(24,23,21,.9)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,240,210,.2)'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+    text(s, x, 562, `900 40px ${SERIF}`, col, 'center', k);
+    if (note) text(note, x, 606, `500 22px ${SANS}`, '#8a857a', 'center', k);
+  });
+  ctx.restore();
+}
+
+// ---------- L. ending: back to the first 11 years (137–150) ----------
+cue(137.4, 140.2, CAPY, 56, [{ text: '复利不难算，难的是{g:相信}它。' }]);
+cue(140.4, 143.4, CAPY, 56, [{ text: '因为在最初的那 {g:11} 年里，还有一整场金融危机，' }]);
+cue(143.6, 146.2, CAPY, 56, [{ text: '每一年，看起来都像{r:什么都没发生}。' }]);
+function ending(t) {
+  const a = env(t, 137.0, 146.6, .7, .7); if (a <= 0) return;
+  const zk = easeInOut(seg(t, 137.4, 140.4));
+  const px0 = 200, px1 = 1700, py0 = 800, py1 = 160;
+  const xr = lerp(END_DAY * 1.03, 4400, zk), hi = 6.5e6;
+  const X = d => lerp(px0, px1, d / xr), Y = v => lerp(py0, py1, v / hi);
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.save(); ctx.beginPath(); ctx.rect(px0, 0, px1 - px0 + 10, py0 + 4); ctx.clip();
+  ctx.save(); ctx.strokeStyle = '#e4dccb'; ctx.lineWidth = 3; ctx.beginPath();
+  for (let k = 0; k <= 200; k++) { const d = END_DAY * k / 200; k ? ctx.lineTo(X(d), Y(bankAt(d))) : ctx.moveTo(X(d), Y(bankAt(d))); } ctx.stroke(); ctx.restore();
+  ctx.save(); ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 4; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 14; ctx.beginPath();
+  NDX_DCA.forEach((r, k) => { if (k % 2) return; k ? ctx.lineTo(X(ROWDAY[k]), Y(r[2])) : ctx.moveTo(X(ROWDAY[k]), Y(r[2])); }); ctx.stroke(); ctx.restore();
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(255,240,210,.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px0, py1); ctx.lineTo(px0, py0); ctx.lineTo(px1, py0); ctx.stroke();
+  for (const y of [2007, 2009, 2011, 2013, 2015, 2017]) { const x = X((Date.parse(y + '-01-01') - D0) / DAY); text(String(y), x, py0 + 30, `400 20px ${MONO}`, '#6d685e', 'center', zk); }
+  // a slow dot walking through the flat years
+  const dd = lerp(0, (Date.parse('2017-10-30') - D0) / DAY, seg(t, 140.4, 146.2)), dv = ndxAt(dd);
+  ctx.save(); ctx.globalAlpha *= seg(t, 140.2, 140.8); ctx.fillStyle = `rgb(${GOLD})`; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 24; ctx.beginPath(); ctx.arc(X(dd), Y(dv), 10, 0, 7); ctx.fill(); ctx.restore();
+  text(String(new Date(D0 + dd * DAY).getUTCFullYear()), X(dd), Y(dv) - 40, `400 26px ${MONO}`, '#d9cfae', 'center', seg(t, 140.2, 140.8));
+  ctx.restore();
+}
+
 // ---------- frame ----------
 window.render = function (t) {
   clearFrame();
@@ -212,6 +504,9 @@ window.render = function (t) {
   floor(env(t, 26.1, 30.3, .5, .4), 700);
   dotGrid(env(t, 30.2, 44.4, .5, .5) * .5);
   lineVsCurve(t - 10.2); // section C is authored on a 20–34s clock
+  dotGrid(env(t, 44.0, 137.2, .5, .5) * .4);
+  floor(env(t, 146.0, 150.0, .6, .8), 700);
+  exp1975(t); covid(t); households(t); retirement(t); finlit(t); debt(t); inflation(t); rule72(t); ending(t);
   renderMeta(t); title(t); renderCues(t);
 };
 window.ready = (async () => { await loadFonts(); window.render(0); return true; })();
