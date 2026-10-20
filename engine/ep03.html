@@ -15,86 +15,100 @@
   <div class="layer" id="ui"></div>
 </div>
 <script src="common.js"></script>
+<script src="data/ep03_ndx_dca.js"></script>
 <script>
 // =============== Episode 03 · 复利（指数增长偏差） ===============
-window.DURATION = 36.5; // sample: first ~36s of the ~152s script
+window.DURATION = 48.4; // first ~48s of the script
 
 LABELS.push(
-  [0.2, 18.0, 'QUESTION  ·  一个问题'],
-  [22.5, 36.1, 'BIAS  ·  偏差'],
+  [4.3, 29.9, 'BACKTEST  ·  20 年回测'],
+  [34.4, 48.0, 'BIAS  ·  偏差'],
 );
 
-// ---------- A. the question, then 10万 over 30 years (0–18) ----------
-cue(0.3, 3.4, 470, 84, [{ text: '10 万块，放 {g:30} 年，' }, { text: '会变成多少？', delay: .7 }], { lineHeight: 1.45 });
-cue(3.7, 6.6, 880, 56, [{ text: '假设每年 6% 的收益，第 10 年：{g:17.9 万}。' }]);
-cue(6.8, 9.6, 880, 56, [{ text: '第 20 年：{g:32.1 万}。' }]);
-cue(9.8, 12.6, 880, 56, [{ text: '第 30 年：{g:57.4 万}。' }]);
-cue(12.8, 15.6, 880, 56, [{ text: '三个 10 年，分别多赚了 7.9 万、14.2 万、{g:25.4 万}。' }]);
-cue(15.8, 18.0, 880, 56, [{ text: '最后 10 年赚的，比前 20 年{r:加起来还多}。' }]);
-src(3.8, 17.9, '假设一次性存入 10 万元，年化 6% 复利  ·  数学示意，不构成投资建议');
-ALLTEXT.push('本金 10 万', '7.9 + 14.2 = 22.1  <  25.4', '+7.9 万', '+14.2 万', '+25.4 万', '17.9 万', '32.1 万', '57.4 万');
+// ---------- A. 20 years of 100 a day: Nasdaq-100 vs a 1.6% bank deposit (0–30) ----------
+// Real data: NDX_DCA rows = [date, principal, value] (see data/ep03_sim.py)
+cue(0.3, 4.0, 420, 76, [{ text: '如果 {g:20} 年前，你每天定投纳指 {g:100} 块，' }, { text: '现在会有多少钱？', delay: 1.0 }], { lineHeight: 1.5 });
+cue(4.3, 7.0, 880, 54, [{ text: '另一个你，每天把 100 块存进银行，年化 1.6%。' }]);
+cue(7.2, 11.5, 880, 54, [{ text: '2008 年，金融危机。你投进去 7.6 万，只剩 {r:4 万}。' }]);
+cue(11.7, 14.5, 880, 54, [{ text: '前 3 年多，你一直在{r:亏钱}的边缘打转。' }]);
+cue(14.7, 17.5, 880, 54, [{ text: '2017 年，第一个 {g:100 万}。用了 {g:11} 年。' }]);
+cue(17.7, 20.5, 880, 54, [{ text: '第二个 100 万，只用了 {g:3} 年。' }]);
+cue(20.7, 23.5, 880, 54, [{ text: '2022 年，7 个月里蒸发了 {r:82 万}。' }]);
+cue(23.7, 27.0, 880, 54, [{ text: '今天：本金 73 万。银行 {g:86 万}，纳指 {g:557 万}。' }]);
+cue(27.2, 30.0, 880, 54, [{ text: '前 11 年攒到 100 万，后 9 年，多出了 {g:457 万}。' }]);
+src(4.3, 29.9, '纳斯达克 100 指数日收盘价（不含分红），按当日汇率换算人民币，未计手续费与税费；银行按年化 1.6% 复利  ·  2006.10.20–2026.10.19  ·  历史回测，不代表未来，不构成投资建议');
+ALLTEXT.push('每天定投纳指 100 块', '每天存银行 100 块', '年化 1.6%', '本金', '万', '前 11 年', '后 9 年');
 
-const val = y => 10 * Math.pow(1.06, y); // 万元
-function lumpLine(t) {
-  const a = env(t, 3.5, 18.3, .6, .6); if (a <= 0) return;
-  const px0 = 420, px1 = 1500, py0 = 790, py1 = 190, vmax = 60;
-  const X = y => lerp(px0, px1, y / 30), Y = v => lerp(py0, py1, v / vmax);
+const DAY = 86400000, D0 = Date.parse(NDX_DCA[0][0]);
+const ROWDAY = NDX_DCA.map(r => (Date.parse(r[0]) - D0) / DAY);
+const END_DAY = ROWDAY[ROWDAY.length - 1];
+const dayOf = s => (Date.parse(s) - D0) / DAY;
+// the clock: holds while a caption reads, then runs to the next moment
+const KEYS = [[4.6, '2006-10-20'], [7.0, '2008-11-20'], [11.7, '2008-11-20'], [13.0, '2010-07-06'], [14.7, '2010-07-06'],
+  [16.2, '2017-10-30'], [17.7, '2017-10-30'], [19.0, '2020-08-03'], [20.7, '2020-08-03'], [22.2, '2022-06-16'], [23.7, '2022-06-16'], [25.8, '2026-10-19']].map(([t, d]) => [t, dayOf(d)]);
+function clockDay(t) {
+  if (t <= KEYS[0][0]) return 0;
+  for (let i = 1; i < KEYS.length; i++) if (t <= KEYS[i][0]) return lerp(KEYS[i - 1][1], KEYS[i][1], easeInOut(seg(t, KEYS[i - 1][0], KEYS[i][0])));
+  return END_DAY;
+}
+function ndxAt(day) { // value and principal on a (fractional) calendar day
+  let lo = 0, hi = ROWDAY.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; ROWDAY[m] <= day ? lo = m : hi = m - 1; }
+  const a = NDX_DCA[lo], b = NDX_DCA[Math.min(lo + 1, NDX_DCA.length - 1)], f = lo + 1 < NDX_DCA.length ? clamp((day - ROWDAY[lo]) / (ROWDAY[lo + 1] - ROWDAY[lo])) : 0;
+  return { v: lerp(a[2], b[2], f), p: 100 * (day + 1) };
+}
+const BR = Math.pow(1.016, 1 / 365) - 1;
+const bankAt = day => 100 * (Math.pow(1 + BR, day + 1) - 1) / BR;
+const wan = x => (x / 1e4).toFixed(1);
+const fmtDate = day => { const d = new Date(D0 + Math.round(day) * DAY); return `${d.getUTCFullYear()}.${String(d.getUTCMonth() + 1).padStart(2, '0')}.${String(d.getUTCDate()).padStart(2, '0')}`; };
+
+function race(t) {
+  const a = env(t, 4.1, 30.3, .6, .6); if (a <= 0) return;
+  const day = clockDay(t), n = ndxAt(day), b = bankAt(day), loss = n.v < n.p;
   ctx.save(); ctx.globalAlpha = a;
-  // axes and grid appear only now
-  const gk = easeOut(seg(t, 3.6, 4.3));
-  for (const v of [0, 20, 40, 60]) {
-    ctx.strokeStyle = `rgba(255,240,210,${v ? .07 : .3})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px0, Y(v)); ctx.lineTo(lerp(px0, px1 + 30, gk), Y(v)); ctx.stroke();
-    text(v + ' 万', px0 - 24, Y(v), `400 20px ${MONO}`, '#6d685e', 'right', gk);
+  // date
+  text(fmtDate(day), W / 2, 150, `400 52px ${MONO}`, '#d9cfae', 'center', 1, 10);
+  // two counters
+  const cols = [[600, '每天定投纳指 100 块', n.v, loss ? `rgb(${RED})` : `rgb(${GOLD})`], [1320, '每天存银行 100 块 · 年化 1.6%', b, '#efe9da']];
+  for (const [x, name, v, col] of cols) {
+    text(name, x, 270, `700 30px ${SANS}`, '#a8a08e', 'center');
+    ctx.font = `900 120px ${SERIF}`; const nw = ctx.measureText(wan(v)).width; ctx.font = `900 44px ${SERIF}`; const uw = ctx.measureText('万').width;
+    const left = x - (nw + 14 + uw) / 2;
+    text(wan(v), left, 390, `900 120px ${SERIF}`, col, 'left', 1, col === '#efe9da' ? 8 : 22);
+    text('万', left + nw + 14, 410, `900 44px ${SERIF}`, '#cfc8b8', 'left');
+    text('本金 ' + wan(n.p) + ' 万', x, 480, `400 24px ${MONO}`, '#7a7262', 'center');
   }
-  for (const y of [0, 10, 20, 30]) text('第 ' + y + ' 年', X(y), py0 + 34, `400 20px ${MONO}`, '#8a857a', 'center', gk);
-  // principal: flat dashed line
-  ctx.save(); ctx.setLineDash([10, 10]); ctx.strokeStyle = 'rgba(170,162,148,.6)'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(X(0), Y(10)); ctx.lineTo(lerp(X(0), X(30), gk), Y(10)); ctx.stroke(); ctx.restore();
-  text('本金 10 万', X(30) + 16, Y(10), `500 22px ${SANS}`, '#8a857a', 'left', gk);
-  // the gold line, drawn decade by decade in step with the captions
-  const yr = 10 * easeInOut(seg(t, 3.9, 6.2)) + 10 * easeInOut(seg(t, 6.9, 9.2)) + 10 * easeInOut(seg(t, 9.9, 12.2));
-  if (yr > 0) {
-    // area
-    ctx.beginPath(); ctx.moveTo(X(0), Y(0));
-    for (let i = 0; i <= 90; i++) { const y = yr * i / 90; ctx.lineTo(X(y), Y(val(y))); }
-    ctx.lineTo(X(yr), Y(0)); ctx.closePath();
-    const ag = ctx.createLinearGradient(0, py1, 0, py0); ag.addColorStop(0, `rgba(${GOLD},.20)`); ag.addColorStop(1, `rgba(${GOLD},0)`); ctx.fillStyle = ag; ctx.fill();
-    ctx.save(); ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 5; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 18; ctx.beginPath();
-    for (let i = 0; i <= 90; i++) { const y = yr * i / 90; i ? ctx.lineTo(X(y), Y(val(y))) : ctx.moveTo(X(y), Y(val(y))); }
-    ctx.stroke(); ctx.restore();
-    ctx.save(); ctx.fillStyle = `rgb(${GOLD})`; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 22; ctx.beginPath(); ctx.arc(X(yr), Y(val(yr)), 9, 0, 7); ctx.fill(); ctx.restore();
+  // sparkline of both, on a fixed scale so the early years look flat
+  const sx0 = 360, sx1 = 1560, sy0 = 790, sy1 = 560, vmax = 5.8e6;
+  const SX = d => lerp(sx0, sx1, d / END_DAY), SY = v => lerp(sy0, sy1, v / vmax);
+  ctx.strokeStyle = 'rgba(255,240,210,.18)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(sx0, sy0); ctx.lineTo(sx1, sy0); ctx.stroke();
+  for (const y of [2006, 2011, 2016, 2021, 2026]) text(String(y), SX(dayOf(y + '-10-20')), sy0 + 26, `400 18px ${MONO}`, '#5f5a51', 'center');
+  // split shading at the first million
+  const split = dayOf('2017-10-30'), sk = seg(t, 27.3, 27.9);
+  if (sk > 0) {
+    ctx.save(); ctx.globalAlpha *= sk; ctx.fillStyle = 'rgba(160,152,138,.08)'; ctx.fillRect(sx0, sy1 - 10, SX(split) - sx0, sy0 - sy1 + 10);
+    ctx.fillStyle = `rgba(${GOLD},.07)`; ctx.fillRect(SX(split), sy1 - 10, sx1 - SX(split), sy0 - sy1 + 10); ctx.restore();
+    text('前 11 年 · 100 万', (sx0 + SX(split)) / 2, sy1 + 4, `700 26px ${SANS}`, '#a8a08e', 'center', sk);
+    text('后 9 年 · +457 万', (SX(split) + sx1) / 2, sy1 + 4, `700 26px ${SANS}`, `rgb(${GOLD})`, 'center', sk, 10);
   }
-  // milestone dots and values
-  [[10, '17.9 万', 6.0], [20, '32.1 万', 9.0], [30, '57.4 万', 12.0]].forEach(([y, lbl, at]) => {
-    const k = easeOut(seg(t, at, at + .4)); if (k <= 0) return;
-    ctx.save(); ctx.globalAlpha *= k; ctx.fillStyle = `rgb(${GOLD})`; ctx.beginPath(); ctx.arc(X(y), Y(val(y)), 7, 0, 7); ctx.fill(); ctx.restore();
-    text(lbl, X(y) - 14, Y(val(y)) - 36, `900 34px ${SERIF}`, `rgb(${GOLD})`, 'right', k, 12);
-  });
-  // gain per decade: vertical brackets on the right of each decade
-  const hi = easeInOut(seg(t, 15.8, 16.4));
-  [[0, 10, '+7.9 万', 12.9], [10, 20, '+14.2 万', 13.5], [20, 30, '+25.4 万', 14.1]].forEach(([y0, y1, lbl, at], i) => {
-    const k = easeOut(seg(t, at, at + .6)); if (k <= 0) return;
-    const last = i === 2, x = X(y1) + 26, v0 = Y(val(y0)), v1 = lerp(v0, Y(val(y1)), k);
-    const col = last ? (hi > .5 ? `rgb(${RED})` : `rgb(${GOLD})`) : `rgba(${GOLD},${1 - .5 * hi})`;
-    ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = last ? 6 : 4; ctx.shadowColor = col; ctx.shadowBlur = last ? 10 + 16 * hi : 8;
-    ctx.beginPath(); ctx.moveTo(x - 8, v0); ctx.lineTo(x, v0); ctx.lineTo(x, v1); ctx.lineTo(x - 8, v1); ctx.stroke(); ctx.restore();
-    // dashed guide from the previous level
-    ctx.save(); ctx.globalAlpha *= .4 * k; ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(255,240,210,.6)'; ctx.beginPath(); ctx.moveTo(X(y0), v0); ctx.lineTo(x, v0); ctx.stroke(); ctx.restore();
-    text(lbl, x + 14, (v0 + v1) / 2, `900 ${last ? 34 : 28}px ${SERIF}`, last ? col : `rgba(239,230,204,${1 - .5 * hi})`, 'left', k, last ? 14 : 0);
-  });
-  text('7.9 + 14.2 = 22.1  <  25.4', W / 2, 140, `400 28px ${MONO}`, `rgb(${RED})`, 'center', seg(t, 16.2, 16.7), 10);
+  // bank line
+  ctx.save(); ctx.strokeStyle = '#d8d0bf'; ctx.lineWidth = 2.5; ctx.beginPath();
+  for (let i = 0; i <= 200; i++) { const d = day * i / 200; i ? ctx.lineTo(SX(d), SY(bankAt(d))) : ctx.moveTo(SX(d), SY(bankAt(d))); } ctx.stroke(); ctx.restore();
+  // nasdaq line (daily rows up to the clock)
+  ctx.save(); ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 3; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 12; ctx.beginPath();
+  for (let i = 0; i < NDX_DCA.length && ROWDAY[i] <= day; i += 3) { const x = SX(ROWDAY[i]), y = SY(NDX_DCA[i][2]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.lineTo(SX(day), SY(n.v)); ctx.stroke(); ctx.restore();
+  ctx.save(); ctx.fillStyle = loss ? `rgb(${RED})` : `rgb(${GOLD})`; ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 16; ctx.beginPath(); ctx.arc(SX(day), SY(n.v), 7, 0, 7); ctx.fill(); ctx.restore();
   ctx.restore();
 }
 
-
 // ---------- B. title (16–20) ----------
-const title = makeTitle('冷知识 · 03', '复利', 'EXPONENTIAL GROWTH BIAS', [[18.3, 22.3]]);
+const title = makeTitle('冷知识 · 03', '复利', 'EXPONENTIAL GROWTH BIAS', [[30.2, 34.2]]);
 
 // ---------- C. straight line vs curve (20–34) ----------
-cue(22.7, 26.2, 880, 60, [{ text: '我们的大脑，习惯用{g:直线}想象未来。' }]);
-cue(26.4, 30.2, 880, 60, [{ text: '所以前期，总觉得"怎么还{g:没动静}"；' }]);
-cue(30.4, 33.2, 880, 60, [{ text: '后期，又总被{r:吓一跳}。' }]);
-cue(33.4, 36.3, 880, 60, [{ text: '心理学把这叫作：{g:指数增长偏差}。' }]);
+cue(34.6, 38.1, 880, 60, [{ text: '我们的大脑，习惯用{g:直线}想象未来。' }]);
+cue(38.3, 42.1, 880, 60, [{ text: '所以前期，总觉得"怎么还{g:没动静}"；' }]);
+cue(42.3, 45.1, 880, 60, [{ text: '后期，又总被{r:吓一跳}。' }]);
+cue(45.3, 48.2, 880, 60, [{ text: '心理学把这叫作：{g:指数增长偏差}。' }]);
 ALLTEXT.push('你以为的', '实际的', '失望区', '震惊区', '怎么还没动静', '怎么突然这么多', '时间', '增长');
 
 const K = 4.6;
@@ -151,11 +165,11 @@ function lineVsCurve(t) {
 // ---------- frame ----------
 window.render = function (t) {
   clearFrame();
-  dotGrid(env(t, 0, 18.3, .6, .5) * .6);
-  lumpLine(t);
-  floor(env(t, 18.2, 22.4, .5, .4), 700);
-  dotGrid(env(t, 22.3, 36.5, .5, .5) * .5);
-  lineVsCurve(t - 2.3); // section C is authored on a 20–34s clock
+  dotGrid(env(t, 0, 30.2, .6, .5) * .6);
+  race(t);
+  floor(env(t, 30.1, 34.3, .5, .4), 700);
+  dotGrid(env(t, 34.2, 48.4, .5, .5) * .5);
+  lineVsCurve(t - 14.2); // section C is authored on a 20–34s clock
   renderMeta(t); title(t); renderCues(t);
 };
 window.ready = (async () => { await loadFonts(); window.render(0); return true; })();
