@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-serif-sc/900.css">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-sc/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-sc/700.css">
+<link rel="stylesheet" href="node_modules/@fontsource/jetbrains-mono/400.css">
+<style>
+  html, body { margin: 0; width: 1080px; height: 1920px; background: #070707; overflow: hidden; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1080" height="1920"></canvas>
+<script src="data/ep03_ndx_dca.js"></script>
+<script>
+// Vertical cover for episode 03 (1080×1920), drawn from the same backtest data.
+const W = 1080, H = 1920, GOLD = '245,215,110', RED = '232,72,58';
+const SERIF = '"Noto Serif SC"', SANS = '"Noto Sans SC"', MONO = '"JetBrains Mono", "Noto Sans SC"';
+const ctx = document.getElementById('c').getContext('2d');
+function text(s, x, y, font, color, align = 'center', glow = 0) {
+  ctx.save(); ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (glow) { ctx.shadowColor = color; ctx.shadowBlur = glow; } ctx.fillText(s, x, y); ctx.restore();
+}
+function draw() {
+  // background + vignette + faint dot grid
+  ctx.fillStyle = '#070707'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(255,240,210,.05)'; for (let y = 30; y < H; y += 40) for (let x = 30; x < W; x += 40) ctx.fillRect(x, y, 2, 2);
+  const vg = ctx.createRadialGradient(W / 2, H * .5, 200, W / 2, H * .5, 1250); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.85)'); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+
+  // header
+  text('冷知识 · 03  ·  复利', W / 2, 150, `500 30px ${SANS}`, '#9b8a5c');
+  text('每天 100 块', W / 2, 290, `900 132px ${SERIF}`, `rgb(${GOLD})`, 'center', 40);
+  text('20 年后', W / 2, 450, `900 132px ${SERIF}`, '#f2efe8', 'center', 22);
+
+  // chart: the final state of the race
+  const D0 = Date.parse(NDX_DCA[0][0]), DAY = 864e5, rd = NDX_DCA.map(r => (Date.parse(r[0]) - D0) / DAY), END = rd[rd.length - 1];
+  const BR = Math.pow(1.016, 1 / 365) - 1, bank = d => 100 * (Math.pow(1 + BR, d + 1) - 1) / BR;
+  const px0 = 100, px1 = 790, py0 = 1250, py1 = 600, hi = 6.0e6;
+  const X = d => px0 + (px1 - px0) * d / END, Y = v => py0 - (py0 - py1) * v / hi;
+  // gap fill
+  ctx.beginPath(); NDX_DCA.forEach((r, k) => k ? ctx.lineTo(X(rd[k]), Y(r[2])) : ctx.moveTo(X(rd[k]), Y(r[2])));
+  for (let k = 200; k >= 0; k--) { const d = END * k / 200; ctx.lineTo(X(d), Y(bank(d))); } ctx.closePath();
+  const gg = ctx.createLinearGradient(0, py1, 0, py0); gg.addColorStop(0, `rgba(${GOLD},.35)`); gg.addColorStop(1, `rgba(${GOLD},.04)`); ctx.fillStyle = gg; ctx.fill();
+  // axis
+  ctx.strokeStyle = 'rgba(255,240,210,.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px0, py0); ctx.lineTo(px1 + 20, py0); ctx.stroke();
+  text('2006', px0, py0 + 32, `400 24px ${MONO}`, '#6d685e'); text('2026', px1, py0 + 32, `400 24px ${MONO}`, '#6d685e');
+  // bank line
+  ctx.save(); ctx.strokeStyle = '#e4dccb'; ctx.lineWidth = 5; ctx.beginPath(); for (let k = 0; k <= 200; k++) { const d = END * k / 200; k ? ctx.lineTo(X(d), Y(bank(d))) : ctx.moveTo(X(d), Y(bank(d))); } ctx.stroke(); ctx.restore();
+  // nasdaq line
+  ctx.save(); ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 6; ctx.lineJoin = 'round'; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 24; ctx.beginPath();
+  NDX_DCA.forEach((r, k) => { if (k % 2) return; k ? ctx.lineTo(X(rd[k]), Y(r[2])) : ctx.moveTo(X(rd[k]), Y(r[2])); }); ctx.stroke(); ctx.restore();
+  const vN = NDX_DCA[NDX_DCA.length - 1][2], vB = bank(END);
+  for (const [v, c] of [[vN, `rgb(${GOLD})`], [vB, '#e4dccb']]) { ctx.save(); ctx.fillStyle = c; ctx.shadowColor = c; ctx.shadowBlur = 24; ctx.beginPath(); ctx.arc(X(END), Y(v), 11, 0, 7); ctx.fill(); ctx.restore(); }
+  // gap bracket
+  const bx = px1 + 60;
+  ctx.save(); ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 7; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 18;
+  ctx.beginPath(); ctx.moveTo(bx - 20, Y(vB)); ctx.lineTo(bx, Y(vB)); ctx.lineTo(bx, Y(vN)); ctx.lineTo(bx - 20, Y(vN)); ctx.stroke(); ctx.restore();
+  text('差距', bx + 20, (Y(vB) + Y(vN)) / 2 - 60, `700 34px ${SANS}`, '#f0b4aa', 'left');
+  text('471', bx + 16, (Y(vB) + Y(vN)) / 2 + 10, `900 76px ${SERIF}`, `rgb(${RED})`, 'left', 20);
+  text('万', bx + 26, (Y(vB) + Y(vN)) / 2 + 80, `900 44px ${SERIF}`, `rgb(${RED})`, 'left');
+
+  // the two results
+  const rowY = 1440;
+  text('存银行', 280, rowY, `700 40px ${SANS}`, '#b9b2a2'); text('定投纳指', 800, rowY, `700 40px ${SANS}`, `rgb(${GOLD})`);
+  text('86 万', 280, rowY + 110, `900 108px ${SERIF}`, '#efe9da', 'center', 10);
+  text('557 万', 800, rowY + 110, `900 120px ${SERIF}`, `rgb(${GOLD})`, 'center', 34);
+  text('vs', W / 2 + 20, rowY + 110, `400 40px ${MONO}`, '#6d685e');
+  text('同样投入 73 万', W / 2, rowY + 250, `700 44px ${SANS}`, '#e9e2cf');
+
+  // footer
+  text('历史回测 · 不代表未来 · 不构成投资建议', W / 2, 1840, `500 26px ${SANS}`, '#5f5a51');
+}
+window.ready = (async () => {
+  const t = '冷知识 · 03 复利每天 100 块20 年后2006存银行定投纳指86 万557 万vs同样投入 73 万差距471万历史回测不代表未来不构成投资建议';
+  await Promise.all([document.fonts.load(`900 100px ${SERIF}`, t), document.fonts.load(`700 40px ${SANS}`, t), document.fonts.load(`500 26px ${SANS}`, t), document.fonts.load(`400 24px ${MONO}`, '0123456789vs')]);
+  await document.fonts.ready; draw(); return true;
+})();
+</script>
+</body>
+</html>
