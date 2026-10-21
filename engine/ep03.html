@@ -16,9 +16,10 @@
 </div>
 <script src="common.js"></script>
 <script src="data/ep03_ndx_dca.js"></script>
+<script src="data/ep03_scenarios.js"></script>
 <script>
-// =============== Episode 03 · 复利（投资复利，1 分钟版） ===============
-window.DURATION = 58; // under one minute
+// =============== Episode 03 · 复利（投资复利，3 分钟版） ===============
+window.DURATION = 180; // 3 minutes
 
 LABELS.push([3.4, 19.8, 'BACKTEST  ·  20 年回测']);
 
@@ -146,7 +147,7 @@ function RACE_T(t) {
   for (let i = 1; i < RACE_KEYS.length; i++) if (t <= RACE_KEYS[i][0]) return lerp(RACE_KEYS[i - 1][1], RACE_KEYS[i][1], seg(t, RACE_KEYS[i - 1][0], RACE_KEYS[i][0]));
   return 99;
 }
-const title = makeTitle('冷知识 · 03', '复利', 'COMPOUND INTEREST', [[20.0, 22.6], [53.8, 58.0]]);
+const title = makeTitle('冷知识 · 03', '复利', 'COMPOUND INTEREST', [[20.0, 23.0], [170.0, 176.0]]);
 const FULL = { px0: 200, px1: 1560, py0: 790, py1: 150, xr: END_DAY * 1.03, hi: 6.5e6 };
 const FX = d => lerp(FULL.px0, FULL.px1, d / FULL.xr), FY = v => lerp(FULL.py0, FULL.py1, v / FULL.hi);
 const dayOf = s => (Date.parse(s) - D0) / DAY;
@@ -165,9 +166,9 @@ function ndxPath(fromDay = 0, toDay = END_DAY) {
 function strokeGold(w = 4, al = 1) { ctx.save(); ctx.globalAlpha *= al; ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = w; ctx.lineJoin = 'round'; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 14; ctx.stroke(); ctx.restore(); }
 
 // ---------- B. where the money comes from (22.6–31) ----------
-LABELS.push([22.8, 30.8, 'WHERE IT COMES FROM  ·  钱从哪来']);
-cue(22.9, 26.4, 880, 56, [{ text: '557 万里，你自己投进去的，只有 {g:73 万}。' }]);
-cue(26.6, 30.8, 880, 56, [{ text: '剩下的 {g:87%}，都是收益又生出来的收益。' }]);
+LABELS.push([23.2, 31.2, 'WHERE IT COMES FROM  ·  钱从哪来']);
+cue(23.3, 26.8, 880, 56, [{ text: '557 万里，你自己投进去的，只有 {g:73 万}。' }]);
+cue(27.0, 31.2, 880, 56, [{ text: '剩下的 {g:87%}，都是收益又生出来的收益。' }]);
 ALLTEXT.push('本金', '收益', '15%', '52%', '79%', '87%', '收益占比');
 const SHARES = [['2011-10-20', '15%'], ['2016-10-20', '52%'], ['2021-10-20', '79%'], ['2026-10-19', '87%']];
 function whereFrom(t) {
@@ -197,10 +198,10 @@ function whereFrom(t) {
 }
 
 // ---------- C. getting off in 2008 (31–41) ----------
-LABELS.push([31.2, 40.8, 'STAY IN  ·  别下车']);
-cue(31.2, 35.6, 880, 54, [{ text: '2008 年，纳指{r:腰斩}。如果你在最低点卖掉，从此只存银行——' }]);
-cue(35.8, 40.8, 880, 56, [{ text: '20 年后只有 {r:81 万}，比一直存银行还少。' }]);
-ALLTEXT.push('坚持：557 万', '下车：81 万', '存银行：86 万', '−54%', '卖出');
+LABELS.push([45.2, 54.8, 'STAY IN  ·  坚持持有']);
+cue(45.2, 49.6, 880, 54, [{ text: '2008 年，纳指{r:腰斩}。如果你在最低点卖掉，从此只存银行——' }]);
+cue(49.8, 54.8, 880, 56, [{ text: '20 年后只有 {r:81 万}，比一直存银行还少。' }]);
+ALLTEXT.push('坚持：557 万', '中途卖出：81 万', '存银行：86 万', '−54%', '卖出');
 const SELL = dayOf('2008-11-20'), SELLV = ndxAt(SELL);
 const quitAt = d => d <= SELL ? ndxAt(d) : SELLV * Math.pow(1 + BR, d - SELL) + 100 * (Math.pow(1 + BR, d - SELL) - 1) / BR;
 function quitter(t) {
@@ -208,7 +209,7 @@ function quitter(t) {
   // zoomed in on the bottom first (so 81 vs 86 is readable), then zoom out to reveal the one who stayed
   const zo = easeInOut(seg(t, 37.4, 38.8)), keepHi = FULL.hi; FULL.hi = lerp(1.25e6, 6.5e6, zo);
   ctx.save(); ctx.globalAlpha = a; axesFull(1);
-  ctx.save(); ctx.beginPath(); ctx.rect(FULL.px0, 0, W, FULL.py0 + 2); ctx.clip();
+  ctx.save(); ctx.beginPath(); ctx.rect(FULL.px0, FULL.py1 - 30, W, FULL.py0 - FULL.py1 + 32); ctx.clip();
   const stay = seg(t, 37.2, 37.6);
   // the path up to the sale
   ndxPath(0, SELL); strokeGold(4);
@@ -226,16 +227,16 @@ function quitter(t) {
   ctx.save(); ctx.globalAlpha *= mk; ctx.fillStyle = `rgb(${RED})`; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 18; ctx.beginPath(); ctx.arc(FX(SELL), FY(SELLV), 9, 0, 7); ctx.fill(); ctx.restore();
   ctx.restore();
   text('2008 · 指数 −54% · 卖出', FX(SELL) + 18, FY(SELLV) - 34, `700 26px ${SANS}`, `rgb(${RED})`, 'left', mk);
-  text('下车：81 万', FX(END_DAY) + 16, FY(quitAt(END_DAY)) + 22, `900 34px ${SERIF}`, `rgb(${RED})`, 'left', seg(t, 35.9, 36.4), 12);
+  text('中途卖出：81 万', FX(END_DAY) + 16, FY(quitAt(END_DAY)) + 22, `900 34px ${SERIF}`, `rgb(${RED})`, 'left', seg(t, 35.9, 36.4), 12);
   text('存银行：86 万', FX(END_DAY) + 16, FY(bankAt(END_DAY)) - 22, `700 24px ${SANS}`, '#d8d0bf', 'left', seg(t, 36.4, 36.9));
   text('坚持：557 万', FX(END_DAY) + 16, FY(ndxAt(END_DAY)), `900 40px ${SERIF}`, `rgb(${GOLD})`, 'left', zo, 18);
   ctx.restore(); FULL.hi = keepHi;
 }
 
 // ---------- D. missing the best 10 days (41–50) ----------
-LABELS.push([41.2, 49.8, 'BEST DAYS  ·  最好的日子']);
-cue(41.2, 45.6, 880, 54, [{ text: '5000 多个交易日，只错过涨得最多的 {g:10} 天：557 万变成 {r:348 万}。' }]);
-cue(45.8, 49.8, 880, 56, [{ text: '而这 10 天，全都出现在市场{r:最恐慌}的时候。' }]);
+LABELS.push([67.2, 75.8, 'BEST DAYS  ·  最好的日子']);
+cue(67.2, 71.6, 880, 54, [{ text: '5000 多个交易日，只错过涨得最多的 {g:10} 天：557 万变成 {r:348 万}。' }]);
+cue(71.8, 75.8, 880, 56, [{ text: '而这 10 天，全都出现在市场{r:最恐慌}的时候。' }]);
 ALLTEXT.push('一直在场', '错过 10 天', '错过 20 天', '错过 30 天', '最好的 10 天在哪？');
 const MISS = [['一直在场', 557.1], ['错过 10 天', 348.4], ['错过 20 天', 263.3], ['错过 30 天', 214.4]];
 const BEST10 = ['2008-10-13', '2025-04-09', '2008-10-28', '2020-03-13', '2020-03-24', '2022-11-10', '2020-04-06', '2008-09-30', '2009-03-10', '2008-11-13'];
@@ -262,20 +263,211 @@ function bestDays(t) {
   ctx.restore();
 }
 
-// ---------- E. ending (50–58) ----------
-cue(50.2, 53.6, 440, 80, [{ text: '复利的公式很简单，' }, { text: '难的是{g:坚持持有}。', delay: .9 }], { lineHeight: 1.5 });
-src(3.4, 53.6, '纳斯达克 100 指数日收盘价（不含分红），按当日汇率换算人民币，未计手续费与税费；银行按年化 1.6% 复利  ·  2006.10.20–2026.10.19  ·  历史回测，不代表未来，不构成投资建议');
+// ======================= new sections for the 3-minute cut =======================
+const CY = 880;
+function scenPath(arr, upTo = 1e9) { ctx.beginPath(); let st = false; for (const [d, v] of arr) { if (d > upTo) break; const x = FX(d), y = FY(v); st ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), st = true); } }
+function strokeCol(col, w = 4, al = 1, glow = 12) { ctx.save(); ctx.globalAlpha *= al; ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineJoin = 'round'; ctx.shadowColor = col; ctx.shadowBlur = glow; ctx.stroke(); ctx.restore(); }
+const tailV = arr => arr[arr.length - 1][1];
+
+// ---------- late start (31.6–45) ----------
+LABELS.push([31.8, 44.8, 'START EARLY  ·  早开始']);
+cue(31.8, 35.0, CY, 56, [{ text: '同样每天 100 块，只是开始得晚一点。' }]);
+cue(35.2, 39.6, CY, 56, [{ text: '晚 5 年开始：{g:267 万}。晚 10 年开始：{g:99 万}。' }]);
+cue(39.8, 45.0, CY, 56, [{ text: '晚 10 年，本金少一半，结果却少了 {r:82%}。' }]);
+ALLTEXT.push('2006 年开始', '2011 年开始', '2016 年开始', '557 万', '267 万', '99 万');
+function lateStart(t) {
+  const a = env(t, 31.6, 45.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; axesFull(1);
+  ndxPath(); strokeGold(4);
+  const k1 = easeInOut(seg(t, 35.3, 36.6)), k2 = easeInOut(seg(t, 36.6, 37.9));
+  const d11 = dayOf('2011-10-20'), d16 = dayOf('2016-10-20');
+  if (k1 > 0) { scenPath(SCEN.late2011, lerp(d11, END_DAY, k1)); strokeCol('rgb(240,170,90)', 4); }
+  if (k2 > 0) { scenPath(SCEN.late2016, lerp(d16, END_DAY, k2)); strokeCol('rgb(232,120,80)', 4); }
+  const ex = FX(END_DAY) + 16;
+  text('2006 年开始 · 557 万', ex, FY(ndxAt(END_DAY)), `900 34px ${SERIF}`, `rgb(${GOLD})`, 'left', seg(t, 31.8, 32.3), 12);
+  text('2011 年开始 · 267 万', ex, FY(tailV(SCEN.late2011)), `900 30px ${SERIF}`, 'rgb(240,170,90)', 'left', seg(t, 36.4, 36.8));
+  text('2016 年开始 · 99 万', ex, FY(tailV(SCEN.late2016)) + 12, `900 30px ${SERIF}`, 'rgb(232,120,80)', 'left', seg(t, 37.7, 38.1));
+  ctx.restore();
+}
+
+// ---------- the asymmetry of losses (55.2–67) ----------
+LABELS.push([55.4, 66.8, 'DRAWDOWN  ·  回撤']);
+cue(55.4, 59.4, CY, 56, [{ text: '为什么下跌那么难熬？因为跌和涨{r:不对称}。' }]);
+cue(59.6, 63.4, CY, 60, [{ text: '跌了 {r:54%}，要涨 {g:117%} 才能回本。' }]);
+cue(63.6, 67.0, CY, 56, [{ text: '2008 年那次，纳指用了 {g:3} 年多才回到前高。' }]);
+ALLTEXT.push('跌 54%', '涨 117%', '100', '46', '回本', '2007.10 高点', '2011.01 回到前高');
+function drawdown(t) {
+  const a = env(t, 55.2, 67.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const base = 760, unit = 5.2, x1 = 700, x2 = 1220;
+  const k1 = easeInOut(seg(t, 55.8, 57.0)), k2 = easeInOut(seg(t, 59.8, 61.4));
+  // bar 1: 100 falls to 46
+  const h1 = lerp(100, 46, k1) * unit;
+  ctx.save(); ctx.fillStyle = 'rgba(245,215,110,.2)'; ctx.fillRect(x1 - 90, base - 100 * unit, 180, 100 * unit); ctx.restore();
+  ctx.save(); ctx.fillStyle = `rgb(${k1 > .5 ? RED : GOLD})`; ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 14; ctx.fillRect(x1 - 90, base - h1, 180, h1); ctx.restore();
+  text(Math.round(lerp(100, 46, k1)) + '', x1, base - h1 - 34, `900 48px ${SERIF}`, k1 > .5 ? `rgb(${RED})` : `rgb(${GOLD})`, 'center');
+  text('跌 54%', x1, base + 40, `700 30px ${SANS}`, `rgb(${RED})`, 'center', k1);
+  // bar 2: 46 must grow back to 100
+  if (k2 > 0) {
+    const h2 = lerp(46, 100, k2) * unit;
+    ctx.save(); ctx.fillStyle = `rgb(${GOLD})`; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 16; ctx.fillRect(x2 - 90, base - h2, 180, h2); ctx.restore();
+    ctx.save(); ctx.setLineDash([8, 8]); ctx.strokeStyle = 'rgba(255,240,210,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x1 + 90, base - 46 * unit); ctx.lineTo(x2 - 90, base - 46 * unit); ctx.stroke(); ctx.restore();
+    text('涨 117%', x2, base + 40, `700 30px ${SANS}`, `rgb(${GOLD})`, 'center', k2);
+    text('回本', x2, base - h2 - 34, `900 44px ${SERIF}`, `rgb(${GOLD})`, 'center', seg(t, 61.2, 61.6), 14);
+  }
+  const tk = seg(t, 63.7, 64.2);
+  text('2007.10 高点  →  2011.01 回到前高', W / 2, 150, `400 28px ${MONO}`, '#d9cfae', 'center', tk, 8);
+  ctx.restore();
+}
+
+// ---------- fees (76.2–89) ----------
+LABELS.push([76.4, 88.8, 'FEES  ·  费用']);
+cue(76.4, 80.0, CY, 56, [{ text: '再看一个不起眼的数字：每年的{g:管理费}。' }]);
+cue(80.2, 84.6, CY, 56, [{ text: '每年只多收 1.5%，20 年后少了 {r:106 万}。' }]);
+cue(84.8, 89.0, CY, 56, [{ text: '费用也在复利，只不过是{r:反向}的。' }]);
+ALLTEXT.push('不收费', '年费 0.5%', '年费 1.5%', '年费 2%', '−106 万');
+function fees(t) {
+  const a = env(t, 76.2, 89.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; axesFull(1);
+  const k = easeInOut(seg(t, 76.6, 79.2)), upTo = END_DAY * k;
+  ndxPath(0, upTo); strokeGold(4);
+  const lines = [['fee05', 'rgb(240,190,100)', '年费 0.5% · 519 万'], ['fee15', 'rgb(236,140,80)', '年费 1.5% · 451 万'], ['fee20', `rgb(${RED})`, '年费 2% · 421 万']];
+  lines.forEach(([key, col]) => { scenPath(SCEN[key], upTo); strokeCol(col, 3); });
+  const gap = seg(t, 80.4, 81.0);
+  if (gap > 0) { // red band between no-fee and 1.5%
+    ctx.save(); ctx.globalAlpha *= gap; ndxPath(dayOf('2016-01-01'), END_DAY);
+    const f15 = SCEN.fee15.filter(r => r[0] >= dayOf('2016-01-01')); for (let i = f15.length - 1; i >= 0; i--) ctx.lineTo(FX(f15[i][0]), FY(f15[i][1]));
+    ctx.closePath(); ctx.fillStyle = `rgba(${RED},.22)`; ctx.fill(); ctx.restore();
+    text('−106 万', FX(END_DAY) - 60, (FY(ndxAt(END_DAY)) + FY(tailV(SCEN.fee15))) / 2, `900 48px ${SERIF}`, `rgb(${RED})`, 'right', gap, 16);
+  }
+  const ex = FX(END_DAY) + 16, lk = seg(t, 79.0, 79.5);
+  text('不收费 · 557 万', ex, FY(ndxAt(END_DAY)) - 10, `900 30px ${SERIF}`, `rgb(${GOLD})`, 'left', lk);
+  lines.forEach(([key, col, lbl], i) => text(lbl, ex, FY(tailV(SCEN[key])) + 14 + i * 26, `700 24px ${SANS}`, col, 'left', lk));
+  ctx.restore();
+}
+
+// ---------- dividends (89–99) ----------
+LABELS.push([89.2, 98.8, 'DIVIDENDS  ·  分红']);
+cue(89.2, 93.8, CY, 56, [{ text: '把每年的分红再投进去，还会多出约 {g:63 万}。' }]);
+cue(94.0, 99.0, CY, 56, [{ text: '一点点分红，放进复利里，20 年后也是一笔{g:大钱}。' }]);
+ALLTEXT.push('分红再投入 · 620 万', '只看指数 · 557 万', '+63 万');
+function dividends(t) {
+  const a = env(t, 89.0, 99.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; axesFull(1);
+  ndxPath(); strokeGold(3, .7);
+  const k = easeInOut(seg(t, 89.4, 92.2)); scenPath(SCEN.qqq, END_DAY * k); strokeCol('#fff4c8', 4, 1, 18);
+  const ex = FX(END_DAY) + 16, lk = seg(t, 92.0, 92.5);
+  text('分红再投入 · 620 万', ex, FY(tailV(SCEN.qqq)) - 14, `900 30px ${SERIF}`, '#fff4c8', 'left', lk, 12);
+  text('只看指数 · 557 万', ex, FY(ndxAt(END_DAY)) + 22, `700 26px ${SANS}`, `rgb(${GOLD})`, 'left', lk);
+  text('+63 万', FX(END_DAY) - 40, FY(5.9e6), `900 52px ${SERIF}`, `rgb(${GOLD})`, 'right', seg(t, 92.4, 92.9), 16);
+  ctx.restore();
+}
+
+// ---------- a few points of return (99–112) ----------
+LABELS.push([99.2, 111.8, 'RATE  ·  收益率']);
+cue(99.2, 103.4, CY, 56, [{ text: '如果每年收益固定，差几个百分点会怎样？' }]);
+cue(103.6, 107.8, CY, 56, [{ text: '4%：{g:111 万}。8%：{g:174 万}。12%：{g:279 万}。' }]);
+cue(108.0, 112.0, CY, 56, [{ text: '收益率只差一点，时间会把差距{g:放大}。' }]);
+ALLTEXT.push('同样每天 100 块 · 20 年 · 固定年化（数学示意）', '1.6%', '4%', '8%', '12%');
+const RATES = [['1.6%', 86, '#cfc8b8'], ['4%', 111, 'rgb(240,200,110)'], ['8%', 174, 'rgb(245,215,110)'], ['12%', 279, 'rgb(255,226,140)']];
+function rateGap(t) {
+  const a = env(t, 99.0, 112.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  text('同样每天 100 块 · 20 年 · 固定年化（数学示意）', W / 2, 190, `400 24px ${MONO}`, '#9b8a5c', 'center', seg(t, 99.3, 99.8));
+  const x0 = 620, unit = 3.1;
+  RATES.forEach(([r, v, col], i) => {
+    const k = easeOut(seg(t, 100.0 + i * .6, 101.2 + i * .6)), y = 290 + i * 120, w = v * unit * k, big = i === 3;
+    text(r, x0 - 30, y + 30, `900 44px ${SERIF}`, col, 'right', seg(t, 99.6, 100.0));
+    ctx.save(); ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = big ? 22 : 10; ctx.fillRect(x0, y, w, 60); ctx.restore();
+    text(Math.round(v * k) + ' 万', x0 + w + 20, y + 30, `900 ${big ? 48 : 40}px ${SERIF}`, col, 'left', k, big ? 16 : 0);
+  });
+  ctx.restore();
+}
+
+// ---------- rule of 72 (112–124) ----------
+LABELS.push([112.2, 123.8, 'RULE OF 72  ·  72 法则']);
+cue(112.2, 116.2, CY, 56, [{ text: '估算复利，有个简单办法：{g:72 ÷ 年化收益率}。' }]);
+cue(116.4, 120.2, CY, 56, [{ text: '银行 1.6%，钱要 {g:45} 年才翻一倍。' }]);
+cue(120.4, 124.0, CY, 56, [{ text: '纳指过去 20 年年化约 14%，大约 {g:5} 年翻一倍。' }]);
+ALLTEXT.push('72 ÷ 年化收益率 ≈ 翻倍年数', '银行 1.6%', '纳指 ~14%', '45 年', '5 年');
+function rule72b(t) {
+  const a = env(t, 112.0, 124.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  text('72 ÷ 年化收益率 ≈ 翻倍年数', W / 2, 260, `900 84px ${SERIF}`, `rgb(${GOLD})`, 'center', easeOut(seg(t, 112.4, 113.4)), 26);
+  const x0 = 620, unit = 20;
+  [['银行 1.6%', 45, '#cfc8b8', 116.6, '45 年'], ['纳指 ~14%', 5, `rgb(${GOLD})`, 120.6, '5 年']].forEach(([n, yrs, col, at, lbl], i) => {
+    const k = easeOut(seg(t, at, at + 1.2)), y = 430 + i * 150, w = yrs * unit * k;
+    text(n, x0 - 30, y + 36, `700 36px ${SANS}`, col, 'right', seg(t, at - .2, at + .2));
+    ctx.save(); ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 14; ctx.fillRect(x0, y, w, 72); ctx.restore();
+    text(lbl, x0 + w + 22, y + 36, `900 52px ${SERIF}`, col, 'left', k, 14);
+  });
+  ctx.restore();
+}
+
+// ---------- each extra million comes faster (124–138) ----------
+LABELS.push([124.2, 137.8, 'MILLIONS  ·  每个 100 万']);
+cue(124.2, 128.4, CY, 56, [{ text: '回到这条线：每多 100 万，用了多久？' }]);
+cue(128.6, 133.0, CY, 56, [{ text: '第 1 个 100 万，{g:11} 年。第 2 个，{g:2.8} 年。' }]);
+cue(133.2, 138.0, CY, 56, [{ text: '第 4 个，只用了 {g:1} 年。' }]);
+ALLTEXT.push('第 1 个 100 万', '第 2 个 100 万', '第 3 个 100 万', '第 4 个 100 万', '第 5 个 100 万', '年', '2022 年下跌拖慢');
+const MILL = [['第 1 个 100 万', 11.0], ['第 2 个 100 万', 2.8], ['第 3 个 100 万', 2.9, '2022 年下跌拖慢'], ['第 4 个 100 万', 1.0], ['第 5 个 100 万', 1.3]];
+function millions(t) {
+  const a = env(t, 124.0, 138.2, .5, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const x0 = 700, unit = 80;
+  MILL.forEach(([n, yrs, note], i) => {
+    const k = easeOut(seg(t, 124.8 + i * .7, 125.8 + i * .7)), y = 220 + i * 110, w = yrs * unit * k;
+    text(n, x0 - 30, y + 30, `700 32px ${SANS}`, '#efe6cc', 'right', seg(t, 124.6 + i * .7, 125.0 + i * .7));
+    ctx.save(); ctx.fillStyle = `rgb(${GOLD})`; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 14; ctx.fillRect(x0, y, w, 60); ctx.restore();
+    text(yrs.toFixed(1) + ' 年', x0 + w + 20, y + 30, `900 40px ${SERIF}`, `rgb(${GOLD})`, 'left', k);
+    if (note) text(note, x0 + w + 150, y + 30, `500 22px ${SANS}`, '#c98a80', 'left', k);
+  });
+  ctx.restore();
+}
+
+// ---------- ending: back to the flat years (138–170) ----------
+LABELS.push([138.2, 159.8, 'THE FIRST 11 YEARS  ·  前 11 年']);
+cue(138.3, 142.4, CY, 56, [{ text: '最后，回到最开始那条线。' }]);
+cue(142.6, 147.4, CY, 56, [{ text: '前 11 年，它几乎贴着地面，中间还经历了一次{r:腰斩}。' }]);
+cue(147.6, 153.0, CY, 56, [{ text: '后面那 457 万，只属于在这 11 年里{g:一直持有}的人。' }]);
+cue(153.2, 159.8, CY, 56, [{ text: '过去 20 年不代表未来，但复利的规则{g:一直都在}。' }]);
+cue(160.2, 169.6, 420, 84, [{ text: '复利的公式很简单，' }, { text: '难的是{g:坚持持有}。', delay: 1.0 }], { lineHeight: 1.5 });
+function flatYears(t) {
+  const a = env(t, 138.0, 160.2, .6, .7); if (a <= 0) return;
+  const zk = easeInOut(seg(t, 142.6, 145.4)), keep = FULL.xr; FULL.xr = lerp(END_DAY * 1.03, 4300, zk);
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.save(); ctx.beginPath(); ctx.rect(FULL.px0, 0, FULL.px1 - FULL.px0 + 6, FULL.py0 + 2); ctx.clip();
+  ctx.save(); ctx.strokeStyle = '#d8d0bf'; ctx.lineWidth = 2.5; ctx.beginPath(); for (let k = 0; k <= 200; k++) { const d = END_DAY * k / 200; k ? ctx.lineTo(FX(d), FY(bankAt(d))) : ctx.moveTo(FX(d), FY(bankAt(d))); } ctx.stroke(); ctx.restore();
+  ndxPath(); strokeGold(4);
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(255,240,210,.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(FULL.px0, FULL.py1); ctx.lineTo(FULL.px0, FULL.py0); ctx.lineTo(FULL.px1, FULL.py0); ctx.stroke();
+  for (const y of [2007, 2009, 2011, 2013, 2015, 2017]) text(String(y), FX(dayOf(y + '-01-01')), FULL.py0 + 30, `400 20px ${MONO}`, '#6d685e', 'center', zk);
+  // a slow light walking the flat years
+  const dd = lerp(0, dayOf('2017-10-30'), seg(t, 143.0, 153.0)), dv = ndxAt(dd), dk = seg(t, 142.8, 143.4);
+  ctx.save(); ctx.globalAlpha *= dk; ctx.fillStyle = `rgb(${GOLD})`; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 26; ctx.beginPath(); ctx.arc(FX(dd), FY(dv), 10, 0, 7); ctx.fill(); ctx.restore();
+  text(String(new Date(D0 + dd * DAY).getUTCFullYear()), FX(dd), FY(dv) - 40, `400 26px ${MONO}`, '#d9cfae', 'center', dk);
+  // and then the rest of the line lights up
+  const rk = seg(t, 153.0, 154.0);
+  if (rk > 0) text('后面的 457 万 →', FULL.px1 - 20, FULL.py1 + 40, `900 40px ${SERIF}`, `rgb(${GOLD})`, 'right', rk, 16);
+  FULL.xr = keep; ctx.restore();
+}
+ALLTEXT.push('后面的 457 万 →');
+
+// ---------- disclaimer card (176–180) ----------
+cue(176.2, 180.0, 470, 40, [{ text: '本视频为历史数据回测，不代表未来收益，不构成投资建议。' }]);
+src(3.4, 169.6, '纳斯达克 100 指数日收盘价（不含分红），按当日汇率换算人民币，未计手续费与税费；银行按年化 1.6% 复利  ·  2006.10.20–2026.10.19  ·  历史回测，不代表未来，不构成投资建议');
 
 window.render = function (t) {
   clearFrame();
   dotGrid(env(t, 0, 20.0, .6, .5) * .6);
   race(RACE_T(t));
-  floor(env(t, 19.9, 22.7, .4, .4), 700);
-  whereFrom(t); quitter(t); bestDays(t);
-  floor(env(t, 53.6, 58.0, .5, .8), 700);
+  floor(env(t, 19.9, 23.1, .4, .4), 700);
+  whereFrom(t - 0.4); lateStart(t); quitter(t - 14.0); drawdown(t); bestDays(t - 26.0);
+  fees(t); dividends(t); rateGap(t); rule72b(t); millions(t); flatYears(t);
+  floor(env(t, 160.0, 176.0, .8, .8), 700);
   renderMeta(t); title(t); renderCues(t);
 };
-window.ready = (async () => { await loadFonts('2008 金融危机2020 疫情 · 指数 −54% · 卖出'); window.render(0); return true; })();
+window.ready = (async () => { await loadFonts('2008 金融危机2020 疫情 · 指数 −54% · 卖出→'); window.render(0); return true; })();
 </script>
 </body>
 </html>
