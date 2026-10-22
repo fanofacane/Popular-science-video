@@ -43,9 +43,9 @@ const CAPS = [
   [13.87, 14.6, '我告诉你，', 470, 76],
   [14.93, 16.8, '贱卖{g:时间}换不来{g:财富}，', 900, 52],
   [16.95, 19.3, '{g:按部就班}走不出新路。', 900, 52],
-  [19.42, 23.15, '每当你躺在床上，想到这辈子可能就{r:这样}了，', 900, 52],
-  [23.45, 26.2, '你真的{g:甘心}浑浑噩噩下去吗？', 470, 64],
-  [24.93, 28.0, '从这一刻起，{g:不认命}，只认{g:自己}。', 900, 52],
+  [19.42, 23.3, '每当你躺在床上，想到这辈子可能就{r:这样}了，', 470, 64],
+  [23.45, 24.8, '你真的{g:甘心}浑浑噩噩下去吗？', 470, 64],
+  [24.93, 28.0, '从这一刻起，{g:不认命}，只认{g:自己}。', 470, 64],
   [28.22, 29.65, '发了疯地去{g:健身}，', 900, 52],
   [29.8, 31.4, '发了疯地{g:提升自己}，', 900, 52],
   [31.56, 33.95, '去做{g:自媒体}，去学{g:AI}。', 900, 52],
@@ -354,19 +354,19 @@ function glowLine(pts, alpha = 1) { // the reference-video line: glow, light cur
 // ---------- F+H · wasted-time phrases fill the dark; on 不认命 they all crash to the floor; 自己 stands up ----------
 const WASTE = [
   ['再刷五分钟就睡', 330, 250], ['明天再说吧', 1560, 230], ['下周一开始', 860, 170], ['反正也来不及了', 1320, 340],
-  ['躺平算了', 300, 420], ['等有空再学', 1660, 420], ['又熬到三点', 560, 320], ['收藏了就等于学会了', 1180, 620],
+  ['躺平算了', 220, 395], ['等有空再学', 1660, 420], ['又熬到三点', 560, 320], ['收藏了就等于学会了', 1180, 620],
   ['再玩一局', 300, 590], ['等我准备好了', 1600, 560], ['大家不都这样吗', 700, 640], ['工资够花就行', 480, 720],
   ['今天太累了', 1460, 700], ['先混着吧', 1060, 260], ['以后再说', 180, 700], ['又是一天过去了', 960, 720],
-  ['这个月先这样', 1700, 330], ['年纪大了，算了', 240, 520],
+  ['这个月先这样', 1700, 330], ['年纪大了，算了', 190, 505],
 ];
-const FLOOR_Y = 790;
+const FLOOR_Y = 1030;
 function words(t) {
   const a = env(t, 19.3, 28.1, .3, .35); if (a <= 0) return;
   ctx.save(); ctx.globalAlpha = a;
   const T_DROP = 26.15, floorK = seg(t, 26.1, 26.4);
   if (floorK > 0) { const g = ctx.createLinearGradient(160, 0, W - 160, 0); g.addColorStop(0, 'rgba(200,190,170,0)'); g.addColorStop(.5, `rgba(200,190,170,${.35 * floorK})`); g.addColorStop(1, 'rgba(200,190,170,0)'); ctx.fillStyle = g; ctx.fillRect(160, FLOOR_Y + 12, W - 320, 2); }
   WASTE.forEach(([s, x0, y0], i) => {
-    const tIn = 19.6 + i * .2, k = easeOut(seg(t, tIn, tIn + .5)); if (k <= 0) return;
+    const tIn = 19.45 + i * .2, k = easeOut(seg(t, tIn, tIn + .5)); if (k <= 0) return;
     const size = 26 + Math.round(hash(i, 3) * 14), shade = .45 + .45 * hash(i, 5);
     let x = x0 + Math.sin(t * .4 + i) * 8, y = y0 + Math.cos(t * .35 + i * 1.7) * 6, rot = 0, col = `rgba(220,212,198,${shade})`;
     // fall: gravity, one small bounce, settle tilted on the floor
@@ -383,13 +383,13 @@ function words(t) {
   });
   // dust on impact
   const dk = seg(t, 26.3, 26.9);
-  if (dk > 0 && dk < 1) { const g = ctx.createRadialGradient(W / 2, FLOOR_Y, 10, W / 2, FLOOR_Y, 900); g.addColorStop(0, `rgba(200,190,170,${.12 * (1 - dk)})`); g.addColorStop(1, 'rgba(200,190,170,0)'); ctx.fillStyle = g; ctx.fillRect(0, FLOOR_Y - 300, W, 400); }
+  if (dk > 0 && dk < 1) { const g = ctx.createRadialGradient(W / 2, FLOOR_Y, 10, W / 2, FLOOR_Y, 900); g.addColorStop(0, `rgba(200,190,170,${.12 * (1 - dk)})`); g.addColorStop(1, 'rgba(200,190,170,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
   // 只认自己: a beam of light, and 自己 stands up from the floor
   const sk = easeOut(seg(t, 27.0, 27.6));
   if (sk > 0) {
     const bw = 240, g = ctx.createLinearGradient(W / 2 - bw, 0, W / 2 + bw, 0); g.addColorStop(0, rgba(GOLD, 0)); g.addColorStop(.5, rgba(GOLD, .22 * sk)); g.addColorStop(1, rgba(GOLD, 0));
     ctx.fillStyle = g; ctx.fillRect(W / 2 - bw, 0, bw * 2, FLOOR_Y + 14);
-    ctx.save(); ctx.filter = `blur(${(1 - sk) * 12}px)`; text('自己', W / 2, lerp(FLOOR_Y, 470, sk), `900 170px ${SERIF}`, `rgb(${GOLD})`, 'center', sk, 50); ctx.restore();
+    const g2 = ctx.createRadialGradient(W / 2, 470, 10, W / 2, 470, 700); g2.addColorStop(0, rgba(GOLD, .18 * sk)); g2.addColorStop(1, rgba(GOLD, 0)); ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
   }
   ctx.restore();
 }
