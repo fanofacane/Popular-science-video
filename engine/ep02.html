@@ -351,58 +351,91 @@ function glowLine(pts, alpha = 1) { // the reference-video line: glow, light cur
   ctx.restore();
 }
 
-// ---------- F · a life of 80 squares: lived years in gold, the rest copied as the same grey ----------
+// ---------- F · the same day, copied for the rest of your life ----------
+const CARD_W = 520, CARD_H = 230, DAYPLAN = [['睡觉', 0, 7, '#2a2825'], ['通勤', 7, 9, '#5a554d'], ['上班', 9, 18, '#7d776c'], ['通勤', 18, 19, '#5a554d'], ['刷手机', 19, 24, '#46423c']];
+let cardImg = null;
+function buildCard() { // one day, drawn once and reused for every copy
+  const c = document.createElement('canvas'); c.width = CARD_W * 2; c.height = CARD_H * 2; const g = c.getContext('2d'); g.scale(2, 2);
+  const r = (x, y, w, h, q) => { g.beginPath(); g.moveTo(x + q, y); g.arcTo(x + w, y, x + w, y + h, q); g.arcTo(x + w, y + h, x, y + h, q); g.arcTo(x, y + h, x, y, q); g.arcTo(x, y, x + w, y, q); g.closePath(); };
+  r(2, 2, CARD_W - 4, CARD_H - 4, 18); g.fillStyle = '#141311'; g.fill(); g.strokeStyle = 'rgba(200,190,170,.28)'; g.lineWidth = 2; g.stroke();
+  const bx = 34, bw = CARD_W - 68, by = 92, bh = 54;
+  for (const [n, h0, h1, col] of DAYPLAN) { g.fillStyle = col; g.fillRect(bx + bw * h0 / 24 + 1, by, bw * (h1 - h0) / 24 - 2, bh); if (h1 - h0 < 2) continue; g.fillStyle = 'rgba(200,192,178,1)'; g.font = `500 20px ${SANS}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(n, bx + bw * (h0 + h1) / 48, by + bh + 32); }
+  g.fillStyle = '#6d685e'; g.font = `400 16px ${MONO}`; g.textAlign = 'left'; g.fillText('00:00', bx, by - 22); g.textAlign = 'right'; g.fillText('24:00', bx + bw, by - 22);
+  cardImg = c;
+}
 function life(t) {
   const a = env(t, 19.3, 24.8, .35, .4) * (1 - .8 * seg(t, 23.1, 23.5)); if (a <= 0) return;
+  if (!cardImg) buildCard();
   ctx.save(); ctx.globalAlpha = a;
-  const cols = 10, S = 58, G = 12, st = S + G, x0 = (W - (cols * st - G)) / 2, y0 = 230, LIVED = 28;
-  text('人生 80 年  ·  一格一年', W / 2, y0 - 56, `400 24px ${MONO}`, 'rgba(160,152,138,1)', 'center', seg(t, 19.5, 19.9));
-  for (let i = 0; i < 80; i++) {
-    const x = x0 + (i % cols) * st, y = y0 + Math.floor(i / cols) * st;
-    const ap = easeOut(seg(t, 19.45 + i * .006, 19.75 + i * .006)); if (ap <= 0) continue;
-    ctx.save(); ctx.globalAlpha *= ap; rr(x, y, S, S, 6);
-    if (i < LIVED) {
-      const k = seg(t, 19.8 + i * .03, 19.95 + i * .03); ctx.fillStyle = k > 0 ? rgba(GOLD, lerp(.12, .85, k)) : '#1b1a17'; if (k > .5) { ctx.shadowColor = rgba(GOLD, .6); ctx.shadowBlur = 10; } ctx.fill();
-    } else {
-      // "maybe this is it": every remaining year is filled with the same grey, a copy of the same day
-      const k = seg(t, 21.3 + (i - LIVED) * .022, 21.45 + (i - LIVED) * .022);
-      ctx.fillStyle = k > 0 ? `rgba(78,74,68,${lerp(.3, 1, k)})` : '#1b1a17'; ctx.fill(); ctx.strokeStyle = 'rgba(200,190,170,.12)'; ctx.lineWidth = 1.5; ctx.stroke();
-      if (k > 0) text('同', x + S / 2, y + S / 2 + 1, `500 22px ${SANS}`, 'rgba(150,142,130,1)', 'center', k * .9);
-    }
-    ctx.restore();
+  const cx = W / 2, cy = 470, zk = easeInOut(seg(t, 21.0, 22.9)), sc = Math.exp(lerp(Math.log(1.45), Math.log(.03), zk));
+  const pw = (CARD_W + 44) * sc, ph = (CARD_H + 44) * sc, cw = CARD_W * sc, ch = CARD_H * sc;
+  const nx = Math.ceil(W / 2 / pw) + 1, ny = Math.ceil(H / 2 / ph) + 1;
+  for (let j = -ny; j <= ny; j++) for (let i = -nx; i <= nx; i++) {
+    const d = Math.max(Math.abs(i), Math.abs(j)), ap = (i || j) ? seg(t, 20.85 + Math.min(d, 6) * .07, 21.1 + Math.min(d, 6) * .07) : easeOut(seg(t, 19.45, 19.9));
+    if (ap <= 0) continue;
+    const x = cx + i * pw - cw / 2, y = cy + j * ph - ch / 2;
+    ctx.globalAlpha = a * ap * (i || j ? .85 : 1);
+    if (cw > 14) ctx.drawImage(cardImg, x, y, cw, ch); else { ctx.fillStyle = '#4a463f'; ctx.fillRect(x, y, cw, ch); }
   }
-  // "you are here"
-  const hx = x0 + (LIVED % cols) * st, hy = y0 + Math.floor(LIVED / cols) * st, hk = seg(t, 20.7, 21.0);
-  ctx.save(); ctx.globalAlpha *= hk; ctx.strokeStyle = `rgb(${WHITE})`; ctx.lineWidth = 4; ctx.shadowColor = rgba(WHITE, .8); ctx.shadowBlur = 16; rr(hx - 6, hy - 6, S + 12, S + 12, 9); ctx.stroke(); ctx.restore();
-  text('你在这里  →', x0 - 30, hy + S / 2, `700 26px ${SANS}`, `rgb(${WHITE})`, 'right', hk);
-  const R = x0 + cols * st + 30;
-  text('已经过去  28 年', R, y0 + 90, `400 26px ${MONO}`, `rgb(${GOLD})`, 'left', seg(t, 20.6, 21.0));
-  text('剩下  52 年', R, y0 + 330, `400 26px ${MONO}`, 'rgba(180,172,160,1)', 'left', seg(t, 21.3, 21.7));
-  text('每一年都一样', R, y0 + 380, `700 30px ${SANS}`, `rgb(${RED})`, 'left', seg(t, 22.3, 22.7), 12);
+  ctx.globalAlpha = a;
+  // first card is "today"
+  const tk = 1 - seg(t, 21.0, 21.4);
+  text('今天', cx - cw / 2 + 34 * sc, cy - ch / 2 + 38 * sc, `900 ${Math.round(30 * sc)}px ${SERIF}`, `rgb(${WHITE})`, 'left', easeOut(seg(t, 19.6, 20.0)) * tk);
+  // darken the caption band and the top for the counter
+  const g = ctx.createLinearGradient(0, 760, 0, 860); g.addColorStop(0, 'rgba(7,7,7,0)'); g.addColorStop(1, 'rgba(7,7,7,.95)'); ctx.fillStyle = g; ctx.fillRect(0, 760, W, H - 760);
+  const ck = seg(t, 21.35, 21.65);
+  if (ck > 0) {
+    const g2 = ctx.createRadialGradient(cx, 190, 20, cx, 190, 520); g2.addColorStop(0, `rgba(7,7,7,${.92 * ck})`); g2.addColorStop(1, 'rgba(7,7,7,0)'); ctx.fillStyle = g2; ctx.fillRect(0, 0, W, 520);
+    ctx.save(); ctx.globalAlpha *= ck; rr(cx - 330, 70, 660, 210, 24); ctx.fillStyle = 'rgba(9,9,8,.92)'; ctx.fill(); ctx.strokeStyle = rgba(RED, .35); ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+    const n = Math.floor(lerp(1, 18980, zk));
+    ctx.save(); ctx.letterSpacing = '6px'; text('剩下的日子  ·  同一天', cx, 120, `400 22px ${MONO}`, 'rgba(160,152,138,1)', 'center', ck); ctx.restore();
+    text('×' + n.toLocaleString('en-US'), cx, 205, `900 104px ${SERIF}`, `rgb(${RED})`, 'center', ck, 26);
+  }
   ctx.restore();
 }
 
-// ---------- H · two switches: 认命 off, 认自己 on ----------
-function toggle(x, y, on, col) {
-  const w = 150, h = 72; rr(x, y - h / 2, w, h, h / 2);
-  ctx.fillStyle = on > 0 ? `rgba(${col},${.25 + .2 * on})` : '#1d1b18'; ctx.fill(); ctx.strokeStyle = on > .5 ? `rgba(${col},.8)` : 'rgba(200,190,170,.25)'; ctx.lineWidth = 2; ctx.stroke();
-  const kx = lerp(x + h / 2, x + w - h / 2, on); ctx.save(); ctx.fillStyle = on > .5 ? `rgb(${col})` : '#4a4740'; if (on > .5) { ctx.shadowColor = `rgb(${col})`; ctx.shadowBlur = 30; }
-  ctx.beginPath(); ctx.arc(kx, y, 27, 0, 7); ctx.fill(); ctx.restore();
-}
+// ---------- H · a compass: the needle drifts among "whatever", stops on 不认命, swings to 自己 ----------
 function choice(t) {
   const a = env(t, 24.8, 28.1, .35, .35); if (a <= 0) return;
   ctx.save(); ctx.globalAlpha = a;
-  const warm = seg(t, 27.0, 27.8); if (warm > 0) { const g = ctx.createRadialGradient(W / 2, 480, 20, W / 2, 480, 800); g.addColorStop(0, rgba(GOLD, .16 * warm)); g.addColorStop(1, rgba(GOLD, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
-  floorGrid(.35 + .4 * warm, 720);
-  const cx = W / 2, y1 = 370, y2 = 540;
-  const off = easeInOut(seg(t, 26.15, 26.45)), on = easeInOut(seg(t, 27.04, 27.34));
-  text('认命', cx - 40, y1, `900 64px ${SERIF}`, off > .5 ? 'rgba(130,122,110,1)' : `rgb(${WHITE})`, 'right');
-  if (off > 0) { ctx.save(); ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 6; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 16; ctx.beginPath(); ctx.moveTo(cx - 180, y1 + 2); ctx.lineTo(cx - 180 + 150 * off, y1 + 2); ctx.stroke(); ctx.restore(); }
-  toggle(cx + 20, y1, 1 - off, '200,190,170');
-  text(off > .5 ? 'OFF' : 'ON', cx + 200, y1, `400 24px ${MONO}`, off > .5 ? 'rgba(110,104,94,1)' : 'rgba(200,190,170,1)', 'left');
-  text('认自己', cx - 40, y2, `900 64px ${SERIF}`, on > .5 ? `rgb(${GOLD})` : 'rgba(130,122,110,1)', 'right', seg(t, 25.0, 25.4), on > .5 ? 28 : 0);
-  ctx.save(); ctx.globalAlpha *= seg(t, 25.0, 25.4); toggle(cx + 20, y2, on, GOLD); ctx.restore();
-  text(on > .5 ? 'ON' : 'OFF', cx + 200, y2, `400 24px ${MONO}`, on > .5 ? `rgb(${GOLD})` : 'rgba(110,104,94,1)', 'left', seg(t, 25.0, 25.4));
+  const cx = W / 2, cy = 450, R = 270, stop = seg(t, 26.15, 26.45), pick = seg(t, 27.04, 27.9), warm = seg(t, 27.04, 27.6);
+  if (warm > 0) { const g = ctx.createRadialGradient(cx, cy - R, 20, cx, cy, 900); g.addColorStop(0, rgba(GOLD, .2 * warm)); g.addColorStop(1, rgba(GOLD, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+  const ap = easeOut(seg(t, 24.85, 25.3));
+  ctx.save(); ctx.globalAlpha *= ap;
+  // dial
+  ctx.strokeStyle = 'rgba(200,190,170,.22)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+  ctx.strokeStyle = 'rgba(200,190,170,.10)'; ctx.beginPath(); ctx.arc(cx, cy, R - 70, 0, 7); ctx.stroke();
+  for (let i = 0; i < 72; i++) { const th = i / 72 * 2 * Math.PI, L = i % 6 ? 10 : 22; ctx.strokeStyle = `rgba(200,190,170,${i % 6 ? .2 : .45})`; ctx.lineWidth = i % 6 ? 1.5 : 2.5;
+    ctx.beginPath(); ctx.moveTo(cx + (R - 4) * Math.cos(th), cy + (R - 4) * Math.sin(th)); ctx.lineTo(cx + (R - 4 - L) * Math.cos(th), cy + (R - 4 - L) * Math.sin(th)); ctx.stroke(); }
+  // options of fate, struck out on 不认命
+  const FATE = ['随便', '算了', '就这样', '认了'];
+  FATE.forEach((s, i) => {
+    const th = -Math.PI / 2 + (i + 1) * 2 * Math.PI / 5, x = cx + (R + 70) * Math.cos(th), y = cy + (R + 56) * Math.sin(th);
+    const sk = seg(t, 26.15 + i * .06, 26.4 + i * .06);
+    text(s, x, y, `700 34px ${SANS}`, sk > .5 ? 'rgba(110,104,94,1)' : 'rgba(200,192,178,1)', 'center');
+    if (sk > 0) { ctx.save(); ctx.font = `700 34px ${SANS}`; const w = ctx.measureText(s).width + 12; ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 5; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 14;
+      ctx.beginPath(); ctx.moveTo(x - w / 2, y + 2); ctx.lineTo(x - w / 2 + w * easeOut(sk), y + 2); ctx.stroke(); ctx.restore(); }
+  });
+  // "自己" at the top
+  const lit = warm;
+  ctx.save(); ctx.translate(cx, cy - R - 64); rr(-86, -36, 172, 72, 36);
+  ctx.fillStyle = lit > 0 ? rgba(GOLD, lerp(.0, .95, lit)) : 'rgba(0,0,0,0)'; if (lit > .3) { ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 36 * lit; } ctx.fill(); ctx.shadowBlur = 0;
+  ctx.strokeStyle = lit > .3 ? rgba(GOLD, 1) : 'rgba(200,190,170,.3)'; ctx.lineWidth = 2; ctx.setLineDash(lit > .3 ? [] : [8, 6]); ctx.stroke(); ctx.restore();
+  text('自己', cx, cy - R - 62, `900 40px ${SERIF}`, lit > .5 ? '#1a1408' : 'rgba(130,122,110,1)', 'center');
+  ctx.restore();
+  // needle: drifting → braked → swings to the top
+  const drift = tt => tt * 2.4 + 1.6 * Math.sin(tt * 1.7) + .8 * Math.sin(tt * 4.3);
+  const tStop = 26.3, frozen = drift(tStop) + Math.sin((t - tStop) * 30) * .06 * Math.exp(-(Math.max(0, t - tStop)) * 6);
+  let ang = t < tStop ? drift(t) : frozen;
+  if (pick > 0) {
+    const start = drift(tStop), top = -Math.PI / 2 + 2 * Math.PI * Math.ceil((start + Math.PI / 2) / (2 * Math.PI)) ;
+    const e = 1 - Math.exp(-pick * 7) * Math.cos(pick * 13); ang = lerp(start, top, e);
+  }
+  const nc = pick > .1 ? GOLD : stop > .5 ? '200,192,178' : WHITE;
+  ctx.save(); ctx.globalAlpha *= ap; ctx.translate(cx, cy); ctx.rotate(ang);
+  ctx.beginPath(); ctx.moveTo(R - 40, 0); ctx.lineTo(0, -16); ctx.lineTo(-70, 0); ctx.lineTo(0, 16); ctx.closePath();
+  ctx.fillStyle = `rgb(${nc})`; ctx.shadowColor = `rgb(${nc})`; ctx.shadowBlur = pick > .1 ? 34 : 14; ctx.fill();
+  ctx.shadowBlur = 0; ctx.fillStyle = '#0d0c0b'; ctx.beginPath(); ctx.arc(0, 0, 9, 0, 7); ctx.fill(); ctx.restore();
   ctx.restore();
 }
 
@@ -504,7 +537,7 @@ window.render = function (t) {
   label(t);
 };
 window.ready = (async () => {
-  const all = CAPS.map(c => c[2]).join('') + '人生年一格已经过去剩下每都样同你在这里认命自己体能力影响AI现有的规则之外放下旧才找到新我目标：今天不算法LOSEYOURFINDT今天开始周一二三四五六日已推迟次成功永远在下一个明天起床通勤上班下班刷手机睡觉第天同样的一天还在等你的24小时收入一整天罐底薄薄一层→h已浪费的明天睡不着的深夜距离开始天已推迟想象中的你现实中的你365同一天等待中第一天24小时上班加班继续加班睡觉收入时间卖完了还是这么多你以为的路真实的路年0123456789%×,·';
+  const all = CAPS.map(c => c[2]).join('') + '睡觉通勤上班刷手机今天剩下的日子同一天随便算了就这样认了自己:0×人生年一格已经过去剩下每都样同你在这里认命自己体能力影响AI现有的规则之外放下旧才找到新我目标：今天不算法LOSEYOURFINDT今天开始周一二三四五六日已推迟次成功永远在下一个明天起床通勤上班下班刷手机睡觉第天同样的一天还在等你的24小时收入一整天罐底薄薄一层→h已浪费的明天睡不着的深夜距离开始天已推迟想象中的你现实中的你365同一天等待中第一天24小时上班加班继续加班睡觉收入时间卖完了还是这么多你以为的路真实的路年0123456789%×,·';
   await Promise.all([document.fonts.load(`900 64px ${SERIF}`, all), document.fonts.load(`500 22px ${SANS}`, all), document.fonts.load(`700 32px ${SANS}`, all),
     document.fonts.load(`400 24px ${MONO}`, 'DAYSOMEDAYSAMESELLINGTIMEROUTINEJANDECLIFROWNBKYUGHTPQ人生年一格已经过去剩下放下旧的才能找到新现有规则之外算法0123456789·×, h→已浪费的明天睡不着的深夜等待中第天一24小时周二三四五六日永远在下个同样的还在等你的收入整罐底薄层')]);
   await document.fonts.ready; window.render(0); return true;
