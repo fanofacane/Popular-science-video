@@ -35,8 +35,8 @@ window.DURATION = 19.4; // sample: the first 20 seconds
 // ---------- captions (episode 01 style: per-character blur-in) ----------
 // [start, end, text, y, size]
 const CAPS = [
-  [0.17, 1.95, '还有多少个{g:明天}可以浪费？', 470, 76],
-  [2.29, 4.3, '还有多少个{g:深夜}可以忏悔？', 470, 76],
+  [0.17, 1.95, '还有多少个{g:明天}可以浪费？', 460, 76],
+  [2.29, 4.3, '还有多少个{g:深夜}可以忏悔？', 460, 76],
   [4.71, 8.7, '你总说明天开始，总幻想着未来会{g:成功}。', 900, 52],
   [8.92, 12.3, '可你明明知道，现在的生活就是困住你的{r:枷锁}，', 900, 52],
   [12.47, 13.7, '你还要{r:等}到什么时候？', 900, 52],
@@ -70,37 +70,35 @@ function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x 
 // top-left label, as in episode 01
 const LABELS = [[0.1, 4.4, 'DAYS  ·  日子'], [4.6, 8.8, 'SOMEDAY  ·  明天开始'], [8.9, 13.7, 'SAME DAY  ·  每一天'], [14.8, 16.85, 'SELLING TIME  ·  出卖时间'], [16.9, 19.4, 'ROUTINE  ·  按部就班']];
 function label(t) {
-  for (const [a, b, s] of LABELS) if (t >= a && t <= b) text(s, 120, 102, `400 22px ${MONO}`, 'rgba(109,104,94,1)', 'left', env(t, a, b, .4, .3));
+  ctx.save(); ctx.letterSpacing = '6px'; for (const [a, b, s] of LABELS) if (t >= a && t <= b) text(s, 120, 102, `400 22px ${MONO}`, 'rgba(109,104,94,1)', 'left', env(t, a, b, .4, .3)); ctx.restore();
 }
 
 // ---------- backgrounds ----------
 function vignette() { const g = ctx.createRadialGradient(W / 2, H / 2, 380, W / 2, H / 2, 1150); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.9)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
-// A · the pixel wall: every square is a day. They light up, then burn out to dark red.
+// A · the pixel wall — identical to episode 01
 function pixelWall(t) {
-  const a = env(t, 0, 4.5, .5, .4) * .9; if (a <= 0) return;
-  ctx.save(); ctx.globalAlpha = a;
+  const alpha = env(t, 0, 4.5, .6, .4) * .85; if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha = alpha;
   ctx.translate(W / 2, H / 2); ctx.rotate(-0.17); ctx.translate(-W / 2, -H / 2);
-  const cell = 22, gap = 7, step = cell + gap, scroll = t * 22, night = seg(t, 2.1, 2.9);
+  const cell = 22, gap = 7, step = cell + gap, scroll = t * 18;
   for (let r = -14; r < 52; r++) {
     if (((r % 4) + 4) % 4 === 3) continue;
-    const y = r * step - 200, off = r % 2 ? scroll : -scroll * .7, c0 = Math.floor((-400 - off) / step) - 1;
+    const y = r * step - 200, off = (r % 2 ? scroll : -scroll * .7), c0 = Math.floor((-400 - off) / step) - 1;
     for (let c = c0; c < c0 + 100; c++) {
       const x = c * step + off; if (x < -400 || x > W + 400) continue;
-      const h = hash(c, r), b = .55 + .45 * hash(r, c * 7);
-      // a sweep runs across the wall: each day flashes gold, then dies to dark red
-      const sweep = (t * 1.6 - (x + 400) / 900 - h * .4), lit = Math.exp(-Math.pow((sweep % 1.6) - .2, 2) * 40);
-      let rr_ = 120 * b, gg = 30 * b, bb = 26 * b;
-      if (night > 0) { rr_ = lerp(rr_, 40 * b, night); gg = lerp(gg, 44 * b, night); bb = lerp(bb, 80 * b, night); }
-      ctx.fillStyle = h < .03 ? `rgba(245,215,110,${.85 * b})` : `rgba(${Math.round(lerp(rr_, 245, lit))},${Math.round(lerp(gg, 215, lit))},${Math.round(lerp(bb, 110, lit))},.9)`;
+      const h = hash(c, r), b = 0.55 + 0.45 * hash(r, c * 7);
+      ctx.fillStyle = h < 0.025 ? `rgba(245,215,110,${0.85 * b})` : h < 0.13 ? `rgba(150,128,58,${0.75 * b})` : `rgba(${Math.round(120 * b)},${Math.round(30 * b)},${Math.round(26 * b)},0.9)`;
       ctx.fillRect(x, y, cell, cell);
     }
   }
   ctx.restore();
-  const g = ctx.createRadialGradient(W / 2, 480, 50, W / 2, 480, 900);
-  g.addColorStop(0, `rgba(7,7,7,${.75 * a})`); g.addColorStop(.6, `rgba(7,7,7,${.35 * a})`); g.addColorStop(1, 'rgba(7,7,7,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const g = ctx.createRadialGradient(W / 2, 500, 50, W / 2, 500, 900);
+  g.addColorStop(0, `rgba(7,7,7,${0.72 * alpha})`); g.addColorStop(0.6, `rgba(7,7,7,${0.35 * alpha})`); g.addColorStop(1, 'rgba(7,7,7,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const a = alpha;
   // counter above the caption
   const n = Math.floor(lerp(1, 7300, easeInOut(seg(t, .2, 4.2))));
-  text((t < 2.2 ? '已浪费的明天  ·  ' : '睡不着的深夜  ·  ') + n.toLocaleString('en-US'), W / 2, 380, `400 24px ${MONO}`, t < 2.2 ? 'rgba(184,72,60,1)' : 'rgba(150,160,200,1)', 'center', env(t, .3, 4.4, .4, .4));
+  ctx.save(); ctx.letterSpacing = '6px'; text((t < 2.2 ? '已浪费的明天  ·  ' : '睡不着的深夜  ·  ') + n.toLocaleString('en-US'), W / 2, 405, `400 20px ${MONO}`, 'rgba(184,72,60,1)', 'center', env(t, .3, 4.4, .4, .4)); ctx.restore();
 }
 // floor grid used behind charts
 function floorGrid(alpha, horizon = 700) {
