@@ -112,93 +112,159 @@ function floorGrid(alpha, horizon = 700) {
   ctx.restore();
 }
 
-// ---------- B · "tomorrow I'll start": a countdown that never reaches zero, and a dream bar vs reality ----------
+// ---------- B · "tomorrow I'll start": today walks forward, the START flag always hops one day ahead ----------
 function someday(t) {
   const a = env(t, 4.5, 8.85, .35, .35); if (a <= 0) return;
   ctx.save(); ctx.globalAlpha = a;
-  // the countdown: 1 → 0 → back to 1, faster and faster
-  const u = Math.max(0, t - 4.8), phase = u * (1.2 + u * .9), loops = Math.floor(phase), f = phase - loops, zero = f > .62;
-  text('距离开始', W / 2 - 250, 250, `500 30px ${SANS}`, 'rgba(160,152,138,1)', 'right');
-  const flash = zero ? 1 : 0;
-  text(zero ? '0' : '1', W / 2 - 150, 250, `900 150px ${SERIF}`, zero ? `rgb(${RED})` : `rgb(${WHITE})`, 'center', 1, zero ? 30 : 12);
-  text('天', W / 2 - 60, 272, `500 36px ${SANS}`, 'rgba(160,152,138,1)', 'left');
-  text('已推迟  ×' + (loops + 1), W / 2 + 160, 250, `400 34px ${MONO}`, `rgb(${RED})`, 'left', 1, 10);
-  // dream vs reality
-  const x0 = 560, bw = 900, y1 = 470, y2 = 610, fill = easeInOut(seg(t, 6.6, 8.2));
-  text('想象中的你', x0 - 30, y1 + 30, `700 32px ${SANS}`, `rgb(${GOLD})`, 'right', seg(t, 6.5, 6.9));
-  text('现实中的你', x0 - 30, y2 + 30, `700 32px ${SANS}`, 'rgba(200,192,178,1)', 'right', seg(t, 6.5, 6.9));
-  ctx.save(); ctx.globalAlpha *= seg(t, 6.5, 6.9);
-  ctx.setLineDash([12, 9]); ctx.strokeStyle = rgba(GOLD, .8); ctx.lineWidth = 2.5; rr(x0, y1, bw, 60, 30); ctx.stroke(); ctx.setLineDash([]);
-  if (fill > 0) { ctx.save(); rr(x0, y1, bw, 60, 30); ctx.clip(); const g = ctx.createLinearGradient(x0, 0, x0 + bw, 0); g.addColorStop(0, rgba(GOLD, .15)); g.addColorStop(1, rgba(GOLD, .45)); ctx.fillStyle = g; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 30; ctx.fillRect(x0, y1, bw * fill, 60); ctx.restore(); }
-  text(Math.round(fill * 100) + '%', x0 + bw + 30, y1 + 30, `900 44px ${SERIF}`, `rgb(${GOLD})`, 'left', 1, 16);
-  rr(x0, y2, bw, 60, 30); ctx.fillStyle = '#1e1c19'; ctx.fill();
-  ctx.fillStyle = `rgba(${RED},${.5 + .5 * Math.sin(t * 7)})`; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 16; ctx.beginPath(); ctx.arc(x0 + 30, y2 + 30, 10, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
-  text('0%', x0 + bw + 30, y2 + 30, `900 44px ${SERIF}`, `rgb(${RED})`, 'left', 1, 12);
-  ctx.restore();
+  const u = Math.max(0, t - 5.0), phase = u * (.9 + u * .38), n = Math.floor(phase), f = phase - n;
+  const hop = easeInOut(clamp(f / .45)), pos = n + hop;                 // today's position (in days)
+  const S = 118, G = 22, step = S + G, cy = 470, cam = pos * step * .55, X0 = 300;
+  const sx = i => X0 + i * step - cam;
+  const WEEK = ['一', '二', '三', '四', '五', '六', '日'];
+  for (let i = 0; i < 26; i++) {
+    const x = sx(i); if (x < -S || x > 1600) continue;
+    const fade = clamp((1560 - x) / 260) * clamp((x + S) / 200), appear = easeOut(seg(t, 4.6 + i * .04, 5.0 + i * .04));
+    ctx.save(); ctx.globalAlpha *= fade * appear;
+    const past = i < pos - .5;
+    rr(x - S / 2, cy - S / 2, S, S, 10);
+    if (past) { ctx.fillStyle = 'rgba(120,32,28,.85)'; ctx.fill(); }
+    else { ctx.fillStyle = '#1b1a17'; ctx.fill(); ctx.strokeStyle = 'rgba(200,190,170,.18)'; ctx.lineWidth = 2; ctx.stroke(); }
+    text('周' + WEEK[(i + 2) % 7], x, cy + S / 2 + 34, `400 22px ${MONO}`, past ? 'rgba(150,70,60,1)' : '#6d685e');
+    ctx.restore();
+  }
+  // today: white frame
+  const tx = sx(pos);
+  ctx.save(); ctx.strokeStyle = `rgb(${WHITE})`; ctx.lineWidth = 5; ctx.shadowColor = rgba(WHITE, .8); ctx.shadowBlur = 20;
+  rr(tx - S / 2 - 8, cy - S / 2 - 8, S + 16, S + 16, 14); ctx.stroke(); ctx.restore();
+  text('今天', tx, cy, `900 40px ${SERIF}`, `rgb(${WHITE})`, 'center', 1, 12);
+  // START flag: sits on tomorrow, jumps ahead just before today arrives
+  const fpos = n + 1 + easeInOut(clamp((f - .05) / .35)), fx = sx(fpos), jump = Math.sin(Math.PI * clamp((f - .05) / .35)) * 70;
+  const fy = cy - S / 2 - 70 - jump;
+  ctx.save(); ctx.strokeStyle = rgba(GOLD, .9); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(fx, fy + 28); ctx.lineTo(fx, cy - S / 2 - 6); ctx.stroke();
+  rr(fx - 62, fy - 28, 124, 56, 28); ctx.fillStyle = `rgb(${GOLD})`; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 30; ctx.fill(); ctx.restore();
+  text('开始', fx, fy + 1, `900 32px ${SERIF}`, '#1a1408');
+  ctx.save(); rr(sx(Math.round(fpos)) - S / 2, cy - S / 2, S, S, 10); ctx.strokeStyle = rgba(GOLD, .5 * (1 - jump / 70)); ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
+  // postponed counter
+  text('已推迟', W / 2 - 40, 230, `500 32px ${SANS}`, 'rgba(160,152,138,1)', 'right');
+  text(String(n), W / 2 + 10, 222, `900 110px ${SERIF}`, `rgb(${RED})`, 'left', 1, 24);
+  text('次', W / 2 + 10 + (n >= 10 ? 130 : 70), 236, `500 32px ${SANS}`, 'rgba(160,152,138,1)', 'left');
+  // success: glowing far away, never gets closer
+  const sk = seg(t, 6.6, 7.1);
+  if (sk > 0) {
+    ctx.save(); ctx.globalAlpha *= sk; const px = 1700, pulse = .75 + .25 * Math.sin(t * 4);
+    const g = ctx.createRadialGradient(px, cy, 10, px, cy, 220); g.addColorStop(0, rgba(GOLD, .35 * pulse)); g.addColorStop(1, rgba(GOLD, 0)); ctx.fillStyle = g; ctx.fillRect(px - 220, cy - 220, 440, 440);
+    ctx.setLineDash([10, 8]); ctx.strokeStyle = rgba(GOLD, .9); ctx.lineWidth = 3; rr(px - 80, cy - 80, 160, 160, 14); ctx.stroke(); ctx.setLineDash([]);
+    text('成功', px, cy, `900 48px ${SERIF}`, `rgb(${GOLD})`, 'center', 1, 26);
+    text('永远在下一个明天', px, cy + 128, `400 22px ${MONO}`, rgba(GOLD, .6));
+    ctx.restore();
+  }
   ctx.restore();
 }
 
-// ---------- C · the same day, 365 times; the frame closes like a cage ----------
+// ---------- C · the same loop every day; on "枷锁" the loop becomes a chain with a lock ----------
 function sameDays(t) {
   const a = env(t, 8.8, 13.75, .35, .35); if (a <= 0) return;
   ctx.save(); ctx.globalAlpha = a;
-  const cols = 53, rows = 7, cell = 22, gap = 6, step = cell + gap, total = cols * step - gap, x0 = (W - total) / 2, y0 = 330;
-  for (let c = 0; c < cols; c++) for (let r = 0; r < rows; r++) {
-    const i = c * 7 + r; if (i >= 365) continue;
-    const k = easeOut(seg(t, 9.0 + c * .02, 9.4 + c * .02));
-    ctx.globalAlpha = a * k; ctx.fillStyle = '#3a3835'; ctx.fillRect(x0 + c * step, y0 + r * step, cell, cell);
+  const cx = W / 2, cy = 430, R = 280, draw = easeInOut(seg(t, 8.95, 9.7)), chain = easeInOut(seg(t, 11.15, 11.9));
+  const u = Math.max(0, t - 9.5), laps = u * (.55 + u * .32), ang = -Math.PI / 2 - 2 * Math.PI / 6 + laps * 2 * Math.PI; // starts at 起床
+  // ring: grey line → red chain
+  const A0 = -Math.PI / 2;
+  ctx.save(); ctx.strokeStyle = `rgba(200,190,170,${.35 * (1 - chain)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, A0, A0 + draw * 2 * Math.PI); ctx.stroke(); ctx.restore();
+  if (chain > 0) {
+    const N = 56;
+    ctx.save(); ctx.strokeStyle = `rgb(${RED})`; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 14;
+    for (let i = 0; i < N; i++) {
+      const th = A0 + (i / N) * 2 * Math.PI, k = clamp(chain * 1.6 - i / N * .6); if (k <= 0) continue;
+      ctx.save(); ctx.globalAlpha *= k; ctx.translate(cx + R * Math.cos(th), cy + R * Math.sin(th)); ctx.rotate(th + Math.PI / 2);
+      ctx.lineWidth = 5; ctx.beginPath();
+      if (i % 2) ctx.ellipse(0, 0, 19, 8, 0, 0, 7); else { ctx.moveTo(-14, 0); ctx.lineTo(14, 0); }
+      ctx.stroke(); ctx.restore();
+    }
+    ctx.restore();
   }
-  ctx.globalAlpha = a;
-  text('JAN', x0, y0 + rows * step + 24, `400 16px ${MONO}`, '#4d4a44', 'left');
-  text('DEC', x0 + total, y0 + rows * step + 24, `400 16px ${MONO}`, '#4d4a44', 'right');
-  text('365 天  ·  同一天', W / 2, y0 - 50, `400 24px ${MONO}`, 'rgba(160,152,138,1)', 'center', seg(t, 9.3, 9.8));
-  // the cage closes on "枷锁"
-  const ck = easeInOut(seg(t, 11.1, 11.9)), pad = 26;
-  if (ck > 0) {
-    ctx.save(); ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 5; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 22;
-    const L = x0 - pad, R = x0 + total + pad, T = y0 - pad, B = y0 + rows * step - gap + pad, per = 2 * (R - L) + 2 * (B - T), d = per * ck;
-    ctx.beginPath(); ctx.moveTo(L, T); const pts = [[R, T], [R, B], [L, B], [L, T]]; let rem = d, px = L, py = T;
-    for (const [qx, qy] of pts) { const len = Math.hypot(qx - px, qy - py); if (rem >= len) { ctx.lineTo(qx, qy); rem -= len; px = qx; py = qy; } else { ctx.lineTo(px + (qx - px) * rem / len, py + (qy - py) * rem / len); break; } }
-    ctx.stroke(); ctx.restore();
+  // runner with a comet tail
+  if (t > 9.5) {
+    for (let k = 0; k < 24; k++) {
+      const th = ang - k * .035, al = (1 - k / 24) * .8;
+      ctx.fillStyle = rgba(chain > .5 ? RED : GOLD, al * .6); ctx.beginPath(); ctx.arc(cx + R * Math.cos(th), cy + R * Math.sin(th), 7 - k * .2, 0, 7); ctx.fill();
+    }
+    ctx.save(); ctx.fillStyle = '#fff6dc'; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 30; ctx.beginPath(); ctx.arc(cx + R * Math.cos(ang), cy + R * Math.sin(ang), 10, 0, 7); ctx.fill(); ctx.restore();
   }
-  // waiting counter
-  const n = Math.floor(lerp(1, 1825, easeInOut(seg(t, 12.4, 13.6))));
-  text('等待中  ·  第 ' + n.toLocaleString('en-US') + ' 天', W / 2, y0 + rows * step + 90, `400 30px ${MONO}`, `rgb(${RED})`, 'center', seg(t, 12.4, 12.8), 12);
+  // the six stops of the day
+  const STOPS = ['起床', '通勤', '上班', '下班', '刷手机', '睡觉'];
+  STOPS.forEach((s, i) => {
+    const th = -2 * Math.PI / 3 + i * Math.PI / 3, x = cx + R * Math.cos(th), y = cy + R * Math.sin(th);
+    const ap = easeOut(seg(t, 9.0 + i * .1, 9.4 + i * .1)); if (ap <= 0) return;
+    let d = Math.abs(((ang - th) % (2 * Math.PI) + 3 * Math.PI) % (2 * Math.PI) - Math.PI); const lit = t > 9.5 ? Math.exp(-d * d * 30) : 0;
+    ctx.save(); ctx.globalAlpha *= ap; ctx.font = `700 28px ${SANS}`; const w = ctx.measureText(s).width + 52;
+    rr(x - w / 2, y - 28, w, 56, 28); ctx.fillStyle = `rgb(${Math.round(lerp(28, 245, lit))},${Math.round(lerp(26, 215, lit))},${Math.round(lerp(23, 110, lit))})`;
+    if (lit > .3) { ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 24 * lit; } ctx.fill(); ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(200,190,170,.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+    text(s, x, y + 1, `700 28px ${SANS}`, lit > .5 ? '#1a1408' : 'rgba(210,202,188,1)', 'center', ap);
+  });
+  // day counter in the middle
+  const day = Math.floor(1 + 1824 * Math.pow(seg(t, 9.6, 13.5), 2.6)), waiting = seg(t, 12.4, 12.8);
+  ctx.save(); ctx.font = `900 96px ${SERIF}`; const dw = ctx.measureText(day.toLocaleString('en-US')).width; ctx.restore();
+  text('第', cx - dw / 2 - 16, cy - 4, `500 34px ${SANS}`, 'rgba(160,152,138,1)', 'right', seg(t, 9.4, 9.8));
+  text(day.toLocaleString('en-US'), cx, cy - 10, `900 96px ${SERIF}`, waiting > .5 ? `rgb(${RED})` : `rgb(${WHITE})`, 'center', seg(t, 9.4, 9.8), waiting > .5 ? 24 : 12);
+  text('天', cx + dw / 2 + 16, cy - 4, `500 34px ${SANS}`, 'rgba(160,152,138,1)', 'left', seg(t, 9.4, 9.8));
+  text(waiting > .5 ? '还在等' : '同样的一天', cx, cy + 74, `400 24px ${MONO}`, waiting > .5 ? rgba(RED, .9) : '#6d685e', 'center', seg(t, 9.6, 10));
+  // the lock drops onto the chain
+  const lk = seg(t, 11.7, 12.15);
+  if (lk > 0) {
+    const bounce = 1 - Math.pow(1 - lk, 3) * Math.cos(lk * 9), ly = cy + R + 18 - (1 - bounce) * 120;
+    ctx.save(); ctx.globalAlpha *= clamp(lk * 3); ctx.translate(cx, ly);
+    ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 10; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 24;
+    ctx.beginPath(); ctx.arc(0, -30, 26, Math.PI, 0); ctx.lineTo(26, -10); ctx.moveTo(-26, -30); ctx.lineTo(-26, -10); ctx.stroke();
+    rr(-46, -14, 92, 72, 12); ctx.fillStyle = `rgb(${RED})`; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = '#2a0c0a'; ctx.beginPath(); ctx.arc(0, 14, 9, 0, 7); ctx.fill(); ctx.fillRect(-4, 16, 8, 22);
+    ctx.restore();
+  }
   ctx.restore();
 }
 
-// ---------- D · selling time: 24 hours sold, a few coins in the jar ----------
+// ---------- D · selling time: 24 big gold hours fly into the jar and shrink into small coins ----------
 function sellingTime(t) {
-  const a = env(t, 14.7, 16.95, .3, .3); if (a <= 0) return;
+  const a = env(t, 14.6, 16.95, .3, .3); if (a <= 0) return;
   ctx.save(); ctx.globalAlpha = a;
-  const cell = 40, gap = 7, step = cell + gap, x0 = 200, y0 = 360;
-  text('一天 24 小时', x0, y0 - 46, `400 24px ${MONO}`, 'rgba(160,152,138,1)', 'left');
-  const sold = 22 * easeInOut(seg(t, 14.95, 16.3));
+  const B = 64, G = 10, cols = 3, tx0 = 470 - (cols * B + (cols - 1) * G) / 2, ty0 = 200;
+  const jx = 1330, jy = 500, jw = 300, jh = 380, jTop = jy - jh / 2, jBot = jy + jh / 2;
+  const blockPos = i => [tx0 + (i % cols) * (B + G) + B / 2, ty0 + Math.floor(i / cols) * (B + G) + B / 2];
+  const rest = i => [jx - 112 + (i % 9) * 28 + (hash(i, 4) - .5) * 10, jBot - 14 - Math.floor(i / 9) * 9];
+  const T0 = i => 14.95 + i * .045, FL = .45;
+  text('你的 24 小时', 470, ty0 - 50, `400 24px ${MONO}`, 'rgba(160,152,138,1)');
+  text('收入', jx, jTop - 50, `400 24px ${MONO}`, 'rgba(160,152,138,1)');
+  // tower slots
   for (let i = 0; i < 24; i++) {
-    const k = clamp(sold - i), col = i < 8 ? GOLD : i < 12 ? '240,150,70' : RED;
-    ctx.fillStyle = '#26241f'; ctx.fillRect(x0 + i * step - (i >= 12 ? 0 : 0), y0, cell, cell);
-    if (k > 0) { ctx.save(); ctx.globalAlpha *= k; ctx.fillStyle = `rgb(${col})`; ctx.shadowColor = `rgb(${col})`; ctx.shadowBlur = 12; ctx.fillRect(x0 + i * step, y0, cell, cell); ctx.restore(); }
+    const [x, y] = blockPos(i), k = seg(t, T0(i), T0(i) + FL);
+    if (k > 0) { ctx.save(); ctx.setLineDash([6, 6]); ctx.strokeStyle = 'rgba(200,190,170,.18)'; ctx.lineWidth = 1.5; rr(x - B / 2, y - B / 2, B, B, 8); ctx.stroke(); ctx.restore(); }
+    if (k <= 0) { ctx.save(); rr(x - B / 2, y - B / 2, B, B, 8); ctx.fillStyle = rgba(GOLD, .9); ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 16; ctx.fill(); ctx.restore();
+      text('1h', x, y, `400 18px ${MONO}`, 'rgba(40,30,10,.7)'); }
   }
-  [['上班', 0, 8, GOLD], ['加班', 8, 12, '240,150,70'], ['继续加班', 12, 22, RED], ['睡觉', 22, 24, '120,114,104']].forEach(([s, a0, a1, col]) =>
-    text(s, x0 + (a0 + a1) / 2 * step - gap / 2, y0 + cell + 34, `500 22px ${SANS}`, `rgb(${col})`, 'center', seg(t, 15.0 + a0 * .06, 15.3 + a0 * .06)));
   // the jar
-  const jx = 1580, jy = 500, jw = 240, jh = 300;
-  ctx.save(); ctx.strokeStyle = 'rgba(220,214,200,.6)'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(jx - jw / 2 + 20, jy - jh / 2); ctx.lineTo(jx - jw / 2 + 20, jy - jh / 2 + 30); ctx.quadraticCurveTo(jx - jw / 2, jy - jh / 2 + 40, jx - jw / 2, jy - jh / 2 + 80);
-  ctx.lineTo(jx - jw / 2, jy + jh / 2 - 20); ctx.quadraticCurveTo(jx - jw / 2, jy + jh / 2, jx - jw / 2 + 20, jy + jh / 2); ctx.lineTo(jx + jw / 2 - 20, jy + jh / 2); ctx.quadraticCurveTo(jx + jw / 2, jy + jh / 2, jx + jw / 2, jy + jh / 2 - 20);
-  ctx.lineTo(jx + jw / 2, jy - jh / 2 + 80); ctx.quadraticCurveTo(jx + jw / 2, jy - jh / 2 + 40, jx + jw / 2 - 20, jy - jh / 2 + 30); ctx.lineTo(jx + jw / 2 - 20, jy - jh / 2); ctx.stroke();
-  ctx.fillStyle = 'rgba(220,214,200,.04)'; ctx.fillRect(jx - jw / 2, jy - jh / 2 + 60, jw, jh - 60);
-  ctx.restore();
-  // one coin per sold hour, falling into the jar; they barely cover the bottom
-  const coin = (x, y, s = 1) => { ctx.save(); const g = ctx.createLinearGradient(0, y - 10, 0, y + 10); g.addColorStop(0, '#ffe9a8'); g.addColorStop(1, '#b48a32'); ctx.fillStyle = g; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 12;
-    ctx.beginPath(); ctx.ellipse(x, y, 26 * s, 9 * s, 0, 0, 7); ctx.fill(); ctx.strokeStyle = 'rgba(120,84,20,.8)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore(); };
-  const n = Math.floor(sold);
-  for (let i = 0; i < n; i++) {
-    const tStart = 14.95 + (i / 22) * 1.35, k = seg(t, tStart, tStart + .35), fx = jx - 70 + (hash(i, 3) * 140), restY = jy + jh / 2 - 12 - Math.floor(i / 5) * 6;
-    coin(fx, lerp(jy - jh / 2 - 80, restY, k * k));
+  ctx.save(); ctx.strokeStyle = 'rgba(220,214,200,.55)'; ctx.lineWidth = 3; const L = jx - jw / 2, Rr = jx + jw / 2;
+  ctx.beginPath(); ctx.moveTo(L + 30, jTop); ctx.lineTo(L + 30, jTop + 30); ctx.quadraticCurveTo(L, jTop + 40, L, jTop + 90); ctx.lineTo(L, jBot - 24); ctx.quadraticCurveTo(L, jBot, L + 24, jBot);
+  ctx.lineTo(Rr - 24, jBot); ctx.quadraticCurveTo(Rr, jBot, Rr, jBot - 24); ctx.lineTo(Rr, jTop + 90); ctx.quadraticCurveTo(Rr, jTop + 40, Rr - 30, jTop + 30); ctx.lineTo(Rr - 30, jTop); ctx.stroke();
+  const gl = ctx.createLinearGradient(L, 0, Rr, 0); gl.addColorStop(0, 'rgba(255,255,255,.06)'); gl.addColorStop(.3, 'rgba(255,255,255,.0)'); gl.addColorStop(1, 'rgba(255,255,255,.03)');
+  ctx.fillStyle = gl; ctx.fillRect(L, jTop + 60, jw, jh - 60);
+  ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(L + 22, jTop + 100, 8, jh - 160); ctx.restore();
+  const coin = (x, y, s) => { ctx.save(); const g = ctx.createLinearGradient(0, y - 9 * s, 0, y + 9 * s); g.addColorStop(0, '#ffe9a8'); g.addColorStop(1, '#b48a32'); ctx.fillStyle = g; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.ellipse(x, y, 15 * s, 6 * s, 0, 0, 7); ctx.fill(); ctx.restore(); };
+  // flying hours
+  for (let i = 0; i < 24; i++) {
+    const k = seg(t, T0(i), T0(i) + FL); if (k <= 0) continue;
+    const [x0, y0] = blockPos(i), [rx, ry] = rest(i);
+    if (k < .78) {
+      const q = k / .78, e = easeInOut(q), mx = jx + (hash(i, 2) - .5) * 60, cxp = lerp(x0, mx, .5), cyp = 90;
+      const x = (1 - e) * (1 - e) * x0 + 2 * (1 - e) * e * cxp + e * e * mx, y = (1 - e) * (1 - e) * y0 + 2 * (1 - e) * e * cyp + e * e * (jTop - 10);
+      const s = lerp(B, 30, easeOut(q)), r = lerp(8, s / 2, q);
+      ctx.save(); ctx.translate(x, y); ctx.rotate(q * 3 * (hash(i, 5) - .5)); rr(-s / 2, -s / 2, s, s, r); ctx.fillStyle = rgba(GOLD, .95); ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 18; ctx.fill(); ctx.restore();
+    } else {
+      const q = (k - .78) / .22, mx = jx + (hash(i, 2) - .5) * 60;
+      coin(lerp(mx, rx, q), lerp(jTop - 10, ry, q * q), 1);
+    }
   }
-  text('收入', jx, jy - jh / 2 - 110, `500 24px ${SANS}`, 'rgba(160,152,138,1)', 'center');
-  text('时间卖完了  ·  收入还是这么多', W / 2, 760, `700 34px ${SANS}`, 'rgba(232,180,170,1)', 'center', seg(t, 16.2, 16.6));
+  text('一整天  →  罐底薄薄一层', jx, jBot + 56, `400 24px ${MONO}`, rgba(RED, .85), 'center', seg(t, 16.2, 16.5));
   ctx.restore();
 }
 
@@ -239,9 +305,9 @@ window.render = function (t) {
   label(t);
 };
 window.ready = (async () => {
-  const all = CAPS.map(c => c[2]).join('') + '已浪费的明天睡不着的深夜距离开始天已推迟想象中的你现实中的你365同一天等待中第一天24小时上班加班继续加班睡觉收入时间卖完了还是这么多你以为的路真实的路年0123456789%×,·';
+  const all = CAPS.map(c => c[2]).join('') + '今天开始周一二三四五六日已推迟次成功永远在下一个明天起床通勤上班下班刷手机睡觉第天同样的一天还在等你的24小时收入一整天罐底薄薄一层→h已浪费的明天睡不着的深夜距离开始天已推迟想象中的你现实中的你365同一天等待中第一天24小时上班加班继续加班睡觉收入时间卖完了还是这么多你以为的路真实的路年0123456789%×,·';
   await Promise.all([document.fonts.load(`900 64px ${SERIF}`, all), document.fonts.load(`500 22px ${SANS}`, all), document.fonts.load(`700 32px ${SANS}`, all),
-    document.fonts.load(`400 24px ${MONO}`, 'DAYSOMEDAYSAMESELLINGTIMEROUTINEJANDEC0123456789·×, 已浪费的明天睡不着的深夜等待中第天一24小时')]);
+    document.fonts.load(`400 24px ${MONO}`, 'DAYSOMEDAYSAMESELLINGTIMEROUTINEJANDEC0123456789·×, h→已浪费的明天睡不着的深夜等待中第天一24小时周二三四五六日永远在下个同样的还在等你的收入整罐底薄层')]);
   await document.fonts.ready; window.render(0); return true;
 })();
 </script>
