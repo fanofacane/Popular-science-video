@@ -30,7 +30,7 @@ const easeInOut = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
 const env = (t, a, b, fi = .35, fo = .35) => Math.min(seg(t, a, a + fi), 1 - seg(t, b - fo, b));
 const rgba = (c, a) => `rgba(${c},${a})`;
 function hash(i, j) { let h = (i * 374761393 + j * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
-window.DURATION = 19.4; // sample: the first 20 seconds
+window.DURATION = 49.6; // voice ends at 46.5, then the title card
 
 // ---------- captions (episode 01 style: per-character blur-in) ----------
 // [start, end, text, y, size]
@@ -42,33 +42,48 @@ const CAPS = [
   [12.47, 13.7, '你还要{r:等}到什么时候？', 900, 52],
   [13.87, 14.6, '我告诉你，', 470, 76],
   [14.93, 16.8, '贱卖{g:时间}换不来{g:财富}，', 900, 52],
-  [16.95, 19.4, '{g:按部就班}走不出新路。', 900, 52],
+  [16.95, 19.3, '{g:按部就班}走不出新路。', 900, 52],
+  [19.42, 23.15, '每当你躺在床上，想到这辈子可能就{r:这样}了，', 900, 52],
+  [23.45, 24.65, '你真的{g:甘心}吗？', 470, 76],
+  [24.93, 28.0, '从这一刻起，{g:不认命}，只认{g:自己}。', 900, 52],
+  [28.22, 29.65, '发了疯地去{g:健身}，', 900, 52],
+  [29.8, 31.4, '发了疯地{g:提升自己}，', 900, 52],
+  [31.56, 33.95, '去做{g:自媒体}，去学{g:AI}。', 900, 52],
+  [34.14, 36.95, '无论如何，都要{g:跳出}现有的规则，', 900, 52],
+  [37.19, 39.2, '因为那就是你的{r:枷锁}。', 900, 52],
+  [39.49, 42.05, 'Lose {s:yourself} to find {g:yourself}.', 470, 92],
+  [42.38, 44.35, '现在，写下你的{g:目标}，', 900, 52],
+  [44.58, 46.75, '让命运看看你的{g:决心}。', 900, 52],
 ];
-function parse(s) { const out = []; const re = /\{([gr]):([^}]*)\}|([^{]+)/g; let m; while ((m = re.exec(s))) { const c = m[1] || ''; for (const ch of (m[2] ?? m[3])) out.push([ch, c]); } return out; }
+function parse(s) { const out = []; const re = /\{([grs]):([^}]*)\}|([^{]+)/g; let m; while ((m = re.exec(s))) { const c = m[1] || ''; for (const ch of (m[2] ?? m[3])) out.push([ch, c]); } return out; }
 function caption(t, [a, b, s, y, size]) {
   const chars = parse(s), outK = seg(t, b - .3, b);
   if (t < a - .05 || outK >= 1) return;
   ctx.save(); ctx.font = `900 ${size}px ${SERIF}`; ctx.textBaseline = 'middle';
   const ws = chars.map(([ch]) => ctx.measureText(ch).width), total = ws.reduce((p, q) => p + q, 0);
-  let x = W / 2 - total / 2;
+  let x = W / 2 - total / 2, sx0 = 1e9, sx1 = -1e9;
   chars.forEach(([ch, c], i) => {
     const t0 = a + i * .045, k = easeOut(seg(t, t0, t0 + .4)), al = k * (1 - outK);
     if (al > 0) {
-      const col = c === 'g' ? GOLD : c === 'r' ? RED : WHITE;
+      const col = c === 'g' ? GOLD : c === 'r' ? RED : c === 's' ? lerp3(WHITE, '150,140,128', seg(t, a + 1.0, a + 1.3)) : WHITE;
       ctx.save(); ctx.globalAlpha = al; ctx.filter = `blur(${(1 - k) * 14 + outK * 10}px)`; ctx.fillStyle = rgba(col, 1);
       ctx.shadowColor = rgba(col, c ? .55 : .28); ctx.shadowBlur = c ? 26 : 22; ctx.fillText(ch, x, y + (1 - k) * 10); ctx.restore();
     }
+    if (c === 's') { sx0 = Math.min(sx0, x); sx1 = Math.max(sx1, x + ws[i]); }
     x += ws[i];
   });
+  const sk = easeOut(seg(t, a + 1.0, a + 1.3)) * (1 - outK);
+  if (sx1 > sx0 && sk > 0) { ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = size * .07; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 18; ctx.beginPath(); ctx.moveTo(sx0 - 6, y + 4); ctx.lineTo(sx0 - 6 + (sx1 - sx0 + 12) * sk, y + 4); ctx.stroke(); }
   ctx.restore();
 }
+const lerp3 = (c1, c2, k) => { const p = c1.split(',').map(Number), q = c2.split(',').map(Number); return p.map((v, i) => Math.round(lerp(v, q[i], k))).join(','); };
 function text(s, x, y, font, color, align = 'center', alpha = 1, glow = 0) {
   if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle';
   if (glow) { ctx.shadowColor = color; ctx.shadowBlur = glow; } ctx.fillText(s, x, y); ctx.restore();
 }
 function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 // top-left label, as in episode 01
-const LABELS = [[0.1, 4.4, 'DAYS  ·  日子'], [4.6, 8.8, 'SOMEDAY  ·  明天开始'], [8.9, 13.7, 'SAME DAY  ·  每一天'], [14.8, 16.85, 'SELLING TIME  ·  出卖时间'], [16.9, 19.4, 'ROUTINE  ·  按部就班']];
+const LABELS = [[0.1, 4.4, 'DAYS  ·  日子'], [4.6, 8.8, 'SOMEDAY  ·  明天开始'], [8.9, 13.7, 'SAME DAY  ·  每一天'], [14.8, 16.85, 'SELLING TIME  ·  出卖时间'], [16.9, 19.3, 'ROUTINE  ·  按部就班'], [19.4, 24.75, 'LIFE  ·  一辈子'], [24.85, 28.1, 'FROM NOW ON  ·  从这一刻起'], [28.15, 34.0, 'ALL IN  ·  发了疯'], [34.05, 39.3, 'BREAK OUT  ·  跳出规则'], [39.4, 42.15, 'LOSE YOURSELF  ·  放下'], [42.25, 46.8, 'YOUR GOAL  ·  目标']];
 function label(t) {
   ctx.save(); ctx.letterSpacing = '6px'; for (const [a, b, s] of LABELS) if (t >= a && t <= b) text(s, 120, 102, `400 22px ${MONO}`, 'rgba(109,104,94,1)', 'left', env(t, a, b, .4, .3)); ctx.restore();
 }
@@ -268,7 +283,7 @@ function sellingTime(t) {
 
 // ---------- E · routine: a flat line (reference-style glowing line) vs the imagined climb ----------
 function routine(t) {
-  const a = env(t, 16.85, 19.6, .35, .1); if (a <= 0) return;
+  const a = env(t, 16.85, 19.45, .35, .3); if (a <= 0) return;
   ctx.save(); ctx.globalAlpha = a;
   floorGrid(.5, 760);
   const px0 = 300, px1 = 1620, base = 640, k = easeInOut(seg(t, 17.0, 19.2)), xh = lerp(px0, px1, k);
@@ -295,17 +310,203 @@ function routine(t) {
   ctx.restore();
 }
 
+// ---------- shared drawing helpers ----------
+function chainRing(cx, cy, R, k) {
+  if (k <= 0) return; const N = 56, A0 = -Math.PI / 2;
+  ctx.save(); ctx.strokeStyle = `rgb(${RED})`; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 14;
+  for (let i = 0; i < N; i++) {
+    const th = A0 + (i / N) * 2 * Math.PI, q = clamp(k * 1.6 - i / N * .6); if (q <= 0) continue;
+    ctx.save(); ctx.globalAlpha *= q; ctx.translate(cx + R * Math.cos(th), cy + R * Math.sin(th)); ctx.rotate(th + Math.PI / 2);
+    ctx.lineWidth = 5; ctx.beginPath(); if (i % 2) ctx.ellipse(0, 0, 19, 8, 0, 0, 7); else { ctx.moveTo(-14, 0); ctx.lineTo(14, 0); } ctx.stroke(); ctx.restore();
+  }
+  ctx.restore();
+}
+function padlock(cx, cy, lk) {
+  if (lk <= 0) return; const bounce = 1 - Math.pow(1 - lk, 3) * Math.cos(lk * 9), ly = cy - (1 - bounce) * 120;
+  ctx.save(); ctx.globalAlpha *= clamp(lk * 3); ctx.translate(cx, ly);
+  ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 10; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 24;
+  ctx.beginPath(); ctx.arc(0, -30, 26, Math.PI, 0); ctx.lineTo(26, -10); ctx.moveTo(-26, -30); ctx.lineTo(-26, -10); ctx.stroke();
+  rr(-46, -14, 92, 72, 12); ctx.fillStyle = `rgb(${RED})`; ctx.fill(); ctx.shadowBlur = 0;
+  ctx.fillStyle = '#2a0c0a'; ctx.beginPath(); ctx.arc(0, 14, 9, 0, 7); ctx.fill(); ctx.fillRect(-4, 16, 8, 22); ctx.restore();
+}
+function pill(s, x, y, lit, alpha = 1, font = `700 28px ${SANS}`) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.font = font; const w = ctx.measureText(s).width + 52;
+  rr(x - w / 2, y - 28, w, 56, 28); ctx.fillStyle = `rgb(${Math.round(lerp(28, 245, lit))},${Math.round(lerp(26, 215, lit))},${Math.round(lerp(23, 110, lit))})`;
+  if (lit > .3) { ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 24 * lit; } ctx.fill(); ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(200,190,170,.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+  text(s, x, y + 1, font, lit > .5 ? '#1a1408' : 'rgba(210,202,188,1)', 'center', alpha);
+}
+function glowLine(pts, alpha = 1) { // the reference-video line: glow, light curtains, head flare (line charts only)
+  if (pts.length < 2) return; ctx.save(); ctx.globalAlpha *= alpha;
+  for (let i = 0; i < pts.length; i += 2) {
+    const [x, y] = pts[i], h = 120 + 90 * hash(i, 9), g = ctx.createLinearGradient(0, y, 0, y + h);
+    g.addColorStop(0, rgba(GOLD, .2 * (.4 + .6 * hash(i, 2)))); g.addColorStop(1, rgba(GOLD, 0)); ctx.fillStyle = g; ctx.fillRect(x - 2, y, 4, h);
+  }
+  ctx.strokeStyle = 'rgba(255,236,170,.98)'; ctx.lineWidth = 4; ctx.shadowColor = rgba(GOLD, .95); ctx.shadowBlur = 24; ctx.lineJoin = 'round';
+  ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); ctx.shadowBlur = 0;
+  const [hx, hy] = pts[pts.length - 1], fl = ctx.createRadialGradient(hx, hy, 2, hx, hy, 130);
+  fl.addColorStop(0, 'rgba(255,250,230,.95)'); fl.addColorStop(.2, 'rgba(255,230,170,.3)'); fl.addColorStop(1, 'rgba(255,230,170,0)');
+  ctx.fillStyle = fl; ctx.fillRect(hx - 130, hy - 130, 260, 260);
+  ctx.fillStyle = 'rgba(255,245,220,.4)'; ctx.fillRect(hx - 170, hy - 1.5, 340, 3); ctx.fillRect(hx - 1.5, hy - 70, 3, 140);
+  ctx.restore();
+}
+
+// ---------- F · a life of 80 squares: lived years in gold, the rest copied as the same grey ----------
+function life(t) {
+  const a = env(t, 19.3, 24.8, .35, .4) * (1 - .8 * seg(t, 23.1, 23.5)); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const cols = 10, S = 58, G = 12, st = S + G, x0 = (W - (cols * st - G)) / 2, y0 = 230, LIVED = 28;
+  text('人生 80 年  ·  一格一年', W / 2, y0 - 56, `400 24px ${MONO}`, 'rgba(160,152,138,1)', 'center', seg(t, 19.5, 19.9));
+  for (let i = 0; i < 80; i++) {
+    const x = x0 + (i % cols) * st, y = y0 + Math.floor(i / cols) * st;
+    const ap = easeOut(seg(t, 19.45 + i * .006, 19.75 + i * .006)); if (ap <= 0) continue;
+    ctx.save(); ctx.globalAlpha *= ap; rr(x, y, S, S, 6);
+    if (i < LIVED) {
+      const k = seg(t, 19.8 + i * .03, 19.95 + i * .03); ctx.fillStyle = k > 0 ? rgba(GOLD, lerp(.12, .85, k)) : '#1b1a17'; if (k > .5) { ctx.shadowColor = rgba(GOLD, .6); ctx.shadowBlur = 10; } ctx.fill();
+    } else {
+      // "maybe this is it": every remaining year is filled with the same grey, a copy of the same day
+      const k = seg(t, 21.3 + (i - LIVED) * .022, 21.45 + (i - LIVED) * .022);
+      ctx.fillStyle = k > 0 ? `rgba(78,74,68,${lerp(.3, 1, k)})` : '#1b1a17'; ctx.fill(); ctx.strokeStyle = 'rgba(200,190,170,.12)'; ctx.lineWidth = 1.5; ctx.stroke();
+      if (k > 0) text('同', x + S / 2, y + S / 2 + 1, `500 22px ${SANS}`, 'rgba(150,142,130,1)', 'center', k * .9);
+    }
+    ctx.restore();
+  }
+  // "you are here"
+  const hx = x0 + (LIVED % cols) * st, hy = y0 + Math.floor(LIVED / cols) * st, hk = seg(t, 20.7, 21.0);
+  ctx.save(); ctx.globalAlpha *= hk; ctx.strokeStyle = `rgb(${WHITE})`; ctx.lineWidth = 4; ctx.shadowColor = rgba(WHITE, .8); ctx.shadowBlur = 16; rr(hx - 6, hy - 6, S + 12, S + 12, 9); ctx.stroke(); ctx.restore();
+  text('你在这里  →', x0 - 30, hy + S / 2, `700 26px ${SANS}`, `rgb(${WHITE})`, 'right', hk);
+  const R = x0 + cols * st + 30;
+  text('已经过去  28 年', R, y0 + 90, `400 26px ${MONO}`, `rgb(${GOLD})`, 'left', seg(t, 20.6, 21.0));
+  text('剩下  52 年', R, y0 + 330, `400 26px ${MONO}`, 'rgba(180,172,160,1)', 'left', seg(t, 21.3, 21.7));
+  text('每一年都一样', R, y0 + 380, `700 30px ${SANS}`, `rgb(${RED})`, 'left', seg(t, 22.3, 22.7), 12);
+  ctx.restore();
+}
+
+// ---------- H · two switches: 认命 off, 认自己 on ----------
+function toggle(x, y, on, col) {
+  const w = 150, h = 72; rr(x, y - h / 2, w, h, h / 2);
+  ctx.fillStyle = on > 0 ? `rgba(${col},${.25 + .2 * on})` : '#1d1b18'; ctx.fill(); ctx.strokeStyle = on > .5 ? `rgba(${col},.8)` : 'rgba(200,190,170,.25)'; ctx.lineWidth = 2; ctx.stroke();
+  const kx = lerp(x + h / 2, x + w - h / 2, on); ctx.save(); ctx.fillStyle = on > .5 ? `rgb(${col})` : '#4a4740'; if (on > .5) { ctx.shadowColor = `rgb(${col})`; ctx.shadowBlur = 30; }
+  ctx.beginPath(); ctx.arc(kx, y, 27, 0, 7); ctx.fill(); ctx.restore();
+}
+function choice(t) {
+  const a = env(t, 24.8, 28.1, .35, .35); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const warm = seg(t, 27.0, 27.8); if (warm > 0) { const g = ctx.createRadialGradient(W / 2, 480, 20, W / 2, 480, 800); g.addColorStop(0, rgba(GOLD, .16 * warm)); g.addColorStop(1, rgba(GOLD, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+  floorGrid(.35 + .4 * warm, 720);
+  const cx = W / 2, y1 = 370, y2 = 540;
+  const off = easeInOut(seg(t, 26.15, 26.45)), on = easeInOut(seg(t, 27.04, 27.34));
+  text('认命', cx - 40, y1, `900 64px ${SERIF}`, off > .5 ? 'rgba(130,122,110,1)' : `rgb(${WHITE})`, 'right');
+  if (off > 0) { ctx.save(); ctx.strokeStyle = `rgb(${RED})`; ctx.lineWidth = 6; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 16; ctx.beginPath(); ctx.moveTo(cx - 180, y1 + 2); ctx.lineTo(cx - 180 + 150 * off, y1 + 2); ctx.stroke(); ctx.restore(); }
+  toggle(cx + 20, y1, 1 - off, '200,190,170');
+  text(off > .5 ? 'OFF' : 'ON', cx + 200, y1, `400 24px ${MONO}`, off > .5 ? 'rgba(110,104,94,1)' : 'rgba(200,190,170,1)', 'left');
+  text('认自己', cx - 40, y2, `900 64px ${SERIF}`, on > .5 ? `rgb(${GOLD})` : 'rgba(130,122,110,1)', 'right', seg(t, 25.0, 25.4), on > .5 ? 28 : 0);
+  ctx.save(); ctx.globalAlpha *= seg(t, 25.0, 25.4); toggle(cx + 20, y2, on, GOLD); ctx.restore();
+  text(on > .5 ? 'ON' : 'OFF', cx + 200, y2, `400 24px ${MONO}`, on > .5 ? `rgb(${GOLD})` : 'rgba(110,104,94,1)', 'left', seg(t, 25.0, 25.4));
+  ctx.restore();
+}
+
+// ---------- I · radar: four axes pushed to the edge, one per phrase ----------
+function radar(t) {
+  const a = env(t, 28.1, 34.0, .35, .35); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const cx = W / 2, cy = 460, R = 290;
+  const AX = [['体能', 28.45], ['能力', 30.0], ['影响力', 31.75], ['AI', 32.9]];
+  const ang = i => -Math.PI / 2 + i * Math.PI / 2;
+  ctx.strokeStyle = 'rgba(200,190,170,.14)'; ctx.lineWidth = 1.5;
+  for (const f of [.25, .5, .75, 1]) { ctx.beginPath(); AX.forEach((_, i) => { const x = cx + R * f * Math.cos(ang(i)), y = cy + R * f * Math.sin(ang(i)); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath(); ctx.stroke(); }
+  AX.forEach((_, i) => { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + R * Math.cos(ang(i)), cy + R * Math.sin(ang(i))); ctx.stroke(); });
+  const v = AX.map(([, t0]) => { const k = seg(t, t0, t0 + .6); return .18 + .82 * (k < 1 ? easeOut(k) * (1 + .12 * Math.sin(k * Math.PI)) : 1); });
+  const P = v.map((r, i) => [cx + R * r * Math.cos(ang(i)), cy + R * r * Math.sin(ang(i))]);
+  const ap = seg(t, 28.25, 28.6);
+  ctx.save(); ctx.globalAlpha *= ap; ctx.beginPath(); P.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath();
+  ctx.fillStyle = rgba(GOLD, .16); ctx.fill(); ctx.strokeStyle = `rgb(${GOLD})`; ctx.lineWidth = 3.5; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 20; ctx.stroke();
+  P.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 8, 0, 7); ctx.fillStyle = `rgb(${GOLD})`; ctx.fill(); }); ctx.restore();
+  // labels
+  const LP = [[cx, cy - R - 46, 'center'], [cx + R + 34, cy, 'left'], [cx, cy + R + 46, 'center'], [cx - R - 34, cy, 'right']];
+  AX.forEach(([s, t0], i) => { const lit = seg(t, t0, t0 + .3); text(s, LP[i][0], LP[i][1], `900 40px ${SERIF}`, lit > .5 ? `rgb(${GOLD})` : 'rgba(130,122,110,1)', LP[i][2], seg(t, 28.2, 28.6), lit > .5 ? 22 : 0); });
+  text('你', cx, cy, `400 22px ${MONO}`, 'rgba(160,152,138,1)', 'center', ap);
+  ctx.restore();
+}
+
+// ---------- J · break out: the dot leaves the daily loop; the loop becomes the chain ----------
+function breakout(t) {
+  const a = env(t, 34.0, 39.3, .35, .35); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const cx = W / 2 - 120, cy = 430, R = 280, chain = easeInOut(seg(t, 37.3, 38.0)), TB = 35.4, thB = -Math.PI / 2 - .1, w = 7;
+  ctx.strokeStyle = `rgba(200,190,170,${.35 * (1 - chain)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+  chainRing(cx, cy, R, chain);
+  ['起床', '通勤', '上班', '下班', '刷手机', '睡觉'].forEach((s, i) => pill(s, cx + R * Math.cos(-2 * Math.PI / 3 + i * Math.PI / 3), cy + R * Math.sin(-2 * Math.PI / 3 + i * Math.PI / 3), 0, seg(t, 34.1, 34.5)));
+  // runner position over time
+  const T1 = 36.6, target = [1560, 400];
+  const posAt = tt => {
+    if (tt <= TB) { const th = thB - (TB - tt) * w; return [cx + R * Math.cos(th), cy + R * Math.sin(th)]; }
+    const p0 = [cx + R * Math.cos(thB), cy + R * Math.sin(thB)], tg = [-Math.sin(thB), Math.cos(thB)], p1 = [p0[0] + tg[0] * 380, p0[1] + tg[1] * 380 + 40];
+    const e = easeInOut(seg(tt, TB, T1)); return [(1 - e) * (1 - e) * p0[0] + 2 * (1 - e) * e * p1[0] + e * e * target[0], (1 - e) * (1 - e) * p0[1] + 2 * (1 - e) * e * p1[1] + e * e * target[1]];
+  };
+  if (t > 34.2) {
+    for (let k = 26; k >= 1; k--) { const [x, y] = posAt(t - k * .012), al = (1 - k / 26) * .7; ctx.fillStyle = rgba(GOLD, al * .6); ctx.beginPath(); ctx.arc(x, y, 9 - k * .25, 0, 7); ctx.fill(); }
+    const [x, y] = posAt(t), grow = easeOut(seg(t, T1 - .2, T1 + .4)), r = 10 + 16 * grow;
+    const g = ctx.createRadialGradient(x, y, 2, x, y, 40 + 140 * grow); g.addColorStop(0, rgba(GOLD, .5)); g.addColorStop(1, rgba(GOLD, 0)); ctx.fillStyle = g; ctx.fillRect(x - 200, y - 200, 400, 400);
+    ctx.save(); ctx.fillStyle = '#fff6dc'; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 40; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.restore();
+    text('你', target[0], target[1] + 70, `900 40px ${SERIF}`, `rgb(${GOLD})`, 'center', seg(t, T1, T1 + .3), 20);
+    text('规则之外', target[0], target[1] + 118, `400 22px ${MONO}`, rgba(GOLD, .7), 'center', seg(t, T1 + .2, T1 + .5));
+  }
+  padlock(cx, cy + R + 18, seg(t, 37.9, 38.35));
+  text('现有的规则', cx, cy, `400 26px ${MONO}`, chain > .5 ? rgba(RED, .9) : 'rgba(160,152,138,1)', 'center', seg(t, 34.3, 34.7));
+  ctx.restore();
+}
+
+// ---------- K · lose yourself (the caption carries the scene) ----------
+function loseYourself(t) {
+  const a = env(t, 39.35, 42.15, .35, .3); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; floorGrid(.35, 720);
+  ctx.save(); ctx.letterSpacing = '6px'; text('放下旧的你  ·  才能找到新的你', W / 2, 590, `400 26px ${MONO}`, 'rgba(160,152,138,1)', 'center', seg(t, 40.7, 41.1)); ctx.restore();
+  ctx.restore();
+}
+
+// ---------- L · your goal: a rising line (reference line style) climbs to an empty goal box ----------
+function goal(t) {
+  const a = env(t, 42.2, 46.85, .35, .3); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; floorGrid(.45, 760);
+  const bx = 1250, by = 200, bw = 420, bh = 120, arrive = seg(t, 46.1, 46.5);
+  // goal box with a blinking cursor
+  const bk = easeOut(seg(t, 42.5, 42.9));
+  ctx.save(); ctx.globalAlpha *= bk; ctx.setLineDash([12, 9]); ctx.strokeStyle = rgba(GOLD, .55 + .45 * arrive); ctx.lineWidth = 3; if (arrive > 0) { ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 30 * arrive; }
+  rr(bx, by, bw, bh, 16); ctx.stroke(); ctx.restore();
+  text('我的目标：', bx + 34, by + bh / 2, `900 40px ${SERIF}`, `rgb(${GOLD})`, 'left', bk, 16);
+  if (Math.floor(t * 2.2) % 2 === 0) { ctx.save(); ctx.globalAlpha *= bk; ctx.fillStyle = `rgb(${WHITE})`; ctx.fillRect(bx + 250, by + bh / 2 - 26, 4, 52); ctx.restore(); }
+  // the line: from today, up toward the box
+  const x0 = 300, x1 = bx + 40, y0 = 760, y1 = by + bh + 60, k = easeInOut(seg(t, 42.8, 46.2)), pts = [];
+  for (let x = x0; x <= lerp(x0, x1, k); x += 6) { const u = (x - x0) / (x1 - x0); pts.push([x, lerp(y0, y1, Math.pow(u, 1.9)) + Math.sin(u * 40) * 6 * (1 - u)]); }
+  glowLine(pts, seg(t, 42.8, 43.0));
+  text('今天', x0, y0 + 50, `500 26px ${SANS}`, 'rgba(200,192,178,1)', 'center', seg(t, 42.7, 43.0));
+  ctx.restore();
+}
+
+// ---------- M · title card ----------
+function titleCard(t) {
+  const a = env(t, 46.75, 49.7, .8, .01); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; floorGrid(.8, 700);
+  const g = ctx.createRadialGradient(W / 2, 700, 10, W / 2, 700, 700); g.addColorStop(0, 'rgba(255,200,120,.10)'); g.addColorStop(1, 'rgba(255,200,120,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.letterSpacing = '8px'; text('第  0 2  期', W / 2, 395, `400 22px ${MONO}`, 'rgba(160,152,138,1)', 'center', seg(t, 47.0, 47.5)); ctx.restore();
+  const k = easeOut(seg(t, 46.8, 47.7));
+  ctx.save(); ctx.filter = `blur(${(1 - k) * 16}px)`; ctx.letterSpacing = '24px'; text('不认命', W / 2 + 12, 500, `900 150px ${SERIF}`, `rgb(${GOLD})`, 'center', k, 40); ctx.restore();
+  ctx.save(); ctx.letterSpacing = '10px'; text('LOSE YOURSELF  TO  FIND YOURSELF', W / 2, 610, `400 22px ${MONO}`, 'rgba(200,180,120,1)', 'center', seg(t, 47.5, 48.1)); ctx.restore();
+  ctx.restore();
+}
+
 window.render = function (t) {
   ctx.fillStyle = '#070707'; ctx.fillRect(0, 0, W, H);
-  pixelWall(t); someday(t); sameDays(t); sellingTime(t); routine(t);
+  pixelWall(t); someday(t); sameDays(t); sellingTime(t); routine(t); life(t); choice(t); radar(t); breakout(t); loseYourself(t); goal(t); titleCard(t);
   vignette();
   for (const c of CAPS) caption(t, c);
   label(t);
 };
 window.ready = (async () => {
-  const all = CAPS.map(c => c[2]).join('') + '今天开始周一二三四五六日已推迟次成功永远在下一个明天起床通勤上班下班刷手机睡觉第天同样的一天还在等你的24小时收入一整天罐底薄薄一层→h已浪费的明天睡不着的深夜距离开始天已推迟想象中的你现实中的你365同一天等待中第一天24小时上班加班继续加班睡觉收入时间卖完了还是这么多你以为的路真实的路年0123456789%×,·';
+  const all = CAPS.map(c => c[2]).join('') + '人生年一格已经过去剩下每都样同你在这里认命自己体能力影响AI现有的规则之外放下旧才找到新我目标：今天不算法LOSEYOURFINDT今天开始周一二三四五六日已推迟次成功永远在下一个明天起床通勤上班下班刷手机睡觉第天同样的一天还在等你的24小时收入一整天罐底薄薄一层→h已浪费的明天睡不着的深夜距离开始天已推迟想象中的你现实中的你365同一天等待中第一天24小时上班加班继续加班睡觉收入时间卖完了还是这么多你以为的路真实的路年0123456789%×,·';
   await Promise.all([document.fonts.load(`900 64px ${SERIF}`, all), document.fonts.load(`500 22px ${SANS}`, all), document.fonts.load(`700 32px ${SANS}`, all),
-    document.fonts.load(`400 24px ${MONO}`, 'DAYSOMEDAYSAMESELLINGTIMEROUTINEJANDEC0123456789·×, h→已浪费的明天睡不着的深夜等待中第天一24小时周二三四五六日永远在下个同样的还在等你的收入整罐底薄层')]);
+    document.fonts.load(`400 24px ${MONO}`, 'DAYSOMEDAYSAMESELLINGTIMEROUTINEJANDECLIFROWNBKYUGHTPQ人生年一格已经过去剩下放下旧的才能找到新现有规则之外算法0123456789·×, h→已浪费的明天睡不着的深夜等待中第天一24小时周二三四五六日永远在下个同样的还在等你的收入整罐底薄层')]);
   await document.fonts.ready; window.render(0); return true;
 })();
 </script>
