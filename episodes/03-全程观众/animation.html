@@ -83,74 +83,138 @@ const CAPS = [
   { a: 17.9, b: 21.6, s: '在别人的眼里，你永远只是几个{r:零碎的片段}。', y: 985, size: 50 },
 ];
 
-// ---------- light shards ----------
-const SHARDS = [];
-for (let i = 0, n = 0; SHARDS.length < 46 && n < 600; n++) {
-  const x = 80 + hash(n, 1) * (W - 160), y = 60 + hash(n, 2) * (H - 260);
-  const ex = (x - W / 2) / 640, ey = (y - 470) / 230;
-  if (ex * ex + ey * ey < 1) continue; // keep the eye clear
-  const big = hash(n, 3);
-  const size = big < .15 ? 70 + 50 * hash(n, 4) : big < .5 ? 34 + 26 * hash(n, 4) : 12 + 18 * hash(n, 4);
-  const k = 3 + Math.floor(hash(n, 5) * 3), verts = [];
-  for (let v = 0; v < k; v++) { const ang = (v / k) * Math.PI * 2 + (hash(n, 10 + v) - .5) * 1.1; verts.push([Math.cos(ang) * size * (.55 + .5 * hash(n, 20 + v)), Math.sin(ang) * size * (.55 + .5 * hash(n, 30 + v))]); }
-  const c = hash(n, 6);
-  SHARDS.push({ x, y, size, verts, col: c < .5 ? GOLD : c < .82 ? '236,232,222' : '176,204,255', rot: hash(n, 7) * 6.28, spin: (hash(n, 8) - .5) * .5, ph: hash(n, 9) * 6.28, t0: hash(n, 40) });
-  i++;
+// ---------- light shards: elongated glass splinters in three depth layers ----------
+const SHARDS = [], BOKEH = [];
+const LAYERS = { far: { n: 26, s: [10, 26], blur: 2.2, al: .45 }, mid: { n: 18, s: [28, 62], blur: 0, al: 1 }, near: { n: 7, s: [100, 170], blur: 7, al: .55 } };
+let seed = 0;
+for (const [name, L] of Object.entries(LAYERS)) {
+  for (let i = 0; i < L.n; seed++) {
+    if (seed > 4000) break;
+    const n = seed;
+    const near = name === 'near';
+    const x = near ? (hash(n, 1) < .5 ? -40 + hash(n, 2) * 360 : W - 320 + hash(n, 2) * 360) : 60 + hash(n, 1) * (W - 120);
+    const y = near ? 40 + hash(n, 3) * (H - 80) : 50 + hash(n, 3) * 820;
+    const ex = (x - W / 2) / 700, ey = (y - 470) / 250;
+    if (!near && ex * ex + ey * ey < 1) continue;   // keep the eyes clear
+    if (!near && y > 860) continue;                  // keep the subtitle clear
+    const size = L.s[0] + (L.s[1] - L.s[0]) * hash(n, 4), thin = .22 + .3 * hash(n, 5), k = 4 + (hash(n, 6) < .4);
+    const verts = [];
+    for (let v = 0; v < k; v++) { const ang = (v / k) * 6.283 + (hash(n, 10 + v) - .5) * .9, r = .6 + .45 * hash(n, 20 + v); verts.push([Math.cos(ang) * size * r, Math.sin(ang) * size * r * thin]); }
+    // longest edge carries the highlight
+    let best = 0, bl = 0; verts.forEach((p, v) => { const q = verts[(v + 1) % k], l = Math.hypot(q[0] - p[0], q[1] - p[1]); if (l > bl) { bl = l; best = v; } });
+    const c = hash(n, 7);
+    SHARDS.push({ layer: name, L, x, y, size, verts, hi: best, col: c < .55 ? '250,222,150' : c < .88 ? '240,236,226' : '186,208,255',
+      rot: hash(n, 8) * 6.28, spin: (hash(n, 9) - .5) * (near ? .12 : .3), ph: hash(n, 30) * 6.28, t0: hash(n, 31) });
+    i++;
+  }
 }
+for (let n = 0; BOKEH.length < 22 && n < 400; n++) { const x = hash(n, 51) * W, y = hash(n, 52) * 900; if (Math.abs(x - W / 2) < 760 && Math.abs(y - 470) < 300) continue; BOKEH.push({ x, y, r: 8 + 30 * hash(n, 53), al: .05 + .12 * hash(n, 54), ph: hash(n, 55) * 6.28, t0: hash(n, 56) }); }
+
 function shard(S, t, alpha) {
   if (alpha <= 0) return;
-  const fy = Math.sin(t * .6 + S.ph) * 14, fx = Math.cos(t * .45 + S.ph) * 8;
-  ctx.save(); ctx.translate(S.x + fx, S.y + fy); ctx.rotate(S.rot + S.spin * t); ctx.globalAlpha = alpha;
+  const fy = Math.sin(t * .5 + S.ph) * (S.layer === 'near' ? 22 : 12), fx = Math.cos(t * .4 + S.ph) * 8;
+  ctx.save(); ctx.translate(S.x + fx, S.y + fy); ctx.rotate(S.rot + S.spin * t);
+  ctx.globalAlpha = alpha * S.L.al; ctx.globalCompositeOperation = 'lighter';
+  if (S.L.blur) ctx.filter = `blur(${S.L.blur}px)`;
   const p = new Path2D(); S.verts.forEach(([x, y], i) => i ? p.lineTo(x, y) : p.moveTo(x, y)); p.closePath();
-  // glass body with a sheen band sliding across it ("流光")
-  const s = S.size, sweep = ((t * .35 + S.ph) % 1.6) - .3;
-  const g = ctx.createLinearGradient(-s, -s, s, s);
-  g.addColorStop(0, rgba(S.col, .06)); g.addColorStop(clamp(sweep - .12), rgba(S.col, .1));
-  g.addColorStop(clamp(sweep), rgba(S.col, .55)); g.addColorStop(clamp(sweep + .12), rgba(S.col, .1)); g.addColorStop(1, rgba(S.col, .05));
-  ctx.globalCompositeOperation = 'lighter';
+  const s = S.size;
+  // glass body: faint tint, a soft band of light sliding along it
+  const sweep = ((t * .28 + S.ph) % 1.8) - .4;
+  const g = ctx.createLinearGradient(-s, -s * .3, s, s * .3);
+  g.addColorStop(0, rgba(S.col, .03)); g.addColorStop(clamp(sweep - .18), rgba(S.col, .06));
+  g.addColorStop(clamp(sweep), rgba(S.col, .42)); g.addColorStop(clamp(sweep + .18), rgba(S.col, .06)); g.addColorStop(1, rgba(S.col, .12));
   ctx.fillStyle = g; ctx.fill(p);
-  ctx.shadowColor = rgba(S.col, .9); ctx.shadowBlur = 16; ctx.strokeStyle = rgba(S.col, .75); ctx.lineWidth = 1.4; ctx.stroke(p);
+  ctx.strokeStyle = rgba(S.col, .22); ctx.lineWidth = 1; ctx.stroke(p);
+  // one bright cut edge
+  const a0 = S.verts[S.hi], a1 = S.verts[(S.hi + 1) % S.verts.length];
+  const eg = ctx.createLinearGradient(a0[0], a0[1], a1[0], a1[1]);
+  eg.addColorStop(0, 'rgba(255,250,235,0)'); eg.addColorStop(.5, 'rgba(255,250,235,.95)'); eg.addColorStop(1, 'rgba(255,250,235,0)');
+  ctx.strokeStyle = eg; ctx.lineWidth = 2; ctx.shadowColor = rgba(S.col, 1); ctx.shadowBlur = 14;
+  ctx.beginPath(); ctx.moveTo(...a0); ctx.lineTo(...a1); ctx.stroke();
+  // a glint that twinkles at the tip
+  const tw = Math.pow(Math.max(0, Math.sin(t * 1.1 + S.ph * 3)), 12);
+  if (tw > .02 && S.layer === 'mid') {
+    ctx.shadowBlur = 0; const r = 18 * tw;
+    const gg = ctx.createRadialGradient(a0[0], a0[1], 0, a0[0], a0[1], r); gg.addColorStop(0, 'rgba(255,252,240,.9)'); gg.addColorStop(1, 'rgba(255,252,240,0)');
+    ctx.fillStyle = gg; ctx.fillRect(a0[0] - r, a0[1] - r, 2 * r, 2 * r);
+    ctx.fillStyle = `rgba(255,252,240,${.7 * tw})`; ctx.fillRect(a0[0] - r * 1.6, a0[1] - .6, r * 3.2, 1.2); ctx.fillRect(a0[0] - .6, a0[1] - r * 1.6, 1.2, r * 3.2);
+  }
+  ctx.restore();
+}
+function bokeh(t, alpha) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  BOKEH.forEach(B => {
+    const k = alpha * easeOut(seg(t, 18.2 + B.t0 * 1.5, 19 + B.t0 * 1.5)); if (k <= 0) return;
+    const y = B.y + Math.sin(t * .3 + B.ph) * 10;
+    const g = ctx.createRadialGradient(B.x, y, 0, B.x, y, B.r);
+    g.addColorStop(0, rgba(GOLD, B.al * k)); g.addColorStop(.7, rgba(GOLD, B.al * .6 * k)); g.addColorStop(1, rgba(GOLD, 0));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(B.x, y, B.r, 0, 7); ctx.fill();
+  });
   ctx.restore();
 }
 
-// ---------- the eye ----------
+// ---------- the eyes: drawn with light, no outlines ----------
 function eye(t, cx, cy, open, alpha) {
-  if (alpha <= 0) return;
-  const w = 220, up = 110 * open, dn = 74 * open;
+  if (alpha <= 0 || open <= 0.01) return;
+  const w = 230, up = 118 * open, dn = 82 * open;
   ctx.save(); ctx.globalAlpha = alpha;
-  // soft halo
-  const halo = ctx.createRadialGradient(cx, cy, 20, cx, cy, 380);
-  halo.addColorStop(0, rgba(GOLD, .16 * (.3 + .7 * open))); halo.addColorStop(1, rgba(GOLD, 0));
-  ctx.fillStyle = halo; ctx.fillRect(cx - 400, cy - 400, 800, 800);
   const lid = new Path2D();
-  lid.moveTo(cx - w, cy); lid.bezierCurveTo(cx - w * .45, cy - up * 1.35, cx + w * .45, cy - up * 1.35, cx + w, cy);
-  lid.bezierCurveTo(cx + w * .45, cy + dn * 1.35, cx - w * .45, cy + dn * 1.35, cx - w, cy); lid.closePath();
-  // inside
+  lid.moveTo(cx - w, cy); lid.bezierCurveTo(cx - w * .42, cy - up * 1.3, cx + w * .5, cy - up * 1.3, cx + w, cy + 4);
+  lid.bezierCurveTo(cx + w * .45, cy + dn * 1.3, cx - w * .45, cy + dn * 1.3, cx - w, cy); lid.closePath();
+  const look = Math.sin(t * .6) * 8, ix = cx + look, iy = cy + 2, R = 80;
+  // bloom around the iris (outside the lids too, very soft)
+  const bl = ctx.createRadialGradient(ix, iy, 0, ix, iy, 260);
+  bl.addColorStop(0, rgba(GOLD, .13 * open)); bl.addColorStop(1, rgba(GOLD, 0));
+  ctx.fillStyle = bl; ctx.fillRect(ix - 260, iy - 260, 520, 520);
   ctx.save(); ctx.clip(lid);
-  ctx.fillStyle = '#0d0b08'; ctx.fillRect(cx - w, cy - 220, w * 2, 440);
-  const look = Math.sin(t * .7) * 10, ix = cx + look, iy = cy + 3, R = 84;
-  const ir = ctx.createRadialGradient(ix, iy, 30, ix, iy, R);
-  ir.addColorStop(0, '#3a2810'); ir.addColorStop(.32, '#c58a32'); ir.addColorStop(.7, '#f5d76e'); ir.addColorStop(.93, '#8a5a1e'); ir.addColorStop(1, '#2a1b08');
-  ctx.fillStyle = ir; ctx.beginPath(); ctx.arc(ix, iy, R, 0, 7); ctx.fill();
-  ctx.strokeStyle = 'rgba(255,240,200,.18)'; ctx.lineWidth = 1.5;
-  for (let k = 0; k < 64; k++) { const a = k / 64 * 6.283 + hash(k, 3) * .05, r0 = 32 + 5 * hash(k, 4), r1 = R * (.78 + .18 * hash(k, 5)); ctx.beginPath(); ctx.moveTo(ix + Math.cos(a) * r0, iy + Math.sin(a) * r0); ctx.lineTo(ix + Math.cos(a) * r1, iy + Math.sin(a) * r1); ctx.stroke(); }
-  ctx.fillStyle = '#050403'; ctx.beginPath(); ctx.arc(ix, iy, 29 + 2 * Math.sin(t * 1.3), 0, 7); ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.ellipse(ix - 26, iy - 27, 12, 8, -.5, 0, 7); ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.arc(ix + 23, iy + 24, 4.5, 0, 7); ctx.fill();
-  // lid shadow on the eyeball
-  const sh = ctx.createLinearGradient(0, cy - up * 1.1, 0, cy - up * .2); sh.addColorStop(0, 'rgba(0,0,0,.75)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = sh; ctx.fillRect(cx - w, cy - 220, w * 2, 220);
-  ctx.restore();
-  // glowing outline + lashes
+  // sclera: barely-there warm light, darker toward the corners
+  const sc = ctx.createRadialGradient(ix, iy, R * .8, ix, iy, w * 1.05);
+  sc.addColorStop(0, 'rgba(255,238,205,.11)'); sc.addColorStop(.75, 'rgba(255,238,205,.02)'); sc.addColorStop(1, 'rgba(255,238,205,0)');
+  ctx.fillStyle = sc; ctx.fillRect(cx - w, cy - 200, 2 * w, 400);
+  // iris: hundreds of fine threads of light
   ctx.globalCompositeOperation = 'lighter';
-  ctx.shadowColor = rgba(GOLD, .9); ctx.shadowBlur = 26; ctx.strokeStyle = rgba(GOLD, .9); ctx.lineWidth = 3.5; ctx.stroke(lid);
-  ctx.lineWidth = 2.2; ctx.lineCap = 'round';
-  for (let k = 1; k < 10; k++) {
-    const u = k / 10, bx = (1 - u) ** 3 * (cx - w) + 3 * (1 - u) ** 2 * u * (cx - w * .45) + 3 * (1 - u) * u * u * (cx + w * .45) + u ** 3 * (cx + w);
-    const by = 3 * (1 - u) ** 2 * u * (cy - up * 1.35) + 3 * (1 - u) * u * u * (cy - up * 1.35) + cy * ((1 - u) ** 3 + u ** 3);
-    const ang = -Math.PI / 2 + (u - .5) * 1.5, L = (13 + 11 * Math.sin(u * Math.PI)) * open;
-    ctx.strokeStyle = rgba(GOLD, .7 * open); ctx.beginPath(); ctx.moveTo(bx, by - 4); ctx.lineTo(bx + Math.cos(ang) * L, by - 4 + Math.sin(ang) * L); ctx.stroke();
+  const base = ctx.createRadialGradient(ix, iy, 20, ix, iy, R);
+  base.addColorStop(0, 'rgba(255,200,90,.55)'); base.addColorStop(.55, 'rgba(230,160,60,.35)'); base.addColorStop(.92, 'rgba(150,90,30,.25)'); base.addColorStop(1, 'rgba(150,90,30,0)');
+  ctx.fillStyle = base; ctx.beginPath(); ctx.arc(ix, iy, R, 0, 7); ctx.fill();
+  ctx.lineCap = 'round';
+  for (let k = 0; k < 220; k++) {
+    const a = hash(k, 81) * 6.283, r0 = 27 + 8 * hash(k, 82), r1 = R * (.55 + .43 * hash(k, 83)), h = hash(k, 84);
+    ctx.strokeStyle = h < .7 ? `rgba(255,214,120,${.12 + .3 * hash(k, 85)})` : `rgba(255,246,220,${.15 + .35 * hash(k, 85)})`;
+    ctx.lineWidth = .7 + 1.1 * hash(k, 86);
+    const bend = (hash(k, 87) - .5) * .25;
+    ctx.beginPath(); ctx.moveTo(ix + Math.cos(a) * r0, iy + Math.sin(a) * r0);
+    ctx.quadraticCurveTo(ix + Math.cos(a + bend) * (r0 + r1) / 2, iy + Math.sin(a + bend) * (r0 + r1) / 2, ix + Math.cos(a) * r1, iy + Math.sin(a) * r1); ctx.stroke();
   }
+  ctx.strokeStyle = 'rgba(255,220,140,.35)'; ctx.lineWidth = 2; ctx.shadowColor = rgba(GOLD, .8); ctx.shadowBlur = 16;
+  ctx.beginPath(); ctx.arc(ix, iy, R - 1, 0, 7); ctx.stroke(); ctx.shadowBlur = 0;
+  ctx.globalCompositeOperation = 'source-over';
+  // pupil with a soft edge
+  const pu = ctx.createRadialGradient(ix, iy, 18, ix, iy, 31);
+  pu.addColorStop(0, 'rgba(3,3,3,1)'); pu.addColorStop(1, 'rgba(3,3,3,0)');
+  ctx.fillStyle = pu; ctx.beginPath(); ctx.arc(ix, iy, 31, 0, 7); ctx.fill();
+  // upper lid casts a shadow on the eye
+  const sh = ctx.createLinearGradient(0, cy - up * 1.05, 0, cy - up * .25);
+  sh.addColorStop(0, 'rgba(10,10,10,.92)'); sh.addColorStop(1, 'rgba(10,10,10,0)');
+  ctx.fillStyle = sh; ctx.fillRect(cx - w, cy - 200, 2 * w, 200);
+  // catch-lights
+  ctx.globalCompositeOperation = 'lighter';
+  const cl = ctx.createRadialGradient(ix - 24, iy - 22, 0, ix - 24, iy - 22, 13);
+  cl.addColorStop(0, 'rgba(255,255,255,.95)'); cl.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = cl; ctx.fillRect(ix - 40, iy - 38, 32, 32);
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(ix + 20, iy + 22, 3, 0, 7); ctx.fill();
+  ctx.restore();
+  // lids: soft light that fades out toward the corners (no hard outline)
+  ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+  const lg = ctx.createLinearGradient(cx - w, 0, cx + w, 0);
+  lg.addColorStop(0, rgba(GOLD, 0)); lg.addColorStop(.3, rgba(GOLD, .55)); lg.addColorStop(.6, rgba(GOLD, .6)); lg.addColorStop(1, rgba(GOLD, 0));
+  ctx.strokeStyle = lg; ctx.lineWidth = 2; ctx.shadowColor = rgba(GOLD, .9); ctx.shadowBlur = 20;
+  ctx.beginPath(); ctx.moveTo(cx - w, cy); ctx.bezierCurveTo(cx - w * .42, cy - up * 1.3, cx + w * .5, cy - up * 1.3, cx + w, cy + 4); ctx.stroke();
+  ctx.globalAlpha = alpha * .35; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(cx + w, cy + 4); ctx.bezierCurveTo(cx + w * .45, cy + dn * 1.3, cx - w * .45, cy + dn * 1.3, cx - w, cy); ctx.stroke();
+  // crease above the lid, very faint
+  ctx.globalAlpha = alpha * .18 * open; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(cx - w * .8, cy - up * .55 - 16); ctx.bezierCurveTo(cx - w * .3, cy - up * 1.2 - 34, cx + w * .4, cy - up * 1.2 - 34, cx + w * .85, cy - up * .4 - 14); ctx.stroke();
   ctx.restore();
 }
 
@@ -172,11 +236,14 @@ function background(t) {
 
 function renderAt(t) {
   background(t);
-  // eye + shards (17.6 →)
-  const ea = easeOut(seg(t, 17.7, 18.3)), open = easeInOut(seg(t, 18.0, 19.8));
-  const blink = open * (1 - .06 * Math.max(0, Math.sin((t - 20.6) * 9)) * (t > 20.6 && t < 20.95));
-  eye(t, W / 2 - 290, 470, blink, ea); eye(t, W / 2 + 290, 470, blink, ea);
-  SHARDS.forEach(S => shard(S, t, easeOut(seg(t, 18.3 + S.t0 * 1.6, 18.9 + S.t0 * 1.6))));
+  // eyes among light shards (17.6 →)
+  const ea = easeOut(seg(t, 17.7, 18.6)), open = easeInOut(seg(t, 18.0, 19.9));
+  const blink = open * (1 - .9 * Math.pow(Math.max(0, Math.sin(seg(t, 20.7, 20.95) * Math.PI)), 2));
+  const sa = S => easeOut(seg(t, 18.3 + S.t0 * 1.6, 19.1 + S.t0 * 1.6));
+  SHARDS.filter(S => S.layer === 'far').forEach(S => shard(S, t, sa(S)));
+  bokeh(t, 1);
+  eye(t, W / 2 - 300, 460, blink, ea); eye(t, W / 2 + 300, 460, blink, ea);
+  SHARDS.filter(S => S.layer !== 'far').forEach(S => shard(S, t, sa(S)));
   CAPS.forEach(c => caption(t, c));
 }
 
