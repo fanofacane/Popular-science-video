@@ -15,7 +15,7 @@
 <canvas id="c" width="1920" height="1080"></canvas>
 <script>
 // =============== Episode 03 · 全程观众 ===============
-// Timings follow 分镜稿.md. This file currently holds the sample (0–16.5 s).
+// Timings follow 分镜稿.md (full film, 76 s).
 // One "life film strip" (0–80 years) runs through the whole film; each relationship lights only part of it.
 const W = 1920, H = 1080;
 const ctx = document.getElementById('c').getContext('2d');
@@ -30,7 +30,7 @@ const env = (t, a, b, fi = .35, fo = .35) => Math.min(seg(t, a, a + fi), 1 - seg
 const rgba = (c, a) => `rgba(${c},${a})`;
 const mix = (c1, c2, k) => { const p = c1.split(',').map(Number), q = c2.split(',').map(Number); return p.map((v, i) => Math.round(lerp(v, q[i], k))).join(','); };
 function hash(i, j) { let h = (i * 374761393 + j * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
-window.DURATION = 16.5;
+window.DURATION = 76.0;
 
 // ---------- captions: per-character blur-in ----------
 // [start, end, text, y, size]   {g:..} gold  {r:..} red
@@ -40,6 +40,21 @@ const CAPS = [
   [7.1, 9.95, '父母，终究看不见你的{r:暮年}；', 960, 52],
   [10.1, 12.95, '伴侣，未曾参与你的{r:童年}；', 960, 52],
   [13.1, 16.6, '儿女，没见过你{g:风华正茂}的模样；', 960, 52],
+  [16.75, 20.95, '而身边的友人，也无法拼凑出你{r:全部的过往}。', 960, 52],
+  [21.1, 25.3, '在别人的眼里，你永远只是几个{r:零碎的片段}。', 960, 52],
+  [29.2, 31.95, '这个世界上，唯有{g:你自己}，', 960, 52],
+  [32.1, 34.95, '从头到尾，阅尽了你{g:完整的人生}。', 960, 52],
+  [35.1, 37.95, '见过你深夜崩溃时的{r:眼泪}，', 960, 52],
+  [38.1, 40.95, '也见过你咬牙撑过去时的{g:倔强}；', 960, 52],
+  [41.1, 44.4, '清楚你走过多少{r:弯路}，', 960, 52],
+  [44.6, 48.95, '更明白你为了走到今天，付出了多少{g:不为人知}的代价。', 960, 52],
+  [49.1, 52.95, '所以，别再把喜怒哀乐，寄托在{r:别人的评价}里；', 960, 52],
+  [53.1, 56.4, '也别总期待有人能对你{g:感同身受}。', 960, 52],
+  [56.6, 59.95, '既然你是自己生命里唯一的{g:全程观众}，', 960, 52],
+  [60.1, 63.95, '那就请把{g:时间和精力}，都花在自己身上。', 960, 52],
+  [64.1, 67.45, '好好爱惜自己的{g:身体}，耐心打磨自己的本事，', 960, 52],
+  [67.6, 70.45, '对自己的{g:每一天}负责。', 960, 52],
+  [70.6, 77, '往后余生，把日子过好，把自己活成{g:最喜欢的模样}。', 960, 52],
 ];
 function parse(s) { const out = []; const re = /\{([gr]):([^}]*)\}|([^{]+)/g; let m; while ((m = re.exec(s))) { const c = m[1] || ''; for (const ch of (m[2] ?? m[3])) out.push([ch, c]); } return out; }
 function caption(t, [a, b, s, y, size]) {
@@ -64,7 +79,10 @@ function text(s, x, y, font, color, align = 'center', alpha = 1, glow = 0) {
   if (glow) { ctx.shadowColor = color; ctx.shadowBlur = glow; } ctx.fillText(s, x, y); ctx.restore();
 }
 function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-const LABELS = [[0.2, 6.65, 'ONLY A PART  ·  一部分'], [7.05, 9.95, 'PARENTS  ·  父母'], [10.05, 12.95, 'PARTNER  ·  伴侣'], [13.05, 16.6, 'CHILDREN  ·  儿女']];
+const LABELS = [[0.2, 6.65, 'ONLY A PART  ·  一部分'], [7.05, 9.95, 'PARENTS  ·  父母'], [10.05, 12.95, 'PARTNER  ·  伴侣'], [13.05, 16.6, 'CHILDREN  ·  儿女'],
+  [16.65, 21.0, 'FRIENDS  ·  友人'], [21.05, 25.35, 'FRAGMENTS  ·  碎片'], [29.1, 35.0, 'THE WHOLE STORY  ·  全程'], [35.05, 41.0, 'ONLY YOU SAW  ·  只有你见过'],
+  [41.05, 49.0, 'DETOURS  ·  弯路'], [49.05, 53.0, 'OTHER PEOPLE  ·  评价'], [53.05, 56.5, 'EMPATHY  ·  感同身受'], [56.55, 64.0, 'THE ONLY WITNESS  ·  全程观众'],
+  [64.05, 70.5, 'FOR YOURSELF  ·  花在自己身上'], [70.55, 76.0, 'FROM TODAY  ·  往后余生']];
 function label(t) {
   ctx.save(); ctx.letterSpacing = '6px'; for (const [a, b, s] of LABELS) if (t >= a && t <= b) text(s, 120, 102, `400 22px ${MONO}`, 'rgba(109,104,94,1)', 'left', env(t, a, b, .4, .3)); ctx.restore();
 }
@@ -220,61 +238,487 @@ function pixelWall(t) {
   ctx.save(); ctx.letterSpacing = '6px'; text('你的一生  ·  ' + n.toLocaleString('en-US') + ' 天', W / 2, 395, `400 20px ${MONO}`, 'rgba(184,72,60,1)', 'center', env(t, .3, 6.6, .4, .3)); ctx.restore();
 }
 
-// ---------- (unused) drifting glass shards ----------
+// ---------- friends: each one lights only a few scattered frames ----------
+const FRIENDS = [['同学', 12, [2, 3], 16.9], ['室友', 27, [5], 17.35], ['同事', 45, [8, 9], 17.8], ['旧友', 66, [13], 18.25]];
+const FR_OFF = 21.35;
+function friendsLit(t, i) {
+  let best = 0;
+  for (const [, , fr, on] of FRIENDS) if (fr.includes(i)) best = Math.max(best, env(t, on + .15, FR_OFF, .45, .3));
+  return best;
+}
+function friends(t) {
+  const top = FY - BAND / 2;
+  FRIENDS.forEach(([name, age, , on], k) => {
+    const e = env(t, on, FR_OFF, .45, .3); if (e <= 0) return;
+    ctx.save(); ctx.globalAlpha *= e; person(ageX(age), top - 18, 74, GOLD, .75); ctx.restore();
+    text(name, ageX(age), top - 18 - 74 - 30, `700 26px ${SANS}`, rgba(GOLD, .9), 'center', e, 10);
+  });
+}
+
+// ---------- you: one light runs the whole strip, nothing is missed ----------
+const SELF_ON = 32.2, SELF_SWEEP = 2.4;
+function selfLit(t, i) {
+  if (t < SELF_ON || t > 36) return 0;
+  const reach = 80 * easeInOut(seg(t, SELF_ON, SELF_ON + SELF_SWEEP));
+  return clamp((reach - 5 * i) / 5);
+}
+function selfScene(t) {
+  const a = env(t, 29.5, 35.4, .7, .4); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  // the one watching: a gold figure in front of the strip, seen from behind
+  const k = easeOut(seg(t, 29.7, 30.5)), glow = seg(t, SELF_ON, SELF_ON + SELF_SWEEP);
+  const g = ctx.createRadialGradient(W / 2, 760, 10, W / 2, 760, 220); g.addColorStop(0, rgba(GOLD, .12 + .12 * glow)); g.addColorStop(1, rgba(GOLD, 0));
+  ctx.fillStyle = g; ctx.fillRect(W / 2 - 240, 520, 480, 480);
+  ctx.save(); ctx.globalAlpha *= k; person(W / 2, 850, 210, GOLD, .9); ctx.restore();
+  text('你', W / 2, 850 - 210 - 34, `900 34px ${SERIF}`, `rgb(${GOLD})`, 'center', k, 16);
+  // light head travelling the full strip
+  const p = seg(t, SELF_ON, SELF_ON + SELF_SWEEP);
+  if (p > 0 && p < 1) {
+    const x = ageX(80 * easeInOut(p)), top = FY - BAND / 2, gg = ctx.createRadialGradient(x, FY, 4, x, FY, 130);
+    gg.addColorStop(0, rgba('255,245,215', .75)); gg.addColorStop(1, rgba(GOLD, 0)); ctx.fillStyle = gg; ctx.fillRect(x - 130, FY - 130, 260, 260);
+    ctx.fillStyle = rgba('255,245,220', .55); ctx.fillRect(x - 1.5, top - 6, 3, BAND + 12);
+  }
+  // a gold bracket under the strip: the whole of it
+  const bk = easeOut(seg(t, SELF_ON + SELF_SWEEP - .2, SELF_ON + SELF_SWEEP + .3));
+  if (bk > 0) {
+    const xa = ageX(0) + 6, xb = ageX(80) - 6, y = FY + BAND / 2 + 74, xm = (xa + xb) / 2, hw = (xb - xa) / 2 * bk;
+    ctx.save(); ctx.strokeStyle = rgba(GOLD, .9); ctx.lineWidth = 2.5; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.moveTo(xm - hw, y - 12); ctx.lineTo(xm - hw, y); ctx.lineTo(xm + hw, y); ctx.lineTo(xm + hw, y - 12); ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.letterSpacing = '4px'; text('全程', xm, y + 30, `400 22px ${MONO}`, rgba(GOLD, .95), 'center', bk); ctx.restore();
+  }
+  ctx.restore();
+}
+
+// ---------- ending: what is past glows softly, every day after today lights up gold ----------
+const TODAY = 30;
+function endLit(t, i) {
+  if (t < 70.5) return 0;
+  return 5 * i < TODAY ? .42 * seg(t, 70.8, 71.4) : easeOut(seg(t, 71.7 + (i - 6) * .24, 72.0 + (i - 6) * .24));
+}
+function ending(t) {
+  const a = seg(t, 70.7, 71.3); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  const x = ageX(TODAY), top = FY - BAND / 2, k = easeOut(seg(t, 71.0, 71.5));
+  ctx.save(); ctx.globalAlpha *= k; ctx.fillStyle = rgba(WHITE, .85); ctx.shadowColor = rgba(WHITE, .9); ctx.shadowBlur = 14; ctx.fillRect(x - 2, top - 14, 4, BAND + 28); ctx.restore();
+  text('今天', x, top - 44, `900 34px ${SERIF}`, `rgb(${WHITE})`, 'center', k, 14);
+  // you walk on, toward the right end of the strip
+  const wk = easeInOut(seg(t, 72.4, 75.8)), px = lerp(x, ageX(70), wk), bob = Math.abs(Math.sin(t * 6)) * 5 * (wk > 0 && wk < 1 ? 1 : 0);
+  const g = ctx.createRadialGradient(px, 760, 10, px, 760, 200); g.addColorStop(0, rgba(GOLD, .2)); g.addColorStop(1, rgba(GOLD, 0)); ctx.fillStyle = g; ctx.fillRect(px - 220, 540, 440, 440);
+  ctx.save(); ctx.globalAlpha *= easeOut(seg(t, 71.2, 71.8)); person(px, 850 - bob, 200, GOLD, .95); ctx.restore();
+  ctx.restore();
+}
+
+function litAt(t, i) { return Math.max(relLit(t, i), friendsLit(t, i), selfLit(t, i), endLit(t, i)); }
+
+// ---------- the strip on screen (opening, middle, ending) ----------
+function stripAlpha(t) {
+  if (t < 26) return seg(t, 6.65, 7.1) * (1 - seg(t, 21.25, 21.45));
+  if (t < 60) return seg(t, 30.85, 31.15) * (1 - seg(t, 35.05, 35.5));
+  return seg(t, 70.5, 71.2);
+}
+function youthPop(i) { return [4, 5].includes(i); }
+function strip(t) {
+  const a = stripAlpha(t); if (a <= 0) return;
+  filmBand(a);
+  const first = i => t < 8 ? seg(t, 6.7 + i * .025, 7.05 + i * .025) : 1;
+  const up = easeOut(seg(t, 14.4, 15.0)) * (1 - easeInOut(seg(t, 15.9, 16.4)));
+  for (let i = 0; i < N; i++) if (!youthPop(i) || up <= 0) frameAt(i, frameCX(i), FY, 1, litAt(t, i), a * first(i));
+  if (up > 0) {
+    for (const i of [4, 5]) { const lit = Math.max(litAt(t, i), .9 * up * (1 - seg(t, 15.6, 16.2))); frameAt(i, frameCX(i) + (i === 4 ? -22 : 22) * up, FY - 70 * up, 1 + .55 * up, lit, a); }
+    text('风华正茂', ageX(25), FY - 70 * up - FH / 2 * (1 + .55 * up) - 30, `700 26px ${SANS}`, rgba(GOLD, .95), 'center', up * (1 - seg(t, 15.6, 16.0)), 12);
+  }
+}
+
+// ---------- fragments: the strip breaks into glass shards, which come back together for "你自己" ----------
 const SHARDS = Array.from({ length: N }, (_, j) => {
-  const pts = Array.from({ length: 5 }, (_, k) => { const a = k / 5 * Math.PI * 2 + (hash(j, k) - .5) * .9; return [Math.cos(a) * (.7 + .5 * hash(k, j)), Math.sin(a) * (.7 + .5 * hash(k * 3, j))]; });
-  return { pts, x: 220 + hash(j, 11) * 1480, y: (j % 2 ? 160 + hash(j, 13) * 270 : 650 + hash(j, 13) * 260), r: 46 + hash(j, 17) * 34, rot: hash(j, 19) * 6, spin: (hash(j, 23) - .5) * .5 };
+  const pts = Array.from({ length: 5 }, (_, k) => { const a = k / 5 * Math.PI * 2 + (hash(j, k) - .5) * .9; return [Math.cos(a) * (.75 + .45 * hash(k, j)), Math.sin(a) * (.75 + .45 * hash(k * 3, j))]; });
+  return { pts, x: 230 + ((j * 7) % 16) / 15 * 1460 + (hash(j, 11) - .5) * 60, y: 190 + (j % 3) * 250 + hash(j, 13) * 90, r: 70 + hash(j, 17) * 40, rot: (hash(j, 19) - .5) * 1.6, spin: (hash(j, 23) - .5) * .35 };
 });
-const GATHER0 = 3.9, GATHER1 = 6.4;
+const RECT = [[-44, -60], [44, -60], [44, 60], [-44, 60], [-44, 0]];
 function shards(t) {
-  const a = env(t, 0, 7.2, 1.2, .6); if (a <= 0) return;
+  if (t < 21.2 || t > 31.3) return;
+  const appear = seg(t, 21.2, 21.45), vanish = 1 - seg(t, 30.95, 31.25);
+  const spread = easeInOut(seg(t, 25.2, 26.0)) * (1 - easeInOut(seg(t, 28.7, 29.6)));
   SHARDS.forEach((s, j) => {
-    const g = easeInOut(seg(t, GATHER0 + j * .03, GATHER1 + j * .03));
-    const x = lerp(s.x + Math.sin(t * .3 + j) * 20, frameCX(j), g), y = lerp(s.y + Math.cos(t * .25 + j * 2) * 14, FY, g);
-    const rot = lerp(s.rot + t * s.spin, 0, g), r = lerp(s.r, 62, g), quiet = t < GATHER0 ? .45 : lerp(.45, 1, g);
-    const fade = 1 - seg(t, GATHER1 + .2, GATHER1 + .8);
-    ctx.save(); ctx.globalAlpha *= a * quiet * fade; ctx.translate(x, y); ctx.rotate(rot);
-    ctx.beginPath(); s.pts.forEach(([px, py], k) => { const X = lerp(px * r, [-44, 44, 44, -44, -44][k] , g), Y = lerp(py * r, [-60, -60, 60, 60, 0][k], g); k ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); ctx.closePath();
-    const gr = ctx.createLinearGradient(-r, -r, r, r); gr.addColorStop(0, 'rgba(255,236,190,.16)'); gr.addColorStop(.5, 'rgba(255,236,190,.04)'); gr.addColorStop(1, 'rgba(255,236,190,.12)');
-    ctx.fillStyle = gr; ctx.fill(); ctx.strokeStyle = 'rgba(235,228,214,.4)'; ctx.lineWidth = 1.4; ctx.stroke();
-    ctx.save(); ctx.clip(); ctx.globalAlpha *= .55; ctx.scale(.8, .8); lifeIcon(j, 'rgba(255,230,170,.8)'); ctx.restore();
+    const g = t < 27 ? 1 - easeInOut(seg(t, 21.3 + j * .03, 23.4 + j * .03)) : easeInOut(seg(t, 29.4 + j * .03, 30.9 + j * .03));
+    let sx = s.x + Math.sin(t * .3 + j) * 18, sy = s.y + Math.cos(t * .25 + j * 2) * 12;
+    sx = W / 2 + (sx - W / 2) * (1 + .6 * spread); sy = 470 + (sy - 470) * (1 + .9 * spread);
+    const x = lerp(sx, frameCX(j), g), y = lerp(sy, FY, g), rot = lerp(s.rot + t * s.spin, 0, g), r = lerp(s.r, 62, g);
+    ctx.save(); ctx.globalAlpha *= appear * vanish * (1 - .97 * spread); ctx.translate(x, y); ctx.rotate(rot);
+    ctx.beginPath(); s.pts.forEach(([px, py], k) => { const X = lerp(px * r, RECT[k][0], g), Y = lerp(py * r, RECT[k][1], g); k ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); ctx.closePath();
+    const gr = ctx.createLinearGradient(-r, -r, r, r); gr.addColorStop(0, 'rgba(255,236,190,.24)'); gr.addColorStop(.5, 'rgba(255,236,190,.07)'); gr.addColorStop(1, 'rgba(255,236,190,.18)');
+    ctx.fillStyle = gr; ctx.shadowColor = rgba(GOLD, .35); ctx.shadowBlur = 18; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(240,232,214,.55)'; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.save(); ctx.clip(); const sc = lerp(1.15, 1, g); ctx.scale(sc, sc); lifeIcon(j, 'rgba(255,232,175,.9)'); ctx.restore();
+    // a thin highlight along one edge, like glass
+    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2; ctx.beginPath(); const [ax, ay] = s.pts[0], [bx, by] = s.pts[1]; ctx.moveTo(lerp(ax * r, RECT[0][0], g), lerp(ay * r, RECT[0][1], g)); ctx.lineTo(lerp(bx * r, RECT[1][0], g), lerp(by * r, RECT[1][1], g)); ctx.stroke();
     ctx.restore();
   });
 }
 
-// ---------- children: the 20-something frames lift out, then sink back into the dark ----------
-function youthPop(i) { return [4, 5].includes(i); }
-function strip(t) {
-  const a = seg(t, 6.65, 7.1); if (a <= 0) return;
-  filmBand(a);
-  const up = easeOut(seg(t, 14.4, 15.0)) * (1 - easeInOut(seg(t, 15.9, 16.4)));
-  for (let i = 0; i < N; i++) {
-    let lit = relLit(t, i), y = FY, s = 1;
-    if (youthPop(i) && up > 0) { y = FY - 70 * up; s = 1 + .55 * up; lit = Math.max(lit, .9 * up * (1 - seg(t, 15.6, 16.2))); }
-    if (!youthPop(i)) frameAt(i, frameCX(i), y, s, lit, a * seg(t, 6.7 + i * .025, 7.05 + i * .025));
-  }
-  for (const i of [4, 5]) { let y = FY - 70 * up, s = 1 + .55 * up, lit = Math.max(relLit(t, i), .9 * up * (1 - seg(t, 15.6, 16.2))); frameAt(i, frameCX(i) + (i === 4 ? -22 : 22) * up, y, s, lit, a * seg(t, 6.7 + i * .025, 7.05 + i * .025)); }
-  // dim the youth frames when they sink back: an X of darkness
-  if (up > 0) text('风华正茂', ageX(25), FY - 70 * up - FH / 2 * (1 + .55 * up) - 30, `700 26px ${SANS}`, rgba(GOLD, .95), 'center', up * (1 - seg(t, 15.6, 16.0)), 12);
+// ---------- title card ----------
+function floorGrid(alpha, horizon = 700) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = 'rgba(255,214,150,0.10)'; ctx.lineWidth = 1.2;
+  const vx = W / 2;
+  for (let i = -24; i <= 24; i++) { const x = vx + i * 160; ctx.beginPath(); ctx.moveTo(vx + (x - vx) * .12, horizon); ctx.lineTo(x + (x - vx) * 2.2, H + 300); ctx.stroke(); }
+  for (let k = 1; k < 16; k++) { const y = horizon + Math.pow(k / 15, 2.1) * (H - horizon + 80); ctx.globalAlpha = alpha * (.3 + .7 * k / 15); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  ctx.restore();
 }
-function openingGlow(t) {
-  const a = env(t, 0, 7.2, .8, .6); if (a <= 0) return;
-  const g = ctx.createRadialGradient(W / 2, 540, 20, W / 2, 540, 760); g.addColorStop(0, `rgba(255,214,150,${.05 * a})`); g.addColorStop(1, 'rgba(255,214,150,0)');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+const TITLE = '全程观众', KICKER = '第 03 期', SUB = 'THE ONLY WITNESS';
+function titleCard(t) {
+  const tt = t - 25.5, len = 3.6, ta = env(tt, 0, len, .4, .45); if (ta <= 0) return;
+  ctx.save(); ctx.globalAlpha = ta;
+  floorGrid(1, 700);
+  const g = ctx.createRadialGradient(W / 2, 700, 10, W / 2, 700, 700); g.addColorStop(0, 'rgba(255,200,120,.10)'); g.addColorStop(1, 'rgba(255,200,120,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const sc = 1 + .035 * seg(tt, 0, 4); ctx.translate(W / 2, 540); ctx.scale(sc, sc); ctx.translate(-W / 2, -540);
+  ctx.save(); ctx.letterSpacing = '11px'; text(KICKER, W / 2 + 5, 420, `500 22px ${SANS}`, '#8f8063', 'center', seg(tt, .2, .8)); ctx.restore();
+  ctx.font = `900 136px ${SERIF}`; const cw = [...TITLE].map(c => ctx.measureText(c).width + 13.6), tw = cw.reduce((p, q) => p + q, 0);
+  let x = W / 2 - tw / 2;
+  [...TITLE].forEach((c, i) => {
+    const k = easeOut(seg(tt, .35 + i * .09, .95 + i * .09));
+    if (k > 0) { ctx.save(); ctx.globalAlpha *= k; ctx.filter = `blur(${(1 - k) * 18}px)`; ctx.font = `900 136px ${SERIF}`; ctx.textBaseline = 'middle'; ctx.fillStyle = `rgb(${GOLD})`;
+      ctx.shadowColor = 'rgba(245,215,110,.55)'; ctx.shadowBlur = 40; ctx.fillText(c, x, 545); ctx.shadowColor = 'rgba(245,190,90,.25)'; ctx.shadowBlur = 90; ctx.fillText(c, x, 545); ctx.restore(); }
+    x += cw[i];
+  });
+  const da = seg(tt, 1.2, 1.5) * (.75 + .25 * Math.sin(tt * 6));
+  if (da > 0) { ctx.save(); ctx.globalAlpha *= da; ctx.fillStyle = `rgb(${RED})`; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 16; ctx.beginPath(); ctx.arc(x + 20, 556, 7, 0, 7); ctx.fill(); ctx.restore(); }
+  const sk = easeOut(seg(tt, 1.3, 2.1));
+  ctx.save(); ctx.letterSpacing = `${(.5 + .4 * sk) * 24}px`; text(SUB, W / 2 + (.5 + .4 * sk) * 12, 660, `400 24px ${MONO}`, '#b49a5a', 'center', sk); ctx.restore();
+  ctx.restore();
+}
+
+// ---------- two frames, up close: the night you broke down, the morning you kept going ----------
+function walker(x, gy, h, ph, col, lw, run = 0) {
+  const a = Math.sin(ph) * (.42 + run * .25), lean = run * .12, hip = gy - h * .47 - Math.abs(Math.cos(ph)) * h * .015;
+  const sh = [x + Math.sin(lean) * h * .33, hip - Math.cos(lean) * h * .33], L = h * .47, A = h * .3;
+  ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.arc(sh[0] + Math.sin(lean) * h * .1, sh[1] - h * .12, h * .085, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sh[0], sh[1]); ctx.lineTo(x, hip);
+  for (const s of [1, -1]) { const q = a * s; ctx.moveTo(x, hip); ctx.lineTo(x + Math.sin(q) * L * .5, hip + Math.cos(q) * L * .5); ctx.lineTo(x + Math.sin(q) * L * .5 + Math.sin(q - .35 - run * .4) * L * .5 * (s > 0 ? 1 : 1), hip + L * .5 * (Math.cos(q) + Math.cos(q - .35 - run * .4))); }
+  for (const s of [1, -1]) { const q = -a * s * .85; ctx.moveTo(sh[0], sh[1] + h * .02); ctx.lineTo(sh[0] + Math.sin(q) * A * .55, sh[1] + Math.cos(q) * A * .55); ctx.lineTo(sh[0] + Math.sin(q) * A * .55 + Math.sin(q + .6 + run * .8) * A * .45, sh[1] + Math.cos(q) * A * .55 + Math.cos(q + .6 + run * .8) * A * .45); }
+  ctx.stroke();
+}
+const PW_ = 1100, PH_ = 600;
+function nightScene(t) {
+  const C = '172,188,212';
+  ctx.fillStyle = '#0a0d13'; ctx.fillRect(-PW_ / 2, -PH_ / 2, PW_, PH_);
+  const lg = ctx.createRadialGradient(230, 0, 10, 230, 0, 520); lg.addColorStop(0, 'rgba(200,215,240,.13)'); lg.addColorStop(1, 'rgba(200,215,240,0)'); ctx.fillStyle = lg; ctx.fillRect(-PW_ / 2, -PH_ / 2, PW_, PH_);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  // window: black night, a few faint stars
+  ctx.fillStyle = '#04060a'; ctx.fillRect(-470, -230, 240, 260); ctx.strokeStyle = rgba(C, .45); ctx.lineWidth = 3; ctx.strokeRect(-470, -230, 240, 260);
+  ctx.beginPath(); ctx.moveTo(-350, -230); ctx.lineTo(-350, 30); ctx.moveTo(-470, -100); ctx.lineTo(-230, -100); ctx.stroke();
+  [[-430, -190], [-280, -160], [-400, -40], [-300, -10]].forEach(([x, y], k) => { ctx.fillStyle = rgba(C, .25 + .2 * Math.sin(t * 2 + k)); ctx.fillRect(x, y, 3, 3); });
+  ctx.strokeStyle = rgba(C, .22); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-550, 250); ctx.lineTo(550, 250); ctx.stroke();
+  // desk + lamp with its cone of cold light
+  ctx.strokeStyle = rgba(C, .75); ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(-130, 110); ctx.lineTo(430, 110); ctx.moveTo(-110, 110); ctx.lineTo(-110, 250); ctx.moveTo(410, 110); ctx.lineTo(410, 250); ctx.stroke();
+  const cone = ctx.createLinearGradient(0, -70, 0, 110); cone.addColorStop(0, 'rgba(220,232,255,.28)'); cone.addColorStop(1, 'rgba(220,232,255,.05)');
+  ctx.fillStyle = cone; ctx.beginPath(); ctx.moveTo(180, -60); ctx.lineTo(250, -80); ctx.lineTo(360, 110); ctx.lineTo(20, 110); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(350, 110); ctx.lineTo(350, 96); ctx.moveTo(320, 110); ctx.lineTo(380, 110); ctx.moveTo(350, 96); ctx.lineTo(320, -40); ctx.lineTo(250, -90); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(268, -104); ctx.lineTo(170, -50); ctx.lineTo(205, -40); ctx.lineTo(290, -86); ctx.closePath(); ctx.fillStyle = 'rgba(172,188,212,.35)'; ctx.fill(); ctx.stroke();
+  // papers on the desk
+  ctx.lineWidth = 2.5; ctx.strokeStyle = rgba(C, .45); ctx.beginPath(); ctx.moveTo(250, 108); ctx.lineTo(330, 100); ctx.moveTo(240, 104); ctx.lineTo(300, 92); ctx.stroke();
+  // chair
+  ctx.lineWidth = 4; ctx.strokeStyle = rgba(C, .6); ctx.beginPath(); ctx.moveTo(-170, 170); ctx.lineTo(-40, 170); ctx.moveTo(-165, 170); ctx.lineTo(-185, 30); ctx.moveTo(-160, 170); ctx.lineTo(-160, 250); ctx.moveTo(-50, 170); ctx.lineTo(-50, 250); ctx.stroke();
+  // the person, slumped over the desk; shoulders shake
+  const sh = Math.sin(t * 21) * 2.4 * (Math.sin(t * 2.3) > -.2 ? 1 : .3);
+  ctx.strokeStyle = rgba(C, .95); ctx.lineWidth = 5; ctx.shadowColor = rgba(C, .5); ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.moveTo(-95, 166); ctx.quadraticCurveTo(-70, 50 + sh, 40, 58 + sh); ctx.stroke();               // back
+  ctx.beginPath(); ctx.arc(104, 62 + sh * .6, 36, 0, 7); ctx.stroke();                                                  // head on arms
+  ctx.beginPath(); ctx.moveTo(40, 60 + sh); ctx.lineTo(70, 104); ctx.lineTo(210, 104); ctx.stroke(); // arms under the head
+  ctx.beginPath(); ctx.moveTo(-95, 166); ctx.lineTo(10, 176); ctx.lineTo(16, 250); ctx.stroke();                     // legs
+  ctx.shadowBlur = 0;
+  // a tear, again and again
+  const q = (t * .9) % 1, ty = lerp(84, 112, easeInOut(clamp(q * 1.6)));
+  ctx.save(); ctx.globalAlpha *= Math.sin(Math.PI * clamp(q * 1.25)); ctx.fillStyle = 'rgba(200,220,255,.9)'; ctx.shadowColor = 'rgba(200,220,255,.9)'; ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.moveTo(66, ty - 10); ctx.quadraticCurveTo(60, ty, 66, ty + 4); ctx.quadraticCurveTo(72, ty, 66, ty - 10); ctx.fill(); ctx.restore();
+  text('凌晨 2:47', 450, -240, `400 22px ${MONO}`, rgba(C, .55), 'right');
+}
+function dawnScene(t) {
+  ctx.fillStyle = '#110e08'; ctx.fillRect(-PW_ / 2, -PH_ / 2, PW_, PH_);
+  const gy = 210, open = easeOut(seg(t, 38.5, 39.4));
+  // light from outside the door
+  const spill = ctx.createLinearGradient(420, 0, -500, 0); spill.addColorStop(0, rgba('255,220,150', .35 * open)); spill.addColorStop(1, rgba('255,220,150', 0));
+  ctx.fillStyle = spill; ctx.beginPath(); ctx.moveTo(220, gy); ctx.lineTo(420, gy); ctx.lineTo(-100, PH_ / 2); ctx.lineTo(-550, PH_ / 2); ctx.closePath(); ctx.fill();
+  const rays = ctx.createRadialGradient(320, -20, 20, 320, -20, 700); rays.addColorStop(0, rgba('255,214,140', .22 * open)); rays.addColorStop(1, rgba('255,214,140', 0)); ctx.fillStyle = rays; ctx.fillRect(-PW_ / 2, -PH_ / 2, PW_, PH_);
+  // doorway: bright inside
+  const dg = ctx.createLinearGradient(220, -250, 420, 250); dg.addColorStop(0, rgba('255,240,200', .9 * open)); dg.addColorStop(1, rgba('255,200,110', .7 * open));
+  ctx.fillStyle = dg; ctx.fillRect(220, -250, 200, 460);
+  ctx.strokeStyle = rgba(GOLD, .8); ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.strokeRect(220, -250, 200, 460);
+  // the door swings open
+  const dx = lerp(420, 300, open);
+  ctx.fillStyle = '#1a1409'; ctx.beginPath(); ctx.moveTo(220, -250); ctx.lineTo(dx - 200 + 200 * (1 - open) + 0, -250 + 40 * open); ctx.lineTo(dx - 200 + 200 * (1 - open), gy - 40 * open + 0); ctx.lineTo(220, gy); ctx.closePath();
+  ctx.save(); ctx.translate(0, 0); ctx.restore();
+  const ex = lerp(420, 130, open);
+  ctx.beginPath(); ctx.moveTo(220, -250); ctx.lineTo(ex, -250 + 34 * open); ctx.lineTo(ex, gy - 34 * open); ctx.lineTo(220, gy); ctx.closePath(); ctx.fill(); ctx.strokeStyle = rgba(GOLD, .55); ctx.lineWidth = 3; ctx.stroke();
+  ctx.strokeStyle = rgba(GOLD, .3); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-550, gy); ctx.lineTo(550, gy); ctx.stroke();
+  // the same person, standing up and walking into the light
+  const u = seg(t, 38.6, 41.0), x = lerp(-330, 150, easeInOut(u));
+  ctx.save(); ctx.shadowColor = rgba(GOLD, .8); ctx.shadowBlur = 16; walker(x, gy, 330, t * 6.5, `rgb(${GOLD})`, 6); ctx.restore();
+  text('清晨 6:10', -450, -240, `400 22px ${MONO}`, rgba(GOLD, .6), 'left');
+}
+function closeUps(t) {
+  if (t < 35 || t > 41.5) return;
+  const grow = easeInOut(seg(t, 35.0, 35.7)), fade = 1 - seg(t, 40.95, 41.4);
+  const cx = lerp(frameCX(8), W / 2, grow), cy = FY, w = lerp(88, PW_, grow), s = w / PW_;
+  const pan = easeInOut(seg(t, 38.0, 38.6));
+  ctx.save(); ctx.globalAlpha *= fade * seg(t, 35.0, 35.15);
+  for (const [k, draw] of [[0, nightScene], [1, dawnScene]]) {
+    const ox = (k - pan) * 1560 * s; if (Math.abs(ox) > 1500) continue;
+    ctx.save(); ctx.translate(cx + ox, cy); ctx.scale(s, s);
+    rr(-PW_ / 2, -PH_ / 2, PW_, PH_, 14); ctx.save(); ctx.clip(); draw(t); ctx.restore();
+    rr(-PW_ / 2, -PH_ / 2, PW_, PH_, 14); ctx.strokeStyle = k ? rgba(GOLD, .55) : 'rgba(172,188,212,.45)'; ctx.lineWidth = 2 / Math.max(s, .2); ctx.stroke();
+    // film sprockets above and below the frame
+    ctx.fillStyle = 'rgba(200,190,170,.18)'; for (let x = -PW_ / 2 + 10; x < PW_ / 2 - 20; x += 46) { rr(x, -PH_ / 2 - 34, 24, 16, 3); ctx.fill(); rr(x, PH_ / 2 + 18, 24, 16, 3); ctx.fill(); }
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// ---------- the detours: a winding road, with the costs only you know written at its turns ----------
+const RP = [[250, 720], [430, 590], [350, 430], [560, 360], [720, 600], [880, 690], [990, 520], [880, 360], [1050, 230], [1240, 400], [1350, 650], [1500, 580], [1450, 380], [1660, 290]];
+const ROUTE = (() => {
+  const out = [], n = 26;
+  for (let i = 0; i < RP.length - 1; i++) {
+    const p0 = RP[Math.max(i - 1, 0)], p1 = RP[i], p2 = RP[i + 1], p3 = RP[Math.min(i + 2, RP.length - 1)];
+    for (let k = 0; k < n; k++) {
+      const u = k / n, u2 = u * u, u3 = u2 * u;
+      out.push([0, 1].map(d => .5 * (2 * p1[d] + (-p0[d] + p2[d]) * u + (2 * p0[d] - 5 * p1[d] + 4 * p2[d] - p3[d]) * u2 + (-p0[d] + 3 * p1[d] - 3 * p2[d] + p3[d]) * u3)));
+    }
+  }
+  out.push(RP[RP.length - 1]);
+  let L = 0; const cum = [0]; for (let i = 1; i < out.length; i++) { L += Math.hypot(out[i][0] - out[i - 1][0], out[i][1] - out[i - 1][1]); cum.push(L); }
+  return { pts: out, cum, L };
+})();
+const COSTS = [[2, '熬夜'], [4, '被拒'], [7, '重来'], [9, '搬家'], [10, '生病'], [12, '一个人扛']];
+function detours(t) {
+  const a = env(t, 41.1, 49.3, .5, .4); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  const [sx, sy] = RP[0], [ex, ey] = RP[RP.length - 1];
+  // the straight line you could have taken: faint dashes
+  ctx.save(); ctx.setLineDash([10, 12]); ctx.strokeStyle = 'rgba(200,190,170,.22)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + (ex - sx) * seg(t, 41.3, 42.0), sy + (ey - sy) * seg(t, 41.3, 42.0)); ctx.stroke(); ctx.restore();
+  // the road you actually walked
+  const p = easeInOut(seg(t, 41.4, 44.3)), Lp = ROUTE.L * p, pts = [];
+  for (let i = 0; i < ROUTE.pts.length && ROUTE.cum[i] <= Lp; i++) pts.push(ROUTE.pts[i]);
+  if (pts.length > 1) {
+    ctx.save(); ctx.strokeStyle = 'rgba(255,236,170,.95)'; ctx.lineWidth = 4; ctx.shadowColor = rgba(GOLD, .9); ctx.shadowBlur = 22; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); ctx.restore();
+    if (p < 1) { const [hx, hy] = pts[pts.length - 1], fl = ctx.createRadialGradient(hx, hy, 2, hx, hy, 110); fl.addColorStop(0, 'rgba(255,250,230,.9)'); fl.addColorStop(.25, 'rgba(255,230,170,.25)'); fl.addColorStop(1, 'rgba(255,230,170,0)'); ctx.fillStyle = fl; ctx.fillRect(hx - 110, hy - 110, 220, 220); }
+  }
+  text('起点', sx, sy + 44, `400 22px ${MONO}`, 'rgba(150,142,128,1)', 'center', seg(t, 41.3, 41.7));
+  // small grey notes at the turns
+  COSTS.forEach(([ci, s], k) => {
+    const [x, y] = RP[ci], kk = easeOut(seg(t, 44.8 + k * .42, 45.3 + k * .42)); if (kk <= 0) return;
+    ctx.save(); ctx.globalAlpha *= kk; ctx.fillStyle = 'rgba(200,190,170,.7)'; ctx.beginPath(); ctx.arc(x, y, 5, 0, 7); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.filter = `blur(${(1 - kk) * 8}px)`; text(s, x, y + (y < 480 ? -40 : 44), `500 26px ${SANS}`, 'rgba(196,188,174,1)', 'center', kk); ctx.restore();
+  });
+  // today: the end of the road lights up
+  const tk = easeOut(seg(t, 47.4, 48.0));
+  if (tk > 0) {
+    const pulse = .5 + .5 * Math.sin(t * 5);
+    const g = ctx.createRadialGradient(ex, ey, 4, ex, ey, 150); g.addColorStop(0, rgba(GOLD, .5 * tk)); g.addColorStop(1, rgba(GOLD, 0)); ctx.fillStyle = g; ctx.fillRect(ex - 150, ey - 150, 300, 300);
+    ctx.save(); ctx.globalAlpha *= tk; ctx.fillStyle = '#fff6dc'; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 30; ctx.beginPath(); ctx.arc(ex, ey, 11, 0, 7); ctx.fill();
+    ctx.strokeStyle = rgba(GOLD, .6 * (1 - pulse)); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ex, ey, 18 + 26 * pulse, 0, 7); ctx.stroke(); ctx.restore();
+    text('今天', ex, ey - 52, `900 40px ${SERIF}`, `rgb(${GOLD})`, 'center', tk, 20);
+  }
+  ctx.restore();
+}
+
+// ---------- other people's words: your moods hang from their comments, until the strings are cut ----------
+const MOODS = [['喜', 780, '不错', 330, 260], ['哀', 900, '一般吧', 270, 610], ['怒', 1020, '就这？', 1590, 260], ['乐', 1140, '666', 1650, 610]];
+function face(x, y, r, type, col) {
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.stroke();
+  const e = r * .32, ey = y - r * .18;
+  ctx.beginPath(); ctx.arc(x - e, ey, 3.2, 0, 7); ctx.arc(x + e, ey, 3.2, 0, 7); ctx.fill();
+  ctx.beginPath();
+  if (type === '喜') ctx.arc(x, y + r * .05, r * .45, .2 * Math.PI, .8 * Math.PI);
+  else if (type === '哀') ctx.arc(x, y + r * .6, r * .38, 1.2 * Math.PI, 1.8 * Math.PI);
+  else if (type === '怒') { ctx.moveTo(x - r * .3, y + r * .4); ctx.lineTo(x + r * .3, y + r * .4); ctx.moveTo(x - e - 10, ey - 14); ctx.lineTo(x - e + 8, ey - 6); ctx.moveTo(x + e + 10, ey - 14); ctx.lineTo(x + e - 8, ey - 6); }
+  else { ctx.moveTo(x - r * .42, y + r * .12); ctx.arc(x, y + r * .12, r * .42, 0, Math.PI); ctx.closePath(); }
+  ctx.stroke();
+  if (type === '哀') { ctx.beginPath(); ctx.moveTo(x + e, ey + 8); ctx.quadraticCurveTo(x + e - 4, ey + 18, x + e, ey + 20); ctx.quadraticCurveTo(x + e + 4, ey + 18, x + e, ey + 8); ctx.fill(); }
+}
+function bubble(x, y, s, alpha) {
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.font = `500 30px ${SANS}`; const w = ctx.measureText(s).width + 56, h = 64;
+  rr(x - w / 2, y - h / 2, w, h, 18); ctx.fillStyle = '#171614'; ctx.fill(); ctx.strokeStyle = 'rgba(200,190,170,.45)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x - 10, y + h / 2 - 1); ctx.lineTo(x, y + h / 2 + 14); ctx.lineTo(x + 10, y + h / 2 - 1); ctx.fillStyle = '#171614'; ctx.fill();
+  ctx.restore();
+  text(s, x, y + 1, `500 30px ${SANS}`, 'rgba(220,212,198,1)', 'center', alpha);
+}
+function judged(t) {
+  const a = env(t, 49.05, 53.25, .45, .35); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  const fx = W / 2, fy = 820, fh = 300, chest = [fx, fy - fh * .62];
+  const absorbed = MOODS.reduce((p, _, k) => p + seg(t, 51.75 + k * .28, 52.2 + k * .28), 0) / 4;
+  const g = ctx.createRadialGradient(fx, fy - 140, 10, fx, fy - 140, 260); g.addColorStop(0, rgba(GOLD, .08 + .22 * absorbed)); g.addColorStop(1, rgba(GOLD, 0)); ctx.fillStyle = g; ctx.fillRect(fx - 280, fy - 420, 560, 560);
+  person(fx, fy, fh, GOLD, .55 + .4 * absorbed);
+  MOODS.forEach(([type, x0, s, bx, by], k) => {
+    const ap = easeOut(seg(t, 49.3 + k * .15, 49.8 + k * .15)), cut = 51.4 + k * .28, fall = seg(t, cut, cut + .5);
+    const flick = .65 + .35 * Math.sin(t * 7 + k * 2), sw = Math.sin(t * 2.4 + k * 1.3) * 12 * (1 - fall);
+    let x = x0 + sw, y = 330 + Math.cos(t * 2.4 + k) * 4;
+    bubble(bx, by, s, ap * (fall > 0 ? 1 - fall * .7 : flick));
+    // the string: whole, then cut in the middle and pulled back
+    if (fall <= 0) { ctx.save(); ctx.globalAlpha *= ap * .8; ctx.strokeStyle = 'rgba(220,212,198,.55)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(bx, by + (by < 400 ? 40 : -34)); ctx.lineTo(x, y - 40); ctx.stroke(); ctx.restore(); }
+    else {
+      const r = 1 - easeOut(fall), mx = lerp(bx, x, .5), my = lerp(by, y, .5);
+      ctx.save(); ctx.globalAlpha *= ap * .8 * r; ctx.strokeStyle = 'rgba(220,212,198,.55)'; ctx.lineWidth = 1.4; ctx.beginPath();
+      ctx.moveTo(bx, by); ctx.lineTo(lerp(bx, mx, r), lerp(by, my, r) + 30 * (1 - r)); ctx.moveTo(x, y - 40); ctx.lineTo(lerp(x, mx, r), lerp(y - 40, my, r)); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.globalAlpha *= .9; ctx.fillStyle = `rgb(${RED})`; ctx.beginPath(); ctx.arc(mx, my, 6 * (1 - fall), 0, 7); ctx.fill(); ctx.restore();
+    }
+    // the face drops back into you
+    const e = easeInOut(fall); x = lerp(x, chest[0], e); y = lerp(y, chest[1], e) - Math.sin(Math.PI * e) * 40;
+    const sc = lerp(1, .35, e), col = `rgb(${mix('226,220,208', GOLD, e)})`;
+    ctx.save(); ctx.globalAlpha *= ap * (1 - seg(t, cut + .4, cut + .6));
+    face(x, y, 40 * sc, type, col);
+    text(type, x, y + 66 * sc, `700 ${Math.round(24 * Math.max(sc, .5))}px ${SANS}`, 'rgba(200,192,178,1)', 'center', 1 - e);
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+// ---------- empathy: two circles that never fully overlap ----------
+function empathy(t) {
+  const a = env(t, 53.05, 56.65, .45, .35); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  const R = 200, cy = 470, k = easeInOut(seg(t, 53.3, 55.0)), jig = Math.max(0, Math.sin((t - 55) * 5)) * 10 * seg(t, 55.0, 55.3) * (1 - seg(t, 56.0, 56.4));
+  const x1 = lerp(500, 830, k) + jig, x2 = lerp(1420, 1090, k) - jig;
+  // the shared part glows
+  ctx.save(); ctx.beginPath(); ctx.arc(x1, cy, R, 0, 7); ctx.clip();
+  const g = ctx.createRadialGradient((x1 + x2) / 2, cy, 10, (x1 + x2) / 2, cy, 160); g.addColorStop(0, rgba(GOLD, .55)); g.addColorStop(1, rgba(GOLD, .18));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x2, cy, R, 0, 7); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = rgba(GOLD, .9); ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 18; ctx.beginPath(); ctx.arc(x1, cy, R, 0, 7); ctx.stroke();
+  ctx.strokeStyle = 'rgba(220,212,198,.8)'; ctx.shadowColor = 'rgba(220,212,198,.6)'; ctx.beginPath(); ctx.arc(x2, cy, R, 0, 7); ctx.stroke(); ctx.restore();
+  text('你', x1 - 80, cy, `900 46px ${SERIF}`, `rgb(${GOLD})`, 'center', 1, 18);
+  text('他', x2 + 80, cy, `900 46px ${SERIF}`, 'rgba(226,220,208,1)', 'center', 1, 10);
+  ctx.save(); ctx.letterSpacing = '4px'; text('能懂的，只有这一小块', W / 2, cy + R + 70, `400 22px ${MONO}`, rgba(GOLD, .75), 'center', seg(t, 55.2, 55.7)); ctx.restore();
+  ctx.restore();
+}
+
+// ---------- the only witness: an empty cinema, one lit seat; then time and energy flow back to it ----------
+const SEAT = { row: 2, x: W / 2 };
+const ROWS = Array.from({ length: 5 }, (_, r) => ({ y: 560 + r * 76, sc: .78 + r * .14 }));
+const DOTS = Array.from({ length: 150 }, (_, i) => ({ x: 80 + hash(i, 31) * 1760, y: 90 + hash(i, 37) * 760, d: hash(i, 41) }));
+function cinema(t) {
+  const a = env(t, 56.55, 64.25, .5, .4); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  const dim = 1 - .85 * seg(t, 60.15, 61.0);
+  // the screen, showing the whole lit strip
+  ctx.save(); ctx.globalAlpha *= .4 + .6 * dim;
+  rr(540, 100, 840, 300, 6); ctx.fillStyle = '#16140f'; ctx.fill(); ctx.strokeStyle = 'rgba(220,210,190,.25)'; ctx.lineWidth = 2; ctx.stroke();
+  const sg = ctx.createLinearGradient(0, 400, 0, 900); sg.addColorStop(0, rgba('255,236,190', .07 * dim)); sg.addColorStop(1, rgba('255,236,190', 0)); ctx.fillStyle = sg; ctx.beginPath(); ctx.moveTo(540, 400); ctx.lineTo(1380, 400); ctx.lineTo(1800, 900); ctx.lineTo(120, 900); ctx.closePath(); ctx.fill();
+  for (let i = 0; i < N; i++) frameAt(i, 960 - 368 + 23 + i * 46, 250, .46, dim * easeOut(seg(t, 56.8 + i * .04, 57.1 + i * .04)), 1);
+  ctx.restore();
+  // rows of empty seats; one is lit
+  const lit = easeOut(seg(t, 57.2, 58.0)), glow = seg(t, 61.6, 63.6);
+  ROWS.forEach(({ y, sc }, r) => {
+    const sw = 70 * sc, gap = 16 * sc, step = sw + gap, n = Math.ceil(W / step) + 2, x0 = W / 2 - Math.floor(n / 2) * step;
+    for (let c = 0; c < n; c++) {
+      const x = x0 + c * step, me = r === SEAT.row && Math.abs(x - SEAT.x) < 1;
+      if (me) {
+        // spotlight and the person sitting there
+        const cone = ctx.createLinearGradient(0, -50, 0, y); cone.addColorStop(0, rgba('255,236,190', 0)); cone.addColorStop(1, rgba('255,236,190', .14 * lit));
+        ctx.fillStyle = cone; ctx.beginPath(); ctx.moveTo(x - 30, -50); ctx.lineTo(x + 30, -50); ctx.lineTo(x + 110 * sc, y + 10); ctx.lineTo(x - 110 * sc, y + 10); ctx.closePath(); ctx.fill();
+        const gg = ctx.createRadialGradient(x, y - 40 * sc, 5, x, y - 40 * sc, (90 + 140 * glow) * sc); gg.addColorStop(0, rgba(GOLD, .25 * lit + .35 * glow)); gg.addColorStop(1, rgba(GOLD, 0));
+        ctx.fillStyle = gg; ctx.fillRect(x - 300, y - 300, 600, 600);
+        ctx.save(); ctx.globalAlpha *= lit; person(x, y + 30 * sc, 150 * sc, GOLD, .6 + .4 * Math.max(lit * .6, glow)); ctx.restore();
+      }
+      rr(x - sw / 2, y - 26 * sc, sw, 58 * sc, 10 * sc); ctx.fillStyle = me ? `rgb(${mix('22,20,17', '60,50,26', lit)})` : '#141311'; ctx.fill();
+      ctx.strokeStyle = me ? rgba(GOLD, .5 * lit) : 'rgba(200,190,170,.10)'; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+  });
+  // time and energy: drifting away at first, then turning back to you
+  if (t > 60.1) {
+    const tx = SEAT.x, ty = ROWS[SEAT.row].y - 60 * ROWS[SEAT.row].sc;
+    for (const { x, y, d } of DOTS) {
+      const out = easeOut(seg(t, 60.1, 61.2)), back = easeInOut(seg(t, 60.9 + d * .9, 62.6 + d * .9));
+      if (back >= 1) continue;
+      const vx = x - tx, vy = y - ty, len = Math.hypot(vx, vy) || 1, px = x + vx / len * 70 * out, py = y + vy / len * 70 * out;
+      const X = lerp(px, tx, back), Y = lerp(py, ty, back) - Math.sin(Math.PI * back) * 60 * (d - .5);
+      ctx.save(); ctx.globalAlpha *= seg(t, 60.1, 60.5) * (.5 + .5 * d) * (1 - seg(back, .85, 1)); ctx.fillStyle = rgba(GOLD, 1); ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(X, Y, 2.2 + 1.6 * d, 0, 7); ctx.fill(); ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+
+// ---------- three small scenes: your body, your skills, your every day ----------
+function threePanels(t) {
+  const a = env(t, 64.05, 70.65, .4, .35); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  const PW = 460, PH = 480, GAP = 50, x0 = (W - (3 * PW + 2 * GAP)) / 2, py = 160;
+  const P = [['身体', 64.3], ['本事', 65.7], ['每一天', 67.75]];
+  P.forEach(([name, t0], i) => {
+    const x = x0 + i * (PW + GAP), cx = x + PW / 2, cy = py + 210, ap = seg(t, 64.1 + i * .08, 64.45 + i * .08), on = seg(t, t0, t0 + .35), u = Math.max(0, t - t0);
+    ctx.save(); ctx.globalAlpha *= ap;
+    rr(x, py, PW, PH, 22); ctx.fillStyle = on > 0 ? `rgba(245,215,110,${.05 * on})` : '#0f0e0d'; ctx.fill();
+    ctx.strokeStyle = on > .5 ? rgba(GOLD, .7) : 'rgba(200,190,170,.18)'; ctx.lineWidth = 2; if (on > .5) { ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 24; } ctx.stroke(); ctx.shadowBlur = 0;
+    const C = on > .5 ? GOLD : '110,104,94', cs = `rgb(${C})`;
+    ctx.globalAlpha *= .35 + .65 * on;
+    ctx.save(); rr(x, py, PW, PH, 22); ctx.clip();
+    if (i === 0) { // running, with a heartbeat line
+      if (on > .5) { ctx.shadowColor = cs; ctx.shadowBlur = 14; }
+      walker(cx, cy + 60, 220, on > 0 ? u * 11 : 0, cs, 5, 1); ctx.shadowBlur = 0;
+      ctx.strokeStyle = cs; ctx.lineWidth = 3; ctx.beginPath();
+      for (let k = 0; k <= 80; k++) { const xx = x + 40 + k * (PW - 80) / 80, ph = ((k / 80) * 3 - u * 1.4) % 1, pp = ph < 0 ? ph + 1 : ph;
+        const yy = cy + 140 - (pp > .45 && pp < .5 ? (pp - .45) * 20 * 60 : pp >= .5 && pp < .55 ? (.55 - pp) * 20 * 60 - 30 : 0) * (on > 0 ? 1 : 0);
+        k ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); }
+      ctx.stroke();
+    } else if (i === 1) { // a rough stone being polished until it glows
+      const pol = on > 0 ? easeOut(clamp(u / 2.6)) : 0, V = 7, rr0 = 110;
+      const pts = Array.from({ length: V }, (_, k) => { const ang = k / V * Math.PI * 2 - Math.PI / 2, rad = rr0 * (lerp(.72 + .4 * hash(k, 3), 1, pol)); return [cx + Math.cos(ang) * rad, cy - 10 + Math.sin(ang) * rad]; });
+      const g = ctx.createRadialGradient(cx, cy - 10, 5, cx, cy - 10, 150); g.addColorStop(0, rgba(GOLD, .55 * pol)); g.addColorStop(1, rgba(GOLD, 0)); ctx.fillStyle = g; ctx.fillRect(cx - 160, cy - 170, 320, 320);
+      ctx.beginPath(); pts.forEach(([px, ppy], k) => k ? ctx.lineTo(px, ppy) : ctx.moveTo(px, ppy)); ctx.closePath(); ctx.fillStyle = `rgba(${mix('40,38,34', '120,96,40', pol)},1)`; ctx.fill();
+      ctx.strokeStyle = cs; ctx.lineWidth = 3; ctx.stroke();
+      ctx.save(); ctx.globalAlpha *= pol; ctx.strokeStyle = rgba(GOLD, .8); ctx.lineWidth = 1.5; ctx.beginPath(); pts.forEach(([px, ppy]) => { ctx.moveTo(cx, cy - 10); ctx.lineTo(px, ppy); }); ctx.stroke(); ctx.restore();
+      // the tool working the right side
+      const tx = cx + 150, ty = cy - 10 + Math.sin(u * 10) * 50 * (on > 0 ? 1 : 0);
+      ctx.save(); ctx.translate(tx, ty); ctx.rotate(-.5); rr(-10, -60, 20, 120, 6); ctx.strokeStyle = cs; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
+      if (on > 0) for (let k = 0; k < 6; k++) { const q = (u * 2 + k / 6) % 1; ctx.save(); ctx.globalAlpha *= (1 - q) * .8; ctx.fillStyle = `rgb(${GOLD})`; ctx.fillRect(cx + 115 + q * 50 * Math.cos(k), ty + q * 40 * Math.sin(k * 2), 3, 3); ctx.restore(); }
+    } else { // calendar pages, each one ticked
+      const per = .48, n = on > 0 ? Math.floor(u / per) : 0, f = on > 0 ? (u / per) % 1 : 0, pw = 220, ph = 240, px = cx - pw / 2, ppy = cy - ph / 2 - 10;
+      const page = (day, lift, tick) => {
+        ctx.save(); ctx.translate(0, -lift * 60); ctx.globalAlpha *= 1 - lift;
+        rr(px, ppy, pw, ph, 12); ctx.fillStyle = '#1a1813'; ctx.fill(); ctx.strokeStyle = cs; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = cs; ctx.fillRect(px, ppy, pw, 46); [px + 60, px + pw - 60].forEach(rx => { ctx.beginPath(); ctx.arc(rx, ppy, 9, 0, 7); ctx.strokeStyle = cs; ctx.stroke(); });
+        text('第 ' + day + ' 天', cx, ppy + 23, `700 24px ${SANS}`, '#1a1408');
+        if (tick > 0) { ctx.save(); ctx.strokeStyle = rgba(GOLD, 1); ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.shadowColor = `rgb(${GOLD})`; ctx.shadowBlur = 18;
+          const A = [cx - 52, ppy + 145], B = [cx - 12, ppy + 185], Cc = [cx + 60, ppy + 95], k1 = clamp(tick * 2.2), k2 = clamp(tick * 2.2 - 1);
+          ctx.beginPath(); ctx.moveTo(...A); ctx.lineTo(lerp(A[0], B[0], k1), lerp(A[1], B[1], k1)); if (k2 > 0) ctx.lineTo(lerp(B[0], Cc[0], k2), lerp(B[1], Cc[1], k2)); ctx.stroke(); ctx.restore(); }
+        ctx.restore();
+      };
+      page(n + 2, 0, 0);
+      page(n + 1, f > .8 ? easeInOut((f - .8) / .2) : 0, on > 0 ? clamp(f / .55) : 0);
+    }
+    ctx.restore();
+    ctx.restore();
+    text(name, cx, py + PH - 46, `900 40px ${SERIF}`, on > .5 ? `rgb(${GOLD})` : 'rgba(130,122,110,1)', 'center', ap, on > .5 ? 22 : 0);
+  });
+  ctx.restore();
+}
+
+// keep bottom captions readable over busy scenes
+function captionShade(t) {
+  const k = Math.max(env(t, 56.6, 64.2, .4, .4), env(t, 29.3, 35.2, .4, .4));
+  if (k <= 0) return; const g = ctx.createLinearGradient(0, 870, 0, 1050); g.addColorStop(0, 'rgba(10,10,10,0)'); g.addColorStop(.5, `rgba(10,10,10,${.8 * k})`); g.addColorStop(1, 'rgba(10,10,10,0)'); ctx.fillStyle = g; ctx.fillRect(0, 870, W, 180);
 }
 
 const renderAt = function (t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#0A0A0A'; ctx.fillRect(0, 0, W, H);
-  pixelWall(t); strip(t); relations(t);
-  vignette();
+  pixelWall(t); strip(t); relations(t); friends(t); shards(t); titleCard(t); selfScene(t);
+  closeUps(t); detours(t); judged(t); empathy(t); cinema(t); threePanels(t); ending(t);
+  vignette(); captionShade(t);
   for (const c of CAPS) caption(t, c);
   label(t);
+  const fo = seg(t, 75.2, 76.0); if (fo > 0) { ctx.fillStyle = `rgba(0,0,0,${fo})`; ctx.fillRect(0, 0, W, H); }
 };
 window.render = t => renderAt(t);
 window.ready = (async () => {
-  const all = CAPS.map(c => c[2]).join('') + REL.map(r => r[0] + r[6][2]).join('') + '风华正茂年龄为示意岁你的一生天';
-  await Promise.all([document.fonts.load(`900 64px ${SERIF}`, all), document.fonts.load(`700 30px ${SANS}`, all),
-    document.fonts.load(`400 24px ${MONO}`, 'ONLYAPARTENSCHILDR·一部分父母伴侣儿女0123456789岁年龄为示意看不见未曾参与没见过')]);
+  const all = CAPS.map(c => c[2]).join('') + REL.map(r => r[0] + r[6][2]).join('') + FRIENDS.map(f => f[0]).join('') + MOODS.map(m => m[0] + m[2]).join('') + COSTS.map(c => c[1]).join('')
+    + '风华正茂年龄为示意岁你的一生天全程观众第期起点今天他能懂的只有这一小块身体本事每一天凌晨清晨';
+  await Promise.all([document.fonts.load(`900 64px ${SERIF}`, all), document.fonts.load(`700 30px ${SANS}`, all), document.fonts.load(`500 30px ${SANS}`, all),
+    document.fonts.load(`400 24px ${MONO}`, LABELS.map(l => l[2]).join('') + 'THEONLYWITNESS0123456789:·岁年龄为示意看不见未曾参与没见过全程起点能懂的只有这一小块凌晨清晨')]);
   await document.fonts.ready; window.render(0); return true;
 })();
 </script>
