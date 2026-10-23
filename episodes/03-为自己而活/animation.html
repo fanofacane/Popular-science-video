@@ -14,7 +14,7 @@
 <body>
 <canvas id="c" width="1920" height="1080"></canvas>
 <script>
-// =============== Episode 03 · 全程观众 ===============
+// =============== Episode 03 · 为自己而活 ===============
 // Timings follow 分镜稿.md (full film, 76 s).
 // One "life film strip" (0–80 years) runs through the whole film; each relationship lights only part of it.
 const W = 1920, H = 1080;
@@ -365,7 +365,7 @@ function floorGrid(alpha, horizon = 700) {
   for (let k = 1; k < 16; k++) { const y = horizon + Math.pow(k / 15, 2.1) * (H - horizon + 80); ctx.globalAlpha = alpha * (.3 + .7 * k / 15); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
   ctx.restore();
 }
-const TITLE = '全程观众', KICKER = '第 03 期', SUB = 'THE ONLY WITNESS';
+const TITLE = '为自己而活', KICKER = '第 03 期', SUB = 'LIVE FOR YOURSELF';
 function titleCard(t) {
   const tt = t - 25.5, len = 3.6, ta = env(tt, 0, len, .4, .45); if (ta <= 0) return;
   ctx.save(); ctx.globalAlpha = ta;
@@ -716,9 +716,9 @@ const renderAt = function (t) {
 window.render = t => renderAt(t);
 window.ready = (async () => {
   const all = CAPS.map(c => c[2]).join('') + REL.map(r => r[0] + r[6][2]).join('') + FRIENDS.map(f => f[0]).join('') + MOODS.map(m => m[0] + m[2]).join('') + COSTS.map(c => c[1]).join('')
-    + '风华正茂年龄为示意岁你的一生天全程观众第期起点今天他能懂的只有这一小块身体本事每一天凌晨清晨';
+    + '风华正茂年龄为示意岁你的一生天为自己而活全程观众第期起点今天他能懂的只有这一小块身体本事每一天凌晨清晨';
   await Promise.all([document.fonts.load(`900 64px ${SERIF}`, all), document.fonts.load(`700 30px ${SANS}`, all), document.fonts.load(`500 30px ${SANS}`, all),
-    document.fonts.load(`400 24px ${MONO}`, LABELS.map(l => l[2]).join('') + 'THEONLYWITNESS0123456789:·岁年龄为示意看不见未曾参与没见过全程起点能懂的只有这一小块凌晨清晨')]);
+    document.fonts.load(`400 24px ${MONO}`, LABELS.map(l => l[2]).join('') + 'THEONLYWITNESSLIVEFORYU0123456789:·岁年龄为示意看不见未曾参与没见过全程起点能懂的只有这一小块凌晨清晨')]);
   await document.fonts.ready; window.render(0); return true;
 })();
 </script>
