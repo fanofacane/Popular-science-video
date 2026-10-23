@@ -1,4 +1,4 @@
-// Usage: node render.mjs <page.html[#variant]> <out.mp4> [--fps 30] [--from 0] [--to DURATION] [--stills 1,5.5,12]
+// Usage (from engine/): node render.mjs <page.html[#variant]> <out.mp4> [--fps 30] [--from 0] [--to DURATION] [--stills 1,5.5,12]
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import path from 'node:path';

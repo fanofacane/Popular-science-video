@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Usage: ./render-parallel.sh <page.html> <out.mp4> [jobs=4]
+# Usage: engine/render-parallel.sh <page.html> <out.mp4> [jobs=4]   (paths relative to where you run it)
 # Splits the timeline into N parts, renders them at the same time, then joins them (no re-encode).
 set -euo pipefail
-page=$1; out=$(realpath -m "$2"); jobs=${3:-4}; fps=30
-dur=$(node -e "import('playwright').then(async({chromium})=>{const b=await chromium.launch();const p=await b.newPage();await p.goto('file://'+require('path').resolve('$page'));await p.evaluate(()=>window.ready);console.log(await p.evaluate(()=>window.DURATION));await b.close()})")
+page=$(realpath "$1"); out=$(realpath -m "$2"); jobs=${3:-4}; fps=30
+cd "$(dirname "$0")"
+dur=$(node -e "import('playwright').then(async({chromium})=>{const b=await chromium.launch();const p=await b.newPage();await p.goto('file://'+'$page');await p.evaluate(()=>window.ready);console.log(await p.evaluate(()=>window.DURATION));await b.close()})")
 frames=$(python3 -c "print(round($dur*$fps))"); per=$(( (frames + jobs - 1) / jobs ))
 tmp=$(mktemp -d); : > "$tmp/list.txt"
 for k in $(seq 0 $((jobs-1))); do
