@@ -14,7 +14,7 @@
 <body>
 <canvas id="c" width="1920" height="1080"></canvas>
 <script>
-// =============== Episode 03 · 为自己而活 ===============
+// =============== Episode 04 · 为自己而活 ===============
 // Timings follow 分镜稿.md (full film, 76 s).
 // One "life film strip" (0–80 years) runs through the whole film; each relationship lights only part of it.
 const W = 1920, H = 1080;
@@ -365,7 +365,7 @@ function floorGrid(alpha, horizon = 700) {
   for (let k = 1; k < 16; k++) { const y = horizon + Math.pow(k / 15, 2.1) * (H - horizon + 80); ctx.globalAlpha = alpha * (.3 + .7 * k / 15); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
   ctx.restore();
 }
-const TITLE = '为自己而活', KICKER = '第 03 期', SUB = 'LIVE FOR YOURSELF';
+const TITLE = '为自己而活', KICKER = '第 04 期', SUB = 'LIVE FOR YOURSELF';
 function titleCard(t) {
   const tt = t - 25.5, len = 3.6, ta = env(tt, 0, len, .4, .45); if (ta <= 0) return;
   ctx.save(); ctx.globalAlpha = ta;

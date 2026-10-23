@@ -16,7 +16,7 @@
 |---|---|---|
 | 01 | 失望性情感隔离 | `episodes/01-失望性情感隔离/output/成片-75s.mp4` |
 | 02 | 不认命 | `episodes/02-不认命/output/成片-48s.mp4` |
-| 03 | 为自己而活 | `episodes/03-为自己而活/output/成片-76s.mp4` |
+| 04 | 为自己而活 | `episodes/04-为自己而活/output/成片-76s.mp4` |
 
 ## 渲染
 
