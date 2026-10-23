@@ -203,7 +203,7 @@ function pixelWall(t) {
   const cell = 22, gap = 7, step = cell + gap, scroll = t * 18;
   for (let r = -14; r < 52; r++) {
     if (((r % 4) + 4) % 4 === 3) continue;
-    const y = r * step - 200, off = (r % 2 ? scroll : -scroll * .7), c0 = Math.floor((-400 - off) / step) - 1;
+    const band = Math.floor(r / 4), y = r * step - 200, off = (((band % 2) + 2) % 2 ? -scroll : scroll), c0 = Math.floor((-400 - off) / step) - 1;
     for (let c = c0; c < c0 + 100; c++) {
       const x = c * step + off; if (x < -400 || x > W + 400) continue;
       const h = hash(c, r), b = 0.55 + 0.45 * hash(r, c * 7);
