@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../engine/node_modules/@fontsource/noto-serif-sc/900.css">
+<link rel="stylesheet" href="../../engine/node_modules/@fontsource/noto-sans-sc/500.css">
+<link rel="stylesheet" href="../../engine/node_modules/@fontsource/noto-sans-sc/700.css">
+<link rel="stylesheet" href="../../engine/node_modules/@fontsource/jetbrains-mono/400.css">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; background: #0A0A0A; overflow: hidden; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// =============== Episode 03 · 全程观众 ===============
+// Timings follow 分镜稿.md. This file currently holds the sample (0–16.5 s).
+// One "life film strip" (0–80 years) runs through the whole film; each relationship lights only part of it.
+const W = 1920, H = 1080;
+const ctx = document.getElementById('c').getContext('2d');
+const GOLD = '245,215,110', RED = '232,72,58', WHITE = '242,242,242';
+const SERIF = '"Noto Serif SC"', SANS = '"Noto Sans SC"', MONO = '"JetBrains Mono", "Noto Sans SC"';
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const easeOut = k => 1 - Math.pow(1 - k, 3);
+const easeInOut = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const env = (t, a, b, fi = .35, fo = .35) => Math.min(seg(t, a, a + fi), 1 - seg(t, b - fo, b));
+const rgba = (c, a) => `rgba(${c},${a})`;
+const mix = (c1, c2, k) => { const p = c1.split(',').map(Number), q = c2.split(',').map(Number); return p.map((v, i) => Math.round(lerp(v, q[i], k))).join(','); };
+function hash(i, j) { let h = (i * 374761393 + j * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
+window.DURATION = 16.5;
+
+// ---------- captions: per-character blur-in ----------
+// [start, end, text, y, size]   {g:..} gold  {r:..} red
+const CAPS = [
+  [0.3, 3.45, '你有没有发现，这世上{g:最爱你}的人，', 540, 68],
+  [3.6, 6.9, '其实都只见过你的{g:一部分}？', 540, 68],
+  [7.1, 9.95, '父母，终究看不见你的{r:暮年}；', 960, 52],
+  [10.1, 12.95, '伴侣，未曾参与你的{r:童年}；', 960, 52],
+  [13.1, 16.6, '儿女，没见过你{g:风华正茂}的模样；', 960, 52],
+];
+function parse(s) { const out = []; const re = /\{([gr]):([^}]*)\}|([^{]+)/g; let m; while ((m = re.exec(s))) { const c = m[1] || ''; for (const ch of (m[2] ?? m[3])) out.push([ch, c]); } return out; }
+function caption(t, [a, b, s, y, size]) {
+  const chars = parse(s), outK = seg(t, b - .3, b);
+  if (t < a - .05 || outK >= 1) return;
+  ctx.save(); ctx.font = `900 ${size}px ${SERIF}`; ctx.textBaseline = 'middle';
+  const ws = chars.map(([ch]) => ctx.measureText(ch).width), total = ws.reduce((p, q) => p + q, 0);
+  let x = W / 2 - total / 2;
+  chars.forEach(([ch, c], i) => {
+    const t0 = a + i * .045, k = easeOut(seg(t, t0, t0 + .4)), al = k * (1 - outK);
+    if (al > 0) {
+      const col = c === 'g' ? GOLD : c === 'r' ? RED : WHITE;
+      ctx.save(); ctx.globalAlpha = al; ctx.filter = `blur(${(1 - k) * 14 + outK * 10}px)`; ctx.fillStyle = rgba(col, 1);
+      ctx.shadowColor = rgba(col, c ? .55 : .28); ctx.shadowBlur = c ? 26 : 22; ctx.fillText(ch, x, y + (1 - k) * 10); ctx.restore();
+    }
+    x += ws[i];
+  });
+  ctx.restore();
+}
+function text(s, x, y, font, color, align = 'center', alpha = 1, glow = 0) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (glow) { ctx.shadowColor = color; ctx.shadowBlur = glow; } ctx.fillText(s, x, y); ctx.restore();
+}
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+const LABELS = [[0.2, 6.95, 'ONLY A PART  ·  一部分'], [7.05, 9.95, 'PARENTS  ·  父母'], [10.05, 12.95, 'PARTNER  ·  伴侣'], [13.05, 16.6, 'CHILDREN  ·  儿女']];
+function label(t) {
+  ctx.save(); ctx.letterSpacing = '6px'; for (const [a, b, s] of LABELS) if (t >= a && t <= b) text(s, 120, 102, `400 22px ${MONO}`, 'rgba(109,104,94,1)', 'left', env(t, a, b, .4, .3)); ctx.restore();
+}
+function vignette() { const g = ctx.createRadialGradient(W / 2, H / 2, 380, W / 2, H / 2, 1150); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.9)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+
+// ---------- the life film strip ----------
+const N = 16, FW = 100, FX0 = 160, FY = 470, FH = 120, BAND = 176;   // 16 frames × 5 years = 0–80
+const ageX = a => FX0 + a / 80 * N * FW;
+const frameCX = i => FX0 + i * FW + FW / 2;
+
+// little line drawings of a life, one per frame (frame-local: origin = frame centre, ground at y = +44)
+function stick(x, gy, h, col, o = {}) {
+  const hr = h * .13, top = gy - h, neck = top + hr * 2, hip = gy - h * .42, st = o.stoop || 0;
+  ctx.beginPath(); ctx.arc(x + st, top + hr, hr, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + st, neck); ctx.lineTo(x, hip);                           // body
+  ctx.moveTo(x, hip); ctx.lineTo(x - h * .14, gy); ctx.moveTo(x, hip); ctx.lineTo(x + h * .14, gy); // legs
+  const ay = neck + h * .1;
+  if (o.armUp) { ctx.moveTo(x + st, ay); ctx.lineTo(x + h * .22, top - h * .05); } else { ctx.moveTo(x + st, ay); ctx.lineTo(x + h * .2, ay + h * .2); }
+  ctx.moveTo(x + st, ay); ctx.lineTo(x - h * .2, ay + h * .2);
+  ctx.stroke();
+}
+function lifeIcon(i, col) {
+  const gy = 44; ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const line = (pts) => { ctx.beginPath(); pts.forEach(([x, y], k) => k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); };
+  switch (i) {
+    case 0: // baby in a cradle
+      ctx.beginPath(); ctx.arc(0, 18, 26, 0, Math.PI); ctx.stroke(); line([[-26, 18], [26, 18]]);
+      ctx.beginPath(); ctx.arc(-10, 10, 7, 0, 7); ctx.stroke(); ctx.beginPath(); ctx.ellipse(8, 12, 12, 6, 0, 0, 7); ctx.stroke(); break;
+    case 1: stick(-6, gy, 40, col); ctx.beginPath(); ctx.arc(18, gy - 6, 6, 0, 7); ctx.stroke(); break;                // kid with a ball
+    case 2: stick(0, gy, 50, col); ctx.strokeRect(-17, gy - 40, 10, 16); break;                                         // school bag
+    case 3: stick(-4, gy, 60, col); ctx.strokeRect(10, gy - 46, 14, 10); break;                                         // book
+    case 4: stick(0, gy, 66, col, { armUp: true }); line([[-12, gy - 62], [0, gy - 68], [12, gy - 62], [0, gy - 57], [-12, gy - 62]]); break; // graduation cap
+    case 5: line([[-40, gy], [-18, gy - 40], [2, gy]]); stick(14, gy, 64, col); ctx.strokeRect(-1, gy - 52, 11, 22); break; // backpack + mountain
+    case 6: stick(-14, gy, 64, col); stick(14, gy, 60, col);                                                            // wedding + heart
+      ctx.beginPath(); ctx.moveTo(0, -26); ctx.bezierCurveTo(-8, -34, -2, -42, 0, -36); ctx.bezierCurveTo(2, -42, 8, -34, 0, -26); ctx.stroke(); break;
+    case 7: stick(-8, gy, 66, col); stick(18, gy, 30, col); break;                                                      // with a small child
+    case 8: stick(-16, gy, 64, col); ctx.strokeRect(4, gy - 30, 30, 4); line([[8, gy - 30], [8, gy]]); line([[30, gy - 30], [30, gy]]); ctx.strokeRect(10, gy - 50, 18, 14); break; // desk + screen
+    case 9: stick(-10, gy, 66, col); stick(16, gy, 52, col); break;                                                     // child grown taller
+    case 10: line([[-36, gy], [-36, gy - 28], [-20, gy - 44], [-4, gy - 28], [-4, gy]]); stick(18, gy, 64, col); break; // house
+    case 11: stick(-10, gy, 64, col); line([[24, gy], [24, gy - 30]]); ctx.beginPath(); ctx.arc(24, gy - 40, 13, 0, 7); ctx.stroke(); break; // tree
+    case 12: stick(-8, gy, 62, col, { stoop: 2 }); stick(18, gy, 28, col); break;                                       // with a grandchild
+    case 13: stick(-4, gy, 60, col, { stoop: 4 }); line([[12, gy - 30], [14, gy]]); break;                              // cane
+    case 14: line([[-30, gy - 18], [30, gy - 18]]); line([[-26, gy - 18], [-26, gy]]); line([[26, gy - 18], [26, gy]]); // bench
+      ctx.beginPath(); ctx.arc(0, gy - 52, 7, 0, 7); ctx.stroke(); line([[0, gy - 45], [0, gy - 20], [14, gy - 20], [14, gy]]); break;
+    case 15: ctx.beginPath(); ctx.arc(26, gy - 10, 16, Math.PI, 0); ctx.stroke(); stick(-8, gy, 58, col, { stoop: 6 }); line([[8, gy - 28], [11, gy]]); break; // sunset + cane
+  }
+}
+function frameAt(i, x, y, s, lit, alpha) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.translate(x, y); ctx.scale(s, s);
+  const fw = FW - 12, fh = FH;
+  rr(-fw / 2, -fh / 2, fw, fh, 6);
+  ctx.fillStyle = `rgb(${mix('20,19,17', '58,47,22', lit)})`; if (lit > .05) { ctx.shadowColor = rgba(GOLD, .7 * lit); ctx.shadowBlur = 26 * lit; } ctx.fill(); ctx.shadowBlur = 0;
+  ctx.strokeStyle = rgba(mix('120,112,100', GOLD, lit), .35 + .5 * lit); ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.save(); rr(-fw / 2, -fh / 2, fw, fh, 6); ctx.clip();
+  const col = `rgb(${mix('92,88,80', '255,236,180', lit)})`;
+  if (lit > .3) { ctx.shadowColor = rgba(GOLD, .8); ctx.shadowBlur = 10 * lit; }
+  lifeIcon(i, col); ctx.restore();
+  ctx.restore();
+}
+function filmBand(alpha) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  const x0 = FX0 - 14, w = N * FW + 28, y0 = FY - BAND / 2;
+  ctx.fillStyle = '#0f0e0c'; ctx.fillRect(x0, y0, w, BAND);
+  ctx.strokeStyle = 'rgba(200,190,170,.16)'; ctx.lineWidth = 1.2; ctx.strokeRect(x0, y0, w, BAND);
+  ctx.fillStyle = 'rgba(200,190,170,.14)';
+  for (let x = x0 + 14; x < x0 + w - 10; x += 25) { rr(x, y0 + 8, 12, 9, 2); ctx.fill(); rr(x, y0 + BAND - 17, 12, 9, 2); ctx.fill(); }
+  // age ticks
+  for (let a = 0; a <= 80; a += 10) {
+    const x = ageX(a); ctx.fillStyle = 'rgba(200,190,170,.35)'; ctx.fillRect(x - .75, y0 + BAND + 4, 1.5, 10);
+    text(a + (a === 0 || a === 80 ? ' 岁' : ''), x, y0 + BAND + 32, `400 20px ${MONO}`, 'rgba(150,142,128,1)');
+  }
+  text('年龄为示意', FX0 + N * FW, y0 - 26, `400 18px ${MONO}`, 'rgba(110,104,94,1)', 'right');
+  ctx.restore();
+}
+
+// ---------- relationships: who sees which part ----------
+// [name, from age, to age, light on, light off, figures [[age, height]], unseen [a0, a1, label]]
+const REL = [
+  ['父母', 0, 55, 7.25, 9.95, [[3, 84], [9, 78]], [55, 80, '看不见']],
+  ['伴侣', 25, 80, 10.25, 12.95, [[27, 80]], [0, 25, '未曾参与']],
+  ['儿女', 30, 80, 13.25, 16.6, [[37, 56]], [0, 30, '没见过']],
+];
+const SWEEP = 1.7;
+function relLit(t, i) {   // brightness of frame i from the relationship on screen now
+  let best = 0;
+  for (const [, a0, a1, on, off] of REL) {
+    const e = env(t, on, off, .2, .35); if (e <= 0) continue;
+    const reach = lerp(a0, a1, easeInOut(seg(t, on + .1, on + .1 + SWEEP)));
+    const f0 = 5 * i; if (f0 < a0 - .01 || f0 >= a1) continue;
+    best = Math.max(best, clamp((reach - f0) / 5) * e);
+  }
+  return best;
+}
+function person(x, y, h, rim, rimA) {
+  const hr = h * .092, headY = y - h + hr, neck = headY + hr * 1.32, sw = h * .17, wb = h * .13, r = h * .075;
+  ctx.beginPath(); ctx.arc(x, headY, hr, 0, 7);
+  ctx.moveTo(x - wb, y); ctx.lineTo(x - sw, neck + r * 1.4); ctx.quadraticCurveTo(x - sw, neck, x - sw + r, neck);
+  ctx.lineTo(x + sw - r, neck); ctx.quadraticCurveTo(x + sw, neck, x + sw, neck + r * 1.4); ctx.lineTo(x + wb, y); ctx.closePath();
+  ctx.fillStyle = '#17140d'; ctx.fill();
+  ctx.save(); ctx.strokeStyle = rgba(rim, rimA); ctx.lineWidth = 2.5; ctx.shadowColor = rgba(rim, rimA); ctx.shadowBlur = 14; ctx.stroke(); ctx.restore();
+}
+function relations(t) {
+  const top = FY - BAND / 2, bot = FY + BAND / 2;
+  for (const [name, a0, a1, on, off, figs, unseen] of REL) {
+    const e = env(t, on - .1, off, .4, .35); if (e <= 0) continue;
+    ctx.save(); ctx.globalAlpha *= e;
+    // who is watching: figures standing on the strip where they enter your life
+    figs.forEach(([age, h], k) => { const ap = easeOut(seg(t, on + k * .12, on + .5 + k * .12)); ctx.save(); ctx.globalAlpha *= ap; person(ageX(age), top - 18, h, GOLD, .85); ctx.restore(); });
+    text(name, ageX(figs.reduce((p, q) => p + q[0], 0) / figs.length), top - 18 - Math.max(...figs.map(f => f[1])) - 34, `700 30px ${SANS}`, `rgb(${GOLD})`, 'center', seg(t, on + .2, on + .6), 14);
+    // light head travelling along the strip
+    const p = seg(t, on + .1, on + .1 + SWEEP), reach = lerp(a0, a1, easeInOut(p));
+    if (p > 0 && p < 1) {
+      const x = ageX(reach), g = ctx.createRadialGradient(x, FY, 4, x, FY, 120); g.addColorStop(0, rgba('255,245,215', .7)); g.addColorStop(1, rgba(GOLD, 0));
+      ctx.fillStyle = g; ctx.fillRect(x - 120, FY - 120, 240, 240);
+      ctx.fillStyle = rgba('255,245,220', .5); ctx.fillRect(x - 1.5, top - 6, 3, BAND + 12);
+    }
+    // the part this person never sees: red bracket under the strip
+    const [u0, u1, ul] = unseen, uk = easeOut(seg(t, on + .1 + SWEEP * .8, on + .5 + SWEEP * .8));
+    if (uk > 0) {
+      const xa = ageX(u0) + 6, xb = ageX(u1) - 6, y = bot + 74, xm = lerp(xa, xb, .5), hw = (xb - xa) / 2 * uk;
+      ctx.save(); ctx.strokeStyle = rgba(RED, .9); ctx.lineWidth = 2.5; ctx.shadowColor = `rgb(${RED})`; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.moveTo(xm - hw, y - 12); ctx.lineTo(xm - hw, y); ctx.lineTo(xm + hw, y); ctx.lineTo(xm + hw, y - 12); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.letterSpacing = '4px'; text(ul, xm, y + 30, `400 22px ${MONO}`, rgba(RED, .95), 'center', uk); ctx.restore();
+    }
+    ctx.restore();
+  }
+}
+
+// ---------- opening: drifting glass shards that gather into the strip ----------
+const SHARDS = Array.from({ length: N }, (_, j) => {
+  const pts = Array.from({ length: 5 }, (_, k) => { const a = k / 5 * Math.PI * 2 + (hash(j, k) - .5) * .9; return [Math.cos(a) * (.7 + .5 * hash(k, j)), Math.sin(a) * (.7 + .5 * hash(k * 3, j))]; });
+  return { pts, x: 220 + hash(j, 11) * 1480, y: (j % 2 ? 160 + hash(j, 13) * 270 : 650 + hash(j, 13) * 260), r: 46 + hash(j, 17) * 34, rot: hash(j, 19) * 6, spin: (hash(j, 23) - .5) * .5 };
+});
+const GATHER0 = 3.9, GATHER1 = 6.4;
+function shards(t) {
+  const a = env(t, 0, 7.2, 1.2, .6); if (a <= 0) return;
+  SHARDS.forEach((s, j) => {
+    const g = easeInOut(seg(t, GATHER0 + j * .03, GATHER1 + j * .03));
+    const x = lerp(s.x + Math.sin(t * .3 + j) * 20, frameCX(j), g), y = lerp(s.y + Math.cos(t * .25 + j * 2) * 14, FY, g);
+    const rot = lerp(s.rot + t * s.spin, 0, g), r = lerp(s.r, 62, g), quiet = t < GATHER0 ? .45 : lerp(.45, 1, g);
+    const fade = 1 - seg(t, GATHER1 + .2, GATHER1 + .8);
+    ctx.save(); ctx.globalAlpha *= a * quiet * fade; ctx.translate(x, y); ctx.rotate(rot);
+    ctx.beginPath(); s.pts.forEach(([px, py], k) => { const X = lerp(px * r, [-44, 44, 44, -44, -44][k] , g), Y = lerp(py * r, [-60, -60, 60, 60, 0][k], g); k ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); ctx.closePath();
+    const gr = ctx.createLinearGradient(-r, -r, r, r); gr.addColorStop(0, 'rgba(255,236,190,.16)'); gr.addColorStop(.5, 'rgba(255,236,190,.04)'); gr.addColorStop(1, 'rgba(255,236,190,.12)');
+    ctx.fillStyle = gr; ctx.fill(); ctx.strokeStyle = 'rgba(235,228,214,.4)'; ctx.lineWidth = 1.4; ctx.stroke();
+    ctx.save(); ctx.clip(); ctx.globalAlpha *= .55; ctx.scale(.8, .8); lifeIcon(j, 'rgba(255,230,170,.8)'); ctx.restore();
+    ctx.restore();
+  });
+}
+
+// ---------- children: the 20-something frames lift out, then sink back into the dark ----------
+function youthPop(i) { return [4, 5].includes(i); }
+function strip(t) {
+  const a = seg(t, GATHER1 - .1, GATHER1 + .7); if (a <= 0) return;
+  filmBand(a);
+  const up = easeOut(seg(t, 14.4, 15.0)) * (1 - easeInOut(seg(t, 15.9, 16.4)));
+  for (let i = 0; i < N; i++) {
+    let lit = relLit(t, i), y = FY, s = 1;
+    if (youthPop(i) && up > 0) { y = FY - 70 * up; s = 1 + .55 * up; lit = Math.max(lit, .9 * up * (1 - seg(t, 15.6, 16.2))); }
+    if (!youthPop(i)) frameAt(i, frameCX(i), y, s, lit, a);
+  }
+  for (const i of [4, 5]) { let y = FY - 70 * up, s = 1 + .55 * up, lit = Math.max(relLit(t, i), .9 * up * (1 - seg(t, 15.6, 16.2))); frameAt(i, frameCX(i) + (i === 4 ? -22 : 22) * up, y, s, lit, a); }
+  // dim the youth frames when they sink back: an X of darkness
+  if (up > 0) text('风华正茂', ageX(25), FY - 70 * up - FH / 2 * (1 + .55 * up) - 30, `700 26px ${SANS}`, rgba(GOLD, .95), 'center', up * (1 - seg(t, 15.6, 16.0)), 12);
+}
+function openingGlow(t) {
+  const a = env(t, 0, 7.2, .8, .6); if (a <= 0) return;
+  const g = ctx.createRadialGradient(W / 2, 540, 20, W / 2, 540, 760); g.addColorStop(0, `rgba(255,214,150,${.05 * a})`); g.addColorStop(1, 'rgba(255,214,150,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+
+const renderAt = function (t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#0A0A0A'; ctx.fillRect(0, 0, W, H);
+  openingGlow(t); shards(t); strip(t); relations(t);
+  vignette();
+  for (const c of CAPS) caption(t, c);
+  label(t);
+};
+window.render = t => renderAt(t);
+window.ready = (async () => {
+  const all = CAPS.map(c => c[2]).join('') + REL.map(r => r[0] + r[6][2]).join('') + '风华正茂年龄为示意岁';
+  await Promise.all([document.fonts.load(`900 64px ${SERIF}`, all), document.fonts.load(`700 30px ${SANS}`, all),
+    document.fonts.load(`400 24px ${MONO}`, 'ONLYAPARTENSCHILDR·一部分父母伴侣儿女0123456789岁年龄为示意看不见未曾参与没见过')]);
+  await document.fonts.ready; window.render(0); return true;
+})();
+</script>
+</body>
+</html>
