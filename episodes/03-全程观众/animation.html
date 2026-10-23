@@ -3,8 +3,6 @@
 <head>
 <meta charset="utf-8">
 <link rel="stylesheet" href="../../engine/node_modules/@fontsource/noto-serif-sc/900.css">
-<link rel="stylesheet" href="../../engine/node_modules/@fontsource/noto-sans-sc/500.css">
-<link rel="stylesheet" href="../../engine/node_modules/@fontsource/jetbrains-mono/400.css">
 <style>
   html, body { margin: 0; width: 1920px; height: 1080px; background: #0A0A0A; overflow: hidden; }
   canvas { display: block; }
@@ -13,248 +11,179 @@
 <body>
 <canvas id="c" width="1920" height="1080"></canvas>
 <script>
-// =============== Episode 03 · 全程观众 — life puzzle ===============
-// Each relationship is a puzzle with only the pieces that person saw; holes are what they missed.
-// Pieces are canvas paths; the object icons are flat SVG drawn onto the canvas.
+// =============== Episode 03 · 全程观众 ===============
+// Centre question → four lines from the corners → an eye among light shards → (later) road, walker, rain, stairs, sunrise.
 const W = 1920, H = 1080;
 const ctx = document.getElementById('c').getContext('2d');
 const GOLD = '245,215,110', RED = '232,72,58', WHITE = '242,242,242';
-const SERIF = '"Noto Serif SC"', SANS = '"Noto Sans SC"', MONO = '"JetBrains Mono", "Noto Sans SC"';
+const SERIF = '"Noto Serif SC"';
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const lerp = (a, b, k) => a + (b - a) * k;
 const seg = (t, a, b) => clamp((t - a) / (b - a));
 const easeOut = k => 1 - Math.pow(1 - k, 3);
 const easeInOut = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
 const rgba = (c, a) => `rgba(${c},${a})`;
-window.DURATION = 17.0; // sample range; full film ~61 s
+function hash(i, j = 0) { let h = (i * 374761393 + j * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
+window.DURATION = 21.5; // sample range for now; full film ~62 s
 
-// ---------- icons (flat SVG, 200×200) ----------
-const ICONS = {
-  bottle: `<defs><clipPath id="b"><rect x="66" y="64" width="68" height="112" rx="22"/></clipPath></defs>
-    <path d="M88 42 Q88 16 100 14 Q112 16 112 42 Z" fill="#E8B98A"/><rect x="80" y="36" width="40" height="12" rx="5" fill="#D9A574"/>
-    <rect x="68" y="46" width="64" height="22" rx="7" fill="#5BB5C9"/>
-    <rect x="66" y="64" width="68" height="112" rx="22" fill="#CFE3EC"/>
-    <rect x="60" y="108" width="80" height="80" fill="#FFFFFF" clip-path="url(#b)"/>
-    <g stroke="#8FB3C2" stroke-width="5" stroke-linecap="round"><line x1="78" y1="88" x2="92" y2="88"/><line x1="78" y1="128" x2="92" y2="128"/><line x1="78" y1="150" x2="92" y2="150"/></g>
-    <rect x="116" y="78" width="7" height="82" rx="3.5" fill="#fff" opacity=".7"/>`,
-  backpack: `<path d="M78 44 Q100 14 122 44" stroke="#8E2A22" stroke-width="9" fill="none" stroke-linecap="round"/>
-    <rect x="48" y="40" width="104" height="142" rx="32" fill="#E04B3C"/>
-    <path d="M48 74 Q48 40 82 40 H118 Q152 40 152 74 V102 Q100 122 48 102 Z" fill="#C23A2D"/>
-    <rect x="91" y="98" width="18" height="20" rx="4" fill="#F5D76E"/>
-    <rect x="66" y="128" width="68" height="44" rx="13" fill="#C23A2D"/>
-    <line x1="76" y1="139" x2="124" y2="139" stroke="#F5D76E" stroke-width="4" stroke-linecap="round"/>`,
-  cap: `<path d="M56 96 V140 Q100 164 144 140 V96 L100 118 Z" fill="#2C4677"/>
-    <polygon points="100,40 182,78 100,116 18,78" fill="#4469B0"/>
-    <polygon points="100,48 166,78 100,106 34,78" fill="#5279C4"/>
-    <polyline points="100,78 158,92 158,128" stroke="#F5D76E" stroke-width="5" fill="none" stroke-linejoin="round"/>
-    <circle cx="100" cy="78" r="8" fill="#F5D76E"/><rect x="151" y="124" width="14" height="30" rx="4" fill="#F5D76E"/>`,
-  briefcase: `<rect x="72" y="38" width="56" height="38" rx="13" fill="none" stroke="#6B4226" stroke-width="11"/>
-    <rect x="26" y="64" width="148" height="108" rx="15" fill="#9A6235"/>
-    <rect x="26" y="64" width="148" height="48" rx="15" fill="#B0763F"/><rect x="26" y="96" width="148" height="16" fill="#B0763F"/>
-    <line x1="26" y1="112" x2="174" y2="112" stroke="#6B4226" stroke-width="5"/>
-    <rect x="87" y="100" width="26" height="24" rx="5" fill="#F5D76E"/>`,
-  rings: `<circle cx="78" cy="118" r="40" fill="none" stroke="#F5D76E" stroke-width="14"/>
-    <circle cx="122" cy="118" r="40" fill="none" stroke="#DCE1EA" stroke-width="14"/>
-    <path d="M108.6 143.7 A40 40 0 0 1 88.4 156.6" fill="none" stroke="#F5D76E" stroke-width="14"/>
-    <polygon points="64,66 78,50 92,66 78,82" fill="#BFE8F5"/><polygon points="64,66 78,50 78,82" fill="#9FD6EA"/>`,
-  stroller: `<path d="M56 102 A62 62 0 0 1 118 40 V102 Z" fill="#E88FA6"/>
-    <path d="M48 102 H162 Q158 142 122 150 H86 Q52 142 48 102 Z" fill="#5BB5C9"/>
-    <path d="M160 104 L176 62 H190" stroke="#4A4A55" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <g stroke="#4A4A55" stroke-width="7" stroke-linecap="round"><line x1="88" y1="148" x2="78" y2="166"/><line x1="120" y1="148" x2="140" y2="166"/></g>
-    <circle cx="76" cy="168" r="16" fill="#2E2E36" stroke="#9A9AA6" stroke-width="6"/><circle cx="142" cy="168" r="16" fill="#2E2E36" stroke="#9A9AA6" stroke-width="6"/>`,
-  glasses: `<g fill="#BFE3F2" fill-opacity=".55" stroke="#8A5A32" stroke-width="10">
-    <rect x="22" y="78" width="68" height="54" rx="24"/><rect x="110" y="78" width="68" height="54" rx="24"/></g>
-    <path d="M90 100 Q100 88 110 100" stroke="#8A5A32" stroke-width="9" fill="none"/>
-    <g stroke="#8A5A32" stroke-width="8" stroke-linecap="round"><line x1="22" y1="94" x2="8" y2="84"/><line x1="178" y1="94" x2="192" y2="84"/></g>
-    <g fill="#fff" opacity=".8"><rect x="36" y="88" width="16" height="6" rx="3"/><rect x="124" y="88" width="16" height="6" rx="3"/></g>`,
-  rocker: `<path d="M34 158 Q100 192 172 150" stroke="#7A4A26" stroke-width="11" fill="none" stroke-linecap="round"/>
-    <g stroke="#8E5730" stroke-width="9" stroke-linecap="round"><line x1="76" y1="126" x2="70" y2="164"/><line x1="140" y1="126" x2="146" y2="160"/></g>
-    <polygon points="56,30 80,30 92,124 70,124" fill="#A8693A"/>
-    <rect x="62" y="44" width="22" height="56" rx="8" fill="#5BB5C9" transform="rotate(-7 73 72)"/>
-    <rect x="68" y="114" width="84" height="16" rx="6" fill="#B8783F"/>
-    <rect x="86" y="102" width="62" height="14" rx="7" fill="#5BB5C9"/>
-    <path d="M84 82 H144 V116" stroke="#8E5730" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
-};
-const PIECES = [ // life order, 2 rows × 4 columns
-  ['bottle', '婴儿'], ['backpack', '童年'], ['cap', '少年'], ['briefcase', '工作'],
-  ['rings', '成家'], ['stroller', '育儿'], ['glasses', '老年'], ['rocker', '暮年'],
-];
-const IMG = {};
-function loadIcons() {
-  return Promise.all(Object.entries(ICONS).map(([k, body]) => new Promise(res => {
-    const im = new Image();
-    im.onload = () => { IMG[k] = im; res(); };
-    im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="400" height="400">${body}</svg>`);
-  })));
-}
-
-// ---------- puzzle geometry ----------
-const S = 232, COLS = 4, ROWS = 2;
-const BX = W / 2 - COLS * S / 2, BY = 300; // board top-left
-const HT = [1, 1, 1, 1];              // horizontal seam tabs per column: +1 = top piece sticks down (keeps labels clear)
-const VT = [[1, -1, 1], [-1, 1, -1]]; // vertical seam tabs per row: +1 = left piece sticks right
-function edge(p, x0, y0, x1, y1, s) { // classic jigsaw edge from (x0,y0) to (x1,y1); s = +1 out, -1 in, 0 flat
-  if (!s) { p.lineTo(x1, y1); return; }
-  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), nx = dy / L * s, ny = -dx / L * s;
-  const P = (u, v) => [x0 + dx * u + nx * v * L, y0 + dy * u + ny * v * L];
-  const pts = [[.37, 0], [.42, 0, .43, .05, .41, .085], [.37, .15, .42, .2, .50, .2], [.58, .2, .63, .15, .59, .085], [.57, .05, .58, 0, .63, 0]];
-  p.lineTo(...P(...pts[0]));
-  for (const q of pts.slice(1)) p.bezierCurveTo(...P(q[0], q[1]), ...P(q[2], q[3]), ...P(q[4], q[5]));
-  p.lineTo(x1, y1);
-}
-function piecePath(i) { // local coords, piece square at (0,0)-(S,S)
-  const r = Math.floor(i / COLS), c = i % COLS, p = new Path2D();
-  const top = r > 0 ? -HT[c] : 0, bottom = r < ROWS - 1 ? HT[c] : 0;
-  const right = c < COLS - 1 ? VT[r][c] : 0, left = c > 0 ? -VT[r][c - 1] : 0;
-  p.moveTo(0, 0); edge(p, 0, 0, S, 0, top); edge(p, S, 0, S, S, right); edge(p, S, S, 0, S, bottom); edge(p, 0, S, 0, 0, left);
-  p.closePath(); return p;
-}
-const PATHS = PIECES.map((_, i) => piecePath(i));
-const slot = i => [BX + (i % COLS) * S, BY + Math.floor(i / COLS) * S];
-
-function drawPiece(i, x, y, { alpha = 1, rot = 0, scale = 1, glow = 0 } = {}) {
-  if (alpha <= 0) return;
-  ctx.save(); ctx.globalAlpha *= alpha;
-  ctx.translate(x + S / 2, y + S / 2); ctx.rotate(rot); ctx.scale(scale, scale); ctx.translate(-S / 2, -S / 2);
-  const p = PATHS[i];
-  // thickness + drop shadow
-  ctx.save(); ctx.translate(0, 7); ctx.shadowColor = 'rgba(0,0,0,.75)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12; ctx.fillStyle = '#15120f'; ctx.fill(p); ctx.restore();
-  // face
-  const g = ctx.createLinearGradient(0, 0, S * .4, S);
-  g.addColorStop(0, '#3a342c'); g.addColorStop(1, '#25211c');
-  ctx.fillStyle = g; ctx.fill(p);
-  if (glow > 0) { ctx.save(); ctx.shadowColor = rgba(GOLD, .9 * glow); ctx.shadowBlur = 34; ctx.strokeStyle = rgba(GOLD, .8 * glow); ctx.lineWidth = 3; ctx.stroke(p); ctx.restore(); }
-  ctx.strokeStyle = 'rgba(255,236,200,.22)'; ctx.lineWidth = 2; ctx.stroke(p);
-  // icon + label
-  const im = IMG[PIECES[i][0]];
-  ctx.drawImage(im, S / 2 - 56, 50, 112, 112);
-  ctx.font = `500 26px ${SANS}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(232,226,214,.88)';
-  ctx.fillText(PIECES[i][1], S / 2, 186);
-  ctx.restore();
-}
-function drawHole(i, x, y, { alpha = 1, pulse = 0 } = {}) {
-  if (alpha <= 0) return;
-  ctx.save(); ctx.globalAlpha *= alpha; ctx.translate(x, y);
-  const p = PATHS[i];
-  ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fill(p);
-  ctx.save(); ctx.globalAlpha *= .1; ctx.drawImage(IMG[PIECES[i][0]], S / 2 - 56, 50, 112, 112); ctx.restore();
-  ctx.font = `500 26px ${SANS}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(232,226,214,.28)';
-  ctx.fillText(PIECES[i][1], S / 2, 186);
-  ctx.setLineDash([10, 9]); ctx.lineWidth = 2.5;
-  const col = pulse > 0 ? rgba(GOLD, .3 + .55 * pulse) : 'rgba(242,242,242,.32)';
-  ctx.strokeStyle = col; if (pulse > 0) { ctx.shadowColor = rgba(GOLD, pulse); ctx.shadowBlur = 22 * pulse; }
-  ctx.stroke(p);
-  ctx.restore();
-}
-
-// ---------- text ----------
-function text(s, x, y, font, color, align = 'center', alpha = 1, glow = 0) {
-  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle';
-  if (glow) { ctx.shadowColor = color; ctx.shadowBlur = glow; } ctx.fillText(s, x, y); ctx.restore();
-}
+// ---------- captions: per-character blur → sharp ----------
+// { a, b, s, x, y, size, align, dim:[t0,t1,alpha] (fade to a lower alpha), out:'dust' (dissolve at b) }
 function parse(s) { const out = []; const re = /\{([gr]):([^}]*)\}|([^{]+)/g; let m; while ((m = re.exec(s))) { const c = m[1] || ''; for (const ch of (m[2] ?? m[3])) out.push([ch, c]); } return out; }
-function caption(t, [a, b, s, y, size]) { // per-character blur → sharp
-  const chars = parse(s), outK = seg(t, b - .3, b);
+function caption(t, C) {
+  const { a, b, s, x: X = W / 2, y, size, align = 'center', dim } = C;
+  const chars = parse(s), outK = seg(t, b - .7, b);
   if (t < a - .05 || outK >= 1) return;
   ctx.save(); ctx.font = `900 ${size}px ${SERIF}`; ctx.textBaseline = 'middle';
   const ws = chars.map(([ch]) => ctx.measureText(ch).width), total = ws.reduce((p, q) => p + q, 0);
-  let x = W / 2 - total / 2;
+  let x = align === 'left' ? X : align === 'right' ? X - total : X - total / 2;
+  const dimK = dim ? lerp(1, dim[2], easeInOut(seg(t, dim[0], dim[1]))) : 1;
   chars.forEach(([ch, c], i) => {
-    const t0 = a + i * .045, k = easeOut(seg(t, t0, t0 + .4)), al = k * (1 - outK);
-    if (al > 0) {
+    const t0 = a + i * .05, k = easeOut(seg(t, t0, t0 + .45));
+    // dissolve: characters drift up and blur out one after another
+    const ok = easeInOut(seg(t, b - .7 + (i / chars.length) * .25, b - .2 + (i / chars.length) * .2));
+    const al = k * (1 - ok) * dimK;
+    if (al > 0.003) {
       const col = c === 'g' ? GOLD : c === 'r' ? RED : WHITE;
-      ctx.save(); ctx.globalAlpha = al; ctx.filter = `blur(${(1 - k) * 14 + outK * 10}px)`; ctx.fillStyle = rgba(col, 1);
-      ctx.shadowColor = rgba(col, c ? .55 : .25); ctx.shadowBlur = c ? 26 : 18; ctx.fillText(ch, x, y + (1 - k) * 10); ctx.restore();
+      ctx.save(); ctx.globalAlpha = al; ctx.filter = `blur(${(1 - k) * 14 + ok * 16 + (1 - dimK) * 2.5}px)`; ctx.fillStyle = rgba(col, 1);
+      ctx.shadowColor = rgba(col, c ? .55 : .25); ctx.shadowBlur = c ? 26 : 18;
+      ctx.fillText(ch, x, y + (1 - k) * 10 - ok * 26); ctx.restore();
     }
     x += ws[i];
   });
   ctx.restore();
+  // light dust rising from the dissolving line
+  if (C.dust && outK > 0) {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    const x0 = align === 'left' ? X : align === 'right' ? X - total : X - total / 2;
+    for (let n = 0; n < 60; n++) {
+      const px = x0 + hash(n, C.seed) * total, k = seg(t, b - .7 + hash(n, C.seed + 1) * .3, b + .6);
+      if (k <= 0 || k >= 1) continue;
+      const py = y + (hash(n, C.seed + 2) - .5) * size - k * (60 + 80 * hash(n, C.seed + 3));
+      const al = Math.sin(k * Math.PI) * .8, r = 1 + 2 * hash(n, C.seed + 4);
+      ctx.fillStyle = rgba(hash(n, C.seed + 5) < .3 ? GOLD : WHITE, al);
+      ctx.beginPath(); ctx.arc(px + (hash(n, C.seed + 6) - .5) * 40 * k, py, r, 0, 7); ctx.fill();
+    }
+    ctx.restore();
+  }
 }
-const SUB = 975, SUBSIZE = 50;
+
+const DISSOLVE = 17.6; // all opening text dissolves here
 const CAPS = [
-  [0.3, 4.4, '你有没有发现，这世上最爱你的人，', 480, 68],
-  [1.7, 4.4, '其实都只见过你的{g:一部分}？', 590, 68],
-  [4.7, 7.45, '父母，终究看不见你的{g:暮年}；', SUB, SUBSIZE],
-  [7.7, 10.45, '伴侣，未曾参与你的{g:童年}；', SUB, SUBSIZE],
-  [10.7, 13.45, '儿女，没见过你{g:风华正茂}的模样；', SUB, SUBSIZE],
-  [13.7, 16.95, '而身边的友人，也无法拼凑出你{g:全部的过往}。', SUB, SUBSIZE],
+  { a: 0.3, b: DISSOLVE, s: '你有没有发现，这世上最爱你的人，', y: 490, size: 68, dim: [4.4, 5.2, .22], dust: 1, seed: 11 },
+  { a: 1.8, b: DISSOLVE, s: '其实都只见过你的{g:一部分}？', y: 600, size: 68, dim: [4.4, 5.2, .22], dust: 1, seed: 12 },
+  // four corners, two rows each so the bottom pair never collide
+  { a: 4.8, b: DISSOLVE, s: '父母，', x: 150, y: 150, size: 48, align: 'left', dust: 1, seed: 13 },
+  { a: 5.0, b: DISSOLVE, s: '终究看不见你的{g:暮年}；', x: 150, y: 218, size: 48, align: 'left', dust: 1, seed: 23 },
+  { a: 7.8, b: DISSOLVE, s: '伴侣，', x: 1770, y: 150, size: 48, align: 'right', dust: 1, seed: 14 },
+  { a: 8.0, b: DISSOLVE, s: '未曾参与你的{g:童年}；', x: 1770, y: 218, size: 48, align: 'right', dust: 1, seed: 24 },
+  { a: 10.8, b: DISSOLVE, s: '儿女，没见过你', x: 150, y: 862, size: 48, align: 'left', dust: 1, seed: 15 },
+  { a: 11.2, b: DISSOLVE, s: '{g:风华正茂}的模样；', x: 150, y: 930, size: 48, align: 'left', dust: 1, seed: 25 },
+  { a: 13.8, b: DISSOLVE, s: '而身边的友人，', x: 1770, y: 862, size: 48, align: 'right', dust: 1, seed: 16 },
+  { a: 14.2, b: DISSOLVE, s: '也无法拼凑出你{g:全部的过往}。', x: 1770, y: 930, size: 48, align: 'right', dust: 1, seed: 26 },
+  { a: 17.9, b: 21.6, s: '在别人的眼里，你永远只是几个{r:零碎的片段}。', y: 985, size: 50 },
 ];
 
-// ---------- boards ----------
-// have: which pieces this person saw; key: holes that the sentence points at (gold pulse)
-const BOARDS = [
-  { a: 4.5, b: 7.5, name: '父母', have: [1, 1, 1, 1, 1, 1, 0, 0], key: [6, 7] },
-  { a: 7.5, b: 10.5, name: '伴侣', have: [0, 0, 0, 1, 1, 1, 1, 1], key: [0, 1, 2] },
-  { a: 10.5, b: 13.5, name: '儿女', have: [0, 0, 0, 0, 0, 1, 1, 1], key: [3, 4] },
-];
-const FLIP = .5; // seconds for the flip between boards
-
-function board(t, B, first) {
-  // flip in at B.a (except the first one, which fades in), flip out at B.b
-  let sx = 1, alpha = 1;
-  if (first) alpha = easeOut(seg(t, B.a, B.a + .5)); else sx = Math.min(sx, easeOut(seg(t, B.a, B.a + FLIP / 2)));
-  sx = Math.min(sx, 1 - easeInOut(seg(t, B.b - FLIP / 2, B.b)));
-  if (sx <= 0.001 || alpha <= 0) return;
-  ctx.save(); ctx.globalAlpha = alpha;
-  ctx.translate(W / 2, BY + S); ctx.scale(sx, 1); ctx.translate(-W / 2, -(BY + S));
-  const seen = B.have.reduce((p, q) => p + q, 0);
-  text(B.name, W / 2, 168, `900 64px ${SERIF}`, rgba(WHITE, 1), 'center', 1, 18);
-  text(`看过 ${seen} / 8`, W / 2, 228, `400 24px ${MONO}`, 'rgba(200,196,188,.75)');
-  const pulse = .5 + .5 * Math.sin((t - B.a) * 5);
-  const pk = seg(t, B.a + 1.1, B.a + 1.5);
-  B.have.forEach((h, i) => { if (!h) { const [x, y] = slot(i); drawHole(i, x, y, { pulse: B.key.includes(i) ? pk * (.55 + .45 * pulse) : 0 }); } });
-  B.have.forEach((h, i) => {
-    if (!h) return;
-    const [x, y] = slot(i), d = first ? easeOut(seg(t, B.a + .25 + i * .12, B.a + .65 + i * .12)) : 1;
-    drawPiece(i, x, y - (1 - d) * 60, { alpha: d });
-  });
+// ---------- light shards ----------
+const SHARDS = [];
+for (let i = 0, n = 0; SHARDS.length < 46 && n < 600; n++) {
+  const x = 80 + hash(n, 1) * (W - 160), y = 60 + hash(n, 2) * (H - 260);
+  const ex = (x - W / 2) / 640, ey = (y - 470) / 230;
+  if (ex * ex + ey * ey < 1) continue; // keep the eye clear
+  const big = hash(n, 3);
+  const size = big < .15 ? 70 + 50 * hash(n, 4) : big < .5 ? 34 + 26 * hash(n, 4) : 12 + 18 * hash(n, 4);
+  const k = 3 + Math.floor(hash(n, 5) * 3), verts = [];
+  for (let v = 0; v < k; v++) { const ang = (v / k) * Math.PI * 2 + (hash(n, 10 + v) - .5) * 1.1; verts.push([Math.cos(ang) * size * (.55 + .5 * hash(n, 20 + v)), Math.sin(ang) * size * (.55 + .5 * hash(n, 30 + v))]); }
+  const c = hash(n, 6);
+  SHARDS.push({ x, y, size, verts, col: c < .5 ? GOLD : c < .82 ? '236,232,222' : '176,204,255', rot: hash(n, 7) * 6.28, spin: (hash(n, 8) - .5) * .5, ph: hash(n, 9) * 6.28, t0: hash(n, 40) });
+  i++;
+}
+function shard(S, t, alpha) {
+  if (alpha <= 0) return;
+  const fy = Math.sin(t * .6 + S.ph) * 14, fx = Math.cos(t * .45 + S.ph) * 8;
+  ctx.save(); ctx.translate(S.x + fx, S.y + fy); ctx.rotate(S.rot + S.spin * t); ctx.globalAlpha = alpha;
+  const p = new Path2D(); S.verts.forEach(([x, y], i) => i ? p.lineTo(x, y) : p.moveTo(x, y)); p.closePath();
+  // glass body with a sheen band sliding across it ("流光")
+  const s = S.size, sweep = ((t * .35 + S.ph) % 1.6) - .3;
+  const g = ctx.createLinearGradient(-s, -s, s, s);
+  g.addColorStop(0, rgba(S.col, .06)); g.addColorStop(clamp(sweep - .12), rgba(S.col, .1));
+  g.addColorStop(clamp(sweep), rgba(S.col, .55)); g.addColorStop(clamp(sweep + .12), rgba(S.col, .1)); g.addColorStop(1, rgba(S.col, .05));
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.fillStyle = g; ctx.fill(p);
+  ctx.shadowColor = rgba(S.col, .9); ctx.shadowBlur = 16; ctx.strokeStyle = rgba(S.col, .75); ctx.lineWidth = 1.4; ctx.stroke(p);
   ctx.restore();
 }
-function friends(t) { // scattered pieces that never fit together
-  const a = 13.5, b = 17;
-  const sx = easeOut(seg(t, a, a + FLIP / 2));
-  if (sx <= 0.001) return;
-  ctx.save(); ctx.translate(W / 2, BY + S); ctx.scale(sx, 1); ctx.translate(-W / 2, -(BY + S));
-  text('朋友', W / 2, 168, `900 64px ${SERIF}`, rgba(WHITE, 1), 'center', 1, 18);
-  text('零零散散，拼不到一起', W / 2, 228, `500 24px ${SANS}`, 'rgba(200,196,188,.75)');
-  for (let i = 0; i < 8; i++) { const [x, y] = slot(i); drawHole(i, x, y, { alpha: .7 }); }
-  const loose = [ // piece, offset from its slot, rotation
-    [1, -250, 120, -.22], [2, 60, -40, .16], [3, 300, 150, -.12], [5, 220, -70, .2],
-  ];
-  loose.forEach(([i, ox, oy, r], n) => {
-    const [x, y] = slot(i), k = easeOut(seg(t, a + .3 + n * .15, a + .9 + n * .15));
-    const drift = Math.sin((t - a) * 1.3 + n * 1.7) * 10; // try to move in, never lands
-    const reach = .35 * easeInOut(seg(t, a + 1.2, b - .3));
-    drawPiece(i, x + ox * (1 - reach) + drift, y + oy * (1 - reach) - drift * .6, { alpha: k, rot: r * (1 - reach * .5) });
-  });
+
+// ---------- the eye ----------
+function eye(t, cx, cy, open, alpha) {
+  if (alpha <= 0) return;
+  const w = 220, up = 110 * open, dn = 74 * open;
+  ctx.save(); ctx.globalAlpha = alpha;
+  // soft halo
+  const halo = ctx.createRadialGradient(cx, cy, 20, cx, cy, 380);
+  halo.addColorStop(0, rgba(GOLD, .16 * (.3 + .7 * open))); halo.addColorStop(1, rgba(GOLD, 0));
+  ctx.fillStyle = halo; ctx.fillRect(cx - 400, cy - 400, 800, 800);
+  const lid = new Path2D();
+  lid.moveTo(cx - w, cy); lid.bezierCurveTo(cx - w * .45, cy - up * 1.35, cx + w * .45, cy - up * 1.35, cx + w, cy);
+  lid.bezierCurveTo(cx + w * .45, cy + dn * 1.35, cx - w * .45, cy + dn * 1.35, cx - w, cy); lid.closePath();
+  // inside
+  ctx.save(); ctx.clip(lid);
+  ctx.fillStyle = '#0d0b08'; ctx.fillRect(cx - w, cy - 220, w * 2, 440);
+  const look = Math.sin(t * .7) * 10, ix = cx + look, iy = cy + 3, R = 84;
+  const ir = ctx.createRadialGradient(ix, iy, 30, ix, iy, R);
+  ir.addColorStop(0, '#3a2810'); ir.addColorStop(.32, '#c58a32'); ir.addColorStop(.7, '#f5d76e'); ir.addColorStop(.93, '#8a5a1e'); ir.addColorStop(1, '#2a1b08');
+  ctx.fillStyle = ir; ctx.beginPath(); ctx.arc(ix, iy, R, 0, 7); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,240,200,.18)'; ctx.lineWidth = 1.5;
+  for (let k = 0; k < 64; k++) { const a = k / 64 * 6.283 + hash(k, 3) * .05, r0 = 32 + 5 * hash(k, 4), r1 = R * (.78 + .18 * hash(k, 5)); ctx.beginPath(); ctx.moveTo(ix + Math.cos(a) * r0, iy + Math.sin(a) * r0); ctx.lineTo(ix + Math.cos(a) * r1, iy + Math.sin(a) * r1); ctx.stroke(); }
+  ctx.fillStyle = '#050403'; ctx.beginPath(); ctx.arc(ix, iy, 29 + 2 * Math.sin(t * 1.3), 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.ellipse(ix - 26, iy - 27, 12, 8, -.5, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.arc(ix + 23, iy + 24, 4.5, 0, 7); ctx.fill();
+  // lid shadow on the eyeball
+  const sh = ctx.createLinearGradient(0, cy - up * 1.1, 0, cy - up * .2); sh.addColorStop(0, 'rgba(0,0,0,.75)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sh; ctx.fillRect(cx - w, cy - 220, w * 2, 220);
+  ctx.restore();
+  // glowing outline + lashes
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.shadowColor = rgba(GOLD, .9); ctx.shadowBlur = 26; ctx.strokeStyle = rgba(GOLD, .9); ctx.lineWidth = 3.5; ctx.stroke(lid);
+  ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+  for (let k = 1; k < 10; k++) {
+    const u = k / 10, bx = (1 - u) ** 3 * (cx - w) + 3 * (1 - u) ** 2 * u * (cx - w * .45) + 3 * (1 - u) * u * u * (cx + w * .45) + u ** 3 * (cx + w);
+    const by = 3 * (1 - u) ** 2 * u * (cy - up * 1.35) + 3 * (1 - u) * u * u * (cy - up * 1.35) + cy * ((1 - u) ** 3 + u ** 3);
+    const ang = -Math.PI / 2 + (u - .5) * 1.5, L = (13 + 11 * Math.sin(u * Math.PI)) * open;
+    ctx.strokeStyle = rgba(GOLD, .7 * open); ctx.beginPath(); ctx.moveTo(bx, by - 4); ctx.lineTo(bx + Math.cos(ang) * L, by - 4 + Math.sin(ang) * L); ctx.stroke();
+  }
   ctx.restore();
 }
 
 // ---------- background ----------
-function background() {
+function background(t) {
   ctx.fillStyle = '#0A0A0A'; ctx.fillRect(0, 0, W, H);
-  const g = ctx.createRadialGradient(W / 2, H * .45, 80, W / 2, H * .45, W * .62);
-  g.addColorStop(0, 'rgba(46,40,32,.55)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  const g = ctx.createRadialGradient(W / 2, H * .45, 60, W / 2, H * .45, W * .62);
+  g.addColorStop(0, 'rgba(40,36,30,.5)'); g.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // faint drifting dust
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  for (let n = 0; n < 70; n++) {
+    const x = (hash(n, 71) * W + t * 6 * (hash(n, 72) - .5)) % W, y = (hash(n, 73) * H - t * 8 * hash(n, 74) + H) % H;
+    ctx.fillStyle = `rgba(255,240,210,${.05 + .1 * hash(n, 75) * (.5 + .5 * Math.sin(t * 1.5 + n))})`;
+    ctx.beginPath(); ctx.arc(x, y, .8 + 1.4 * hash(n, 76), 0, 7); ctx.fill();
+  }
+  ctx.restore();
 }
 
 function renderAt(t) {
-  background();
-  // hook: a single piece silhouette rises under the question
-  const hk = Math.min(seg(t, 3.2, 3.8), 1 - seg(t, 4.2, 4.6));
-  if (hk > 0) {
-    ctx.save(); ctx.globalAlpha = hk * .5; ctx.translate(W / 2 - S / 2, 700); ctx.fillStyle = 'rgba(120,108,90,.35)'; ctx.fill(PATHS[1]);
-    ctx.strokeStyle = rgba(GOLD, .4); ctx.lineWidth = 2; ctx.stroke(PATHS[1]); ctx.restore();
-  }
-  BOARDS.forEach((B, n) => { if (t >= B.a && t < B.b) board(t, B, n === 0); });
-  if (t >= 13.5) friends(t);
+  background(t);
+  // eye + shards (17.6 →)
+  const ea = easeOut(seg(t, 17.7, 18.3)), open = easeInOut(seg(t, 18.0, 19.8));
+  const blink = open * (1 - .06 * Math.max(0, Math.sin((t - 20.6) * 9)) * (t > 20.6 && t < 20.95));
+  eye(t, W / 2 - 290, 470, blink, ea); eye(t, W / 2 + 290, 470, blink, ea);
+  SHARDS.forEach(S => shard(S, t, easeOut(seg(t, 18.3 + S.t0 * 1.6, 18.9 + S.t0 * 1.6))));
   CAPS.forEach(c => caption(t, c));
 }
 
 window.render = t => renderAt(t);
 window.ready = (async () => {
-  const all = CAPS.map(c => c[2]).join('') + PIECES.map(p => p[1]).join('') + BOARDS.map(b => b.name).join('') + '朋友看过零零散散，拼不到一起';
-  await Promise.all([document.fonts.load(`900 64px ${SERIF}`, all), document.fonts.load(`500 26px ${SANS}`, all), document.fonts.load(`400 24px ${MONO}`, '看过 0123456789/'), loadIcons()]);
+  const all = CAPS.map(c => c.s).join('');
+  await document.fonts.load(`900 64px ${SERIF}`, all);
   await document.fonts.ready; window.render(0); return true;
 })();
 </script>
