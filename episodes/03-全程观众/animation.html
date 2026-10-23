@@ -35,8 +35,8 @@ window.DURATION = 16.5;
 // ---------- captions: per-character blur-in ----------
 // [start, end, text, y, size]   {g:..} gold  {r:..} red
 const CAPS = [
-  [0.3, 3.45, '你有没有发现，这世上{g:最爱你}的人，', 540, 68],
-  [3.6, 6.9, '其实都只见过你的{g:一部分}？', 540, 68],
+  [0.3, 6.6, '你有没有发现，这世上{g:最爱你}的人，', 460, 76],
+  [3.4, 6.6, '其实都只见过你的{g:一部分}？', 574, 76],
   [7.1, 9.95, '父母，终究看不见你的{r:暮年}；', 960, 52],
   [10.1, 12.95, '伴侣，未曾参与你的{r:童年}；', 960, 52],
   [13.1, 16.6, '儿女，没见过你{g:风华正茂}的模样；', 960, 52],
@@ -64,7 +64,7 @@ function text(s, x, y, font, color, align = 'center', alpha = 1, glow = 0) {
   if (glow) { ctx.shadowColor = color; ctx.shadowBlur = glow; } ctx.fillText(s, x, y); ctx.restore();
 }
 function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-const LABELS = [[0.2, 6.95, 'ONLY A PART  ·  一部分'], [7.05, 9.95, 'PARENTS  ·  父母'], [10.05, 12.95, 'PARTNER  ·  伴侣'], [13.05, 16.6, 'CHILDREN  ·  儿女']];
+const LABELS = [[0.2, 6.65, 'ONLY A PART  ·  一部分'], [7.05, 9.95, 'PARENTS  ·  父母'], [10.05, 12.95, 'PARTNER  ·  伴侣'], [13.05, 16.6, 'CHILDREN  ·  儿女']];
 function label(t) {
   ctx.save(); ctx.letterSpacing = '6px'; for (const [a, b, s] of LABELS) if (t >= a && t <= b) text(s, 120, 102, `400 22px ${MONO}`, 'rgba(109,104,94,1)', 'left', env(t, a, b, .4, .3)); ctx.restore();
 }
@@ -195,7 +195,32 @@ function relations(t) {
   }
 }
 
-// ---------- opening: drifting glass shards that gather into the strip ----------
+// ---------- opening: the tilted pixel wall used by every episode (same as 01 / 02) ----------
+function pixelWall(t) {
+  const alpha = env(t, 0, 6.8, .6, .5) * .85; if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.translate(W / 2, H / 2); ctx.rotate(-0.17); ctx.translate(-W / 2, -H / 2);
+  const cell = 22, gap = 7, step = cell + gap, scroll = t * 18;
+  for (let r = -14; r < 52; r++) {
+    if (((r % 4) + 4) % 4 === 3) continue;
+    const y = r * step - 200, off = (r % 2 ? scroll : -scroll * .7), c0 = Math.floor((-400 - off) / step) - 1;
+    for (let c = c0; c < c0 + 100; c++) {
+      const x = c * step + off; if (x < -400 || x > W + 400) continue;
+      const h = hash(c, r), b = 0.55 + 0.45 * hash(r, c * 7);
+      ctx.fillStyle = h < 0.025 ? `rgba(245,215,110,${0.85 * b})` : h < 0.13 ? `rgba(150,128,58,${0.75 * b})` : `rgba(${Math.round(120 * b)},${Math.round(30 * b)},${Math.round(26 * b)},0.9)`;
+      ctx.fillRect(x, y, cell, cell);
+    }
+  }
+  ctx.restore();
+  const g = ctx.createRadialGradient(W / 2, 500, 50, W / 2, 500, 900);
+  g.addColorStop(0, `rgba(7,7,7,${0.72 * alpha})`); g.addColorStop(0.6, `rgba(7,7,7,${0.35 * alpha})`); g.addColorStop(1, 'rgba(7,7,7,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // counter above the caption: one cell = one day of a life
+  const n = Math.floor(lerp(1, 29200, easeInOut(seg(t, .2, 6.2))));
+  ctx.save(); ctx.letterSpacing = '6px'; text('你的一生  ·  ' + n.toLocaleString('en-US') + ' 天', W / 2, 395, `400 20px ${MONO}`, 'rgba(184,72,60,1)', 'center', env(t, .3, 6.6, .4, .3)); ctx.restore();
+}
+
+// ---------- (unused) drifting glass shards ----------
 const SHARDS = Array.from({ length: N }, (_, j) => {
   const pts = Array.from({ length: 5 }, (_, k) => { const a = k / 5 * Math.PI * 2 + (hash(j, k) - .5) * .9; return [Math.cos(a) * (.7 + .5 * hash(k, j)), Math.sin(a) * (.7 + .5 * hash(k * 3, j))]; });
   return { pts, x: 220 + hash(j, 11) * 1480, y: (j % 2 ? 160 + hash(j, 13) * 270 : 650 + hash(j, 13) * 260), r: 46 + hash(j, 17) * 34, rot: hash(j, 19) * 6, spin: (hash(j, 23) - .5) * .5 };
@@ -220,15 +245,15 @@ function shards(t) {
 // ---------- children: the 20-something frames lift out, then sink back into the dark ----------
 function youthPop(i) { return [4, 5].includes(i); }
 function strip(t) {
-  const a = seg(t, GATHER1 - .1, GATHER1 + .7); if (a <= 0) return;
+  const a = seg(t, 6.65, 7.1); if (a <= 0) return;
   filmBand(a);
   const up = easeOut(seg(t, 14.4, 15.0)) * (1 - easeInOut(seg(t, 15.9, 16.4)));
   for (let i = 0; i < N; i++) {
     let lit = relLit(t, i), y = FY, s = 1;
     if (youthPop(i) && up > 0) { y = FY - 70 * up; s = 1 + .55 * up; lit = Math.max(lit, .9 * up * (1 - seg(t, 15.6, 16.2))); }
-    if (!youthPop(i)) frameAt(i, frameCX(i), y, s, lit, a);
+    if (!youthPop(i)) frameAt(i, frameCX(i), y, s, lit, a * seg(t, 6.7 + i * .025, 7.05 + i * .025));
   }
-  for (const i of [4, 5]) { let y = FY - 70 * up, s = 1 + .55 * up, lit = Math.max(relLit(t, i), .9 * up * (1 - seg(t, 15.6, 16.2))); frameAt(i, frameCX(i) + (i === 4 ? -22 : 22) * up, y, s, lit, a); }
+  for (const i of [4, 5]) { let y = FY - 70 * up, s = 1 + .55 * up, lit = Math.max(relLit(t, i), .9 * up * (1 - seg(t, 15.6, 16.2))); frameAt(i, frameCX(i) + (i === 4 ? -22 : 22) * up, y, s, lit, a * seg(t, 6.7 + i * .025, 7.05 + i * .025)); }
   // dim the youth frames when they sink back: an X of darkness
   if (up > 0) text('风华正茂', ageX(25), FY - 70 * up - FH / 2 * (1 + .55 * up) - 30, `700 26px ${SANS}`, rgba(GOLD, .95), 'center', up * (1 - seg(t, 15.6, 16.0)), 12);
 }
@@ -240,14 +265,14 @@ function openingGlow(t) {
 
 const renderAt = function (t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#0A0A0A'; ctx.fillRect(0, 0, W, H);
-  openingGlow(t); shards(t); strip(t); relations(t);
+  pixelWall(t); strip(t); relations(t);
   vignette();
   for (const c of CAPS) caption(t, c);
   label(t);
 };
 window.render = t => renderAt(t);
 window.ready = (async () => {
-  const all = CAPS.map(c => c[2]).join('') + REL.map(r => r[0] + r[6][2]).join('') + '风华正茂年龄为示意岁';
+  const all = CAPS.map(c => c[2]).join('') + REL.map(r => r[0] + r[6][2]).join('') + '风华正茂年龄为示意岁你的一生天';
   await Promise.all([document.fonts.load(`900 64px ${SERIF}`, all), document.fonts.load(`700 30px ${SANS}`, all),
     document.fonts.load(`400 24px ${MONO}`, 'ONLYAPARTENSCHILDR·一部分父母伴侣儿女0123456789岁年龄为示意看不见未曾参与没见过')]);
   await document.fonts.ready; window.render(0); return true;
